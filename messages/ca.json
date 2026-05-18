@@ -1,0 +1,109 @@
+{
+  "form": {
+    "title": "Reserva la teva taula",
+    "subtitle": "Corte de Manga · Comte d'Urgell 108, Barcelona",
+    "nombre": "Nom",
+    "apellido": "Cognom",
+    "telefono": "Telèfon",
+    "email": "Correu electrònic",
+    "fecha": "Data",
+    "hora": "Hora",
+    "personas": "Nombre de persones",
+    "notas": "Comentaris (opcional)",
+    "notas_placeholder": "Al·lèrgies, ocasions especials, peticions...",
+    "consentimiento": "He llegit i accepto la",
+    "politica_privacidad": "política de privacitat",
+    "submit": "Reservar",
+    "submitting": "Enviant...",
+    "group_warning": "Els grups de més de {limite} persones requereixen confirmació. T'enviarem un correu quan aprovem la teva sol·licitud.",
+    "midnight_note": "Les hores entre 00:00 i 00:45 corresponen a la matinada del dia seleccionat.",
+    "select_date_first": "Selecciona primer una data",
+    "no_slots": "No hi ha franges disponibles per a aquesta data",
+    "errors": {
+      "nombre_min": "El nom ha de tenir almenys 2 caràcters",
+      "nombre_max": "El nom no pot superar 50 caràcters",
+      "apellido_min": "El cognom ha de tenir almenys 2 caràcters",
+      "apellido_max": "El cognom no pot superar 50 caràcters",
+      "telefono_invalid": "Número de telèfon no vàlid",
+      "email_invalid": "Correu electrònic no vàlid",
+      "email_disposable": "No es permeten correus desechables",
+      "fecha_required": "Selecciona una data",
+      "fecha_past": "La data no pot ser en el passat",
+      "fecha_max": "Només pots reservar amb {dias} dies d'antelació",
+      "hora_required": "Selecciona una hora",
+      "personas_min": "Mínim 1 persona",
+      "personas_max": "Màxim {max} persones per reserva online",
+      "notas_max": "Els comentaris no poden superar 300 caràcters",
+      "consentimiento_required": "Has d'acceptar la política de privacitat",
+      "rate_limit": "Massa sol·licituds. Torna-ho a intentar en uns minuts.",
+      "dia_cerrado": "El restaurant està tancat aquest dia",
+      "franja_bloqueada": "Aquella franja horària no està disponible",
+      "generic": "S'ha produït un error. Torna-ho a intentar."
+    }
+  },
+  "confirmation": {
+    "title": "Reserva confirmada!",
+    "title_pending": "Sol·licitud rebuda",
+    "subtitle": "Ens veiem aviat a Corte de Manga",
+    "subtitle_pending": "T'avisarem quan confirmem la teva sol·licitud",
+    "details": "Detalls de la teva reserva",
+    "date": "Data",
+    "time": "Hora",
+    "people": "Persones",
+    "name": "Nom",
+    "cancel_info": "Necessites cancel·lar? Fes servir l'enllaç que t'hem enviat per correu.",
+    "pending_info": "Els grups de més de 7 persones requereixen confirmació manual. Rebràs un correu amb la confirmació en les properes hores.",
+    "address": "Com arribar",
+    "back_home": "Tornar a l'inici"
+  },
+  "cancellation": {
+    "title": "Cancel·lar reserva",
+    "info": "En cancel·lar la teva reserva, rebràs un correu de confirmació.",
+    "button": "Cancel·lar la meva reserva",
+    "cancelling": "Cancel·lant...",
+    "success_title": "Reserva cancel·lada",
+    "success_info": "La teva reserva ha estat cancel·lada. Esperem veure't aviat.",
+    "error_not_found": "No hem trobat la teva reserva. És possible que l'enllaç hagi caducat.",
+    "error_already_cancelled": "Aquesta reserva ja estava cancel·lada.",
+    "error_cannot_cancel": "No és possible cancel·lar aquesta reserva. Truca'ns si necessites ajuda.",
+    "error_generic": "S'ha produït un error. Si us plau, truca'ns."
+  },
+  "privacy": {
+    "title": "Política de privacitat",
+    "back": "Tornar"
+  },
+  "nav": {
+    "lang": "Idioma"
+  },
+  "admin": {
+    "today": "Avui",
+    "reservations": "reserves",
+    "people": "persones",
+    "previous_day": "Dia anterior",
+    "next_day": "Dia següent",
+    "no_reservations": "No hi ha reserves per a aquest dia",
+    "status": {
+      "confirmada": "Confirmada",
+      "llegado": "Ha arribat",
+      "no_show": "No show",
+      "cancelada": "Cancel·lada",
+      "pendiente_aprobacion": "Pendent",
+      "rechazada": "Rebutjada"
+    },
+    "actions": {
+      "arrived": "Ha arribat",
+      "no_show": "No show",
+      "cancel": "Cancel·lar",
+      "cancel_confirm": "Confirmar cancel·lació?",
+      "save_notes": "Desar notes",
+      "back": "Tornar",
+      "call": "Trucar",
+      "whatsapp": "WhatsApp"
+    },
+    "detail": {
+      "internal_notes": "Notes internes",
+      "client_notes": "Notes del client",
+      "no_notes": "Sense notes"
+    }
+  }
+}

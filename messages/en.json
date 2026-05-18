@@ -1,0 +1,109 @@
+{
+  "form": {
+    "title": "Book your table",
+    "subtitle": "Corte de Manga · Comte d'Urgell 108, Barcelona",
+    "nombre": "First name",
+    "apellido": "Last name",
+    "telefono": "Phone",
+    "email": "Email",
+    "fecha": "Date",
+    "hora": "Time",
+    "personas": "Number of guests",
+    "notas": "Comments (optional)",
+    "notas_placeholder": "Allergies, special occasions, requests...",
+    "consentimiento": "I have read and accept the",
+    "politica_privacidad": "privacy policy",
+    "submit": "Book",
+    "submitting": "Sending...",
+    "group_warning": "Groups of more than {limite} guests require confirmation. We'll send you an email when we approve your request.",
+    "midnight_note": "Times between 00:00 and 00:45 are in the early hours of the selected day.",
+    "select_date_first": "Please select a date first",
+    "no_slots": "No available time slots for this date",
+    "errors": {
+      "nombre_min": "First name must be at least 2 characters",
+      "nombre_max": "First name cannot exceed 50 characters",
+      "apellido_min": "Last name must be at least 2 characters",
+      "apellido_max": "Last name cannot exceed 50 characters",
+      "telefono_invalid": "Invalid phone number",
+      "email_invalid": "Invalid email address",
+      "email_disposable": "Disposable email addresses are not allowed",
+      "fecha_required": "Please select a date",
+      "fecha_past": "Date cannot be in the past",
+      "fecha_max": "You can only book up to {dias} days in advance",
+      "hora_required": "Please select a time",
+      "personas_min": "Minimum 1 guest",
+      "personas_max": "Maximum {max} guests per online booking",
+      "notas_max": "Comments cannot exceed 300 characters",
+      "consentimiento_required": "You must accept the privacy policy",
+      "rate_limit": "Too many requests. Please try again in a few minutes.",
+      "dia_cerrado": "The restaurant is closed on that day",
+      "franja_bloqueada": "That time slot is not available",
+      "generic": "An error occurred. Please try again."
+    }
+  },
+  "confirmation": {
+    "title": "Booking confirmed!",
+    "title_pending": "Request received",
+    "subtitle": "See you soon at Corte de Manga",
+    "subtitle_pending": "We'll let you know when we confirm your request",
+    "details": "Your booking details",
+    "date": "Date",
+    "time": "Time",
+    "people": "Guests",
+    "name": "Name",
+    "cancel_info": "Need to cancel? Use the link we sent to your email.",
+    "pending_info": "Groups of more than 7 guests require manual confirmation. You'll receive a confirmation email within the next few hours.",
+    "address": "How to get here",
+    "back_home": "Back to home"
+  },
+  "cancellation": {
+    "title": "Cancel booking",
+    "info": "When you cancel your booking, you'll receive a confirmation email.",
+    "button": "Cancel my booking",
+    "cancelling": "Cancelling...",
+    "success_title": "Booking cancelled",
+    "success_info": "Your booking has been cancelled. Hope to see you soon.",
+    "error_not_found": "We couldn't find your booking. The link may have expired.",
+    "error_already_cancelled": "This booking was already cancelled.",
+    "error_cannot_cancel": "This booking cannot be cancelled. Please call us for help.",
+    "error_generic": "An error occurred. Please call us."
+  },
+  "privacy": {
+    "title": "Privacy policy",
+    "back": "Back"
+  },
+  "nav": {
+    "lang": "Language"
+  },
+  "admin": {
+    "today": "Today",
+    "reservations": "bookings",
+    "people": "guests",
+    "previous_day": "Previous day",
+    "next_day": "Next day",
+    "no_reservations": "No bookings for this day",
+    "status": {
+      "confirmada": "Confirmed",
+      "llegado": "Arrived",
+      "no_show": "No show",
+      "cancelada": "Cancelled",
+      "pendiente_aprobacion": "Pending",
+      "rechazada": "Rejected"
+    },
+    "actions": {
+      "arrived": "Arrived",
+      "no_show": "No show",
+      "cancel": "Cancel",
+      "cancel_confirm": "Confirm cancellation?",
+      "save_notes": "Save notes",
+      "back": "Back",
+      "call": "Call",
+      "whatsapp": "WhatsApp"
+    },
+    "detail": {
+      "internal_notes": "Internal notes",
+      "client_notes": "Client notes",
+      "no_notes": "No notes"
+    }
+  }
+}
