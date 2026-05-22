@@ -18,25 +18,30 @@ import type {
 
 // Rate limiter basado en Supabase (funciona en entornos serverless como Vercel)
 async function checkRateLimit(ip: string): Promise<boolean> {
-  const serviceClient = createServiceClient();
-  const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return true; // fail open si no está configurada
+  try {
+    const serviceClient = createServiceClient();
+    const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-  const { count, error } = await serviceClient
-    .from("rate_limits")
-    .select("id", { count: "exact", head: true })
-    .eq("identifier", ip)
-    .eq("action", "create_reserva")
-    .gte("created_at", windowStart);
+    const { count, error } = await serviceClient
+      .from("rate_limits")
+      .select("id", { count: "exact", head: true })
+      .eq("identifier", ip)
+      .eq("action", "create_reserva")
+      .gte("created_at", windowStart);
 
-  if (error) return true; // Si hay error en el check, permitir (fail open)
-  if ((count ?? 0) >= 3) return false;
+    if (error) return true;
+    if ((count ?? 0) >= 3) return false;
 
-  await serviceClient.from("rate_limits").insert({
-    identifier: ip,
-    action: "create_reserva",
-  });
+    await serviceClient.from("rate_limits").insert({
+      identifier: ip,
+      action: "create_reserva",
+    });
 
-  return true;
+    return true;
+  } catch {
+    return true; // fail open
+  }
 }
 
 function getClientIp(): string {
