@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 
 const RESTAURANT_NAME    = "Corte de Manga";
-const RESTAURANT_PHONE   = "+34 931 234 567";
+const RESTAURANT_PHONE   = "+34 623 216 562";
 const RESTAURANT_ADDRESS = "Comte d'Urgell 108, 08011 Barcelona";
 const RESTAURANT_MAPS    = "https://maps.google.com";
 const RESTAURANT_LOGO    = ""; // añade aquí tu URL de logo cuando lo tengas

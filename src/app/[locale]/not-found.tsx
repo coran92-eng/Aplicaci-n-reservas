@@ -12,7 +12,7 @@ export default function NotFound() {
         </p>
         <p className="text-sm text-muted-foreground mb-6">
           ¿Necesitas ayuda? Llámanos al{" "}
-          <a href="tel:+34931234567" className="underline">+34 931 234 567</a>
+          <a href="tel:+34623216562" className="underline">+34 623 216 562</a>
         </p>
         <Link href="/es">
           <Button className="w-full">Volver al inicio</Button>

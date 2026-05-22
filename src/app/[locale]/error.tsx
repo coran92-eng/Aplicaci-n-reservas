@@ -25,7 +25,7 @@ export default function Error({
         </p>
         <p className="text-sm text-muted-foreground mb-6">
           Si el problema persiste, llámanos al{" "}
-          <a href="tel:+34931234567" className="underline">+34 931 234 567</a>
+          <a href="tel:+34623216562" className="underline">+34 623 216 562</a>
         </p>
         <div className="flex gap-3">
           <Button onClick={reset} variant="outline" className="flex-1">
