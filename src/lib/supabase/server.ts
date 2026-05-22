@@ -1,8 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createClient(): ReturnType<typeof createServerClient<any>> {
+export function createClient() {
   const cookieStore = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,8 +25,7 @@ export function createClient(): ReturnType<typeof createServerClient<any>> {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createServiceClient(): ReturnType<typeof createServerClient<any>> {
+export function createServiceClient() {
   const cookieStore = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
