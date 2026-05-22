@@ -54,7 +54,7 @@ function getClientIp(): string {
 }
 
 export type CreateReservaResult =
-  | { ok: true; id: string; estado: string; emailSent?: boolean }
+  | { ok: true; id: string; estado: string; emailSent?: boolean; emailError?: string }
   | { ok: false; error: string; field?: string; dbError?: string };
 
 export async function createReserva(
@@ -197,6 +197,7 @@ export async function createReserva(
 
   // Enviar email con manejo de error mejorado
   let emailSent = false;
+  let emailError: string | undefined;
   try {
     if (esPendiente) {
       await sendPendingEmail(emailData);
@@ -205,24 +206,25 @@ export async function createReserva(
     }
     emailSent = true;
   } catch (err) {
+    const errObj = err as { message?: string; name?: string; statusCode?: number };
+    emailError = `${errObj.name ?? "Error"} ${errObj.statusCode ?? ""}: ${errObj.message ?? String(err)}`.trim();
     console.error("[EMAIL_FAILED] Reserva creada pero email no enviado:", {
       reservaId: id,
       email: emailData.email,
       error: err,
     });
-    // Actualizar reserva con nota de fallo (para retry manual)
     try {
       const serviceClient = createServiceClient();
       await serviceClient
         .from("reservas")
-        .update({ notas_internas: "[EMAIL_PENDIENTE] Email no enviado automáticamente." })
+        .update({ notas_internas: `[EMAIL_PENDIENTE] ${emailError}` })
         .eq("id", id);
     } catch {
       // No bloquear si esto también falla
     }
   }
 
-  return { ok: true, id, estado: esPendiente ? "pendiente_aprobacion" : "confirmada", emailSent };
+  return { ok: true, id, estado: esPendiente ? "pendiente_aprobacion" : "confirmada", emailSent, emailError };
 }
 
 export async function updateReserva(
