@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { X, Phone, MessageCircle, Check, UserX, Ban, Save, Pencil } from "lucide-react";
+import { X, Phone, MessageCircle, Check, UserX, Ban, Save, Pencil, ThumbsUp, ThumbsDown, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn, formatTime } from "@/lib/utils";
-import { updateEstadoReserva, updateNotasInternas, updateReserva } from "@/actions/reservas";
+import { updateEstadoReserva, updateNotasInternas, updateReserva, approveReserva, rejectReserva } from "@/actions/reservas";
 import type { Reserva } from "@/lib/supabase/types";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -27,6 +27,7 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
   const [notas, setNotas] = useState(reserva.notas_internas ?? "");
   const [saving, setSaving] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmReject, setConfirmReject] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
   // Edit mode
@@ -94,6 +95,22 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
     setEditSaving(false);
   }
 
+  async function handleApprove() {
+    setLoading("approve");
+    const result = await approveReserva(reserva.id);
+    if (result.ok) onUpdate(reserva.id, { estado: "confirmada" });
+    setLoading(null);
+  }
+
+  async function handleReject() {
+    setLoading("reject");
+    const result = await rejectReserva(reserva.id);
+    if (result.ok) onUpdate(reserva.id, { estado: "rechazada" });
+    setLoading(null);
+    setConfirmReject(false);
+  }
+
+  const isPending = reserva.estado === "pendiente_aprobacion";
   const status = STATUS_CONFIG[reserva.estado] ?? STATUS_CONFIG.confirmada;
 
   return (
@@ -219,6 +236,21 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
         ) : (
           /* ── VIEW MODE ── */
           <>
+            {/* Pending approval banner */}
+            {isPending && (
+              <div className="rounded-xl border-2 border-amber-200 bg-amber-50 px-4 py-3 space-y-1">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-amber-700 shrink-0" />
+                  <p className="text-sm font-semibold text-amber-900">
+                    Grupo grande — pendiente de aprobación
+                  </p>
+                </div>
+                <p className="text-xs text-amber-700 pl-6">
+                  {reserva.personas} personas · El cliente está esperando confirmación
+                </p>
+              </div>
+            )}
+
             {/* Contact */}
             <div className="space-y-3">
               <div className="flex gap-3">
@@ -310,6 +342,52 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
               Cancelar
             </Button>
           </div>
+        ) : isPending ? (
+          /* ── PENDING APPROVAL ACTIONS ── */
+          <>
+            <Button
+              size="lg"
+              className="w-full bg-green-600 hover:bg-green-700 text-white admin-btn gap-2"
+              onClick={handleApprove}
+              disabled={loading !== null}
+            >
+              <ThumbsUp className="h-5 w-5" />
+              {loading === "approve" ? "Confirmando..." : "Aprobar reserva"}
+            </Button>
+            {confirmReject ? (
+              <div className="flex gap-2">
+                <Button
+                  size="lg"
+                  variant="destructive"
+                  className="flex-1 admin-btn"
+                  onClick={handleReject}
+                  disabled={loading === "reject"}
+                >
+                  <ThumbsDown className="h-4 w-4" />
+                  {loading === "reject" ? "..." : "Confirmar rechazo"}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="flex-1 admin-btn text-gray-700 border-gray-300"
+                  onClick={() => setConfirmReject(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full admin-btn gap-2 text-gray-500 border-gray-200 hover:border-gray-300"
+                onClick={() => setConfirmReject(true)}
+                disabled={loading !== null}
+              >
+                <ThumbsDown className="h-4 w-4" />
+                Rechazar reserva
+              </Button>
+            )}
+          </>
         ) : (
           !isClosed && (
             <>

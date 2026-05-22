@@ -326,3 +326,53 @@ export async function cancelarPorToken(token: string): Promise<{
 
   return { ok: true, reserva: reservaData };
 }
+
+export async function approveReserva(
+  id: string
+): Promise<{ ok: boolean; error?: string }> {
+  const serviceClient = createServiceClient();
+
+  const { data: reserva, error: fetchError } = await serviceClient
+    .from("reservas")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !reserva) return { ok: false, error: "not_found" };
+
+  const { error } = await serviceClient
+    .from("reservas")
+    .update({ estado: "confirmada" })
+    .eq("id", id);
+
+  if (error) return { ok: false, error: String(error) };
+
+  try {
+    await sendConfirmationEmail({
+      nombre: reserva.nombre,
+      apellido: reserva.apellido,
+      email: reserva.email,
+      fecha: reserva.fecha,
+      hora: reserva.hora,
+      personas: reserva.personas,
+      cancel_token: reserva.cancel_token,
+      idioma: reserva.idioma,
+    });
+  } catch (err) {
+    console.error("[EMAIL_FAILED] Approve email failed:", err);
+  }
+
+  return { ok: true };
+}
+
+export async function rejectReserva(
+  id: string
+): Promise<{ ok: boolean; error?: string }> {
+  const serviceClient = createServiceClient();
+  const { error } = await serviceClient
+    .from("reservas")
+    .update({ estado: "rechazada" })
+    .eq("id", id);
+  if (error) return { ok: false, error: String(error) };
+  return { ok: true };
+}
