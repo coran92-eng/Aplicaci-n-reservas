@@ -55,7 +55,7 @@ function getClientIp(): string {
 
 export type CreateReservaResult =
   | { ok: true; id: string; estado: string; emailSent?: boolean }
-  | { ok: false; error: string; field?: string };
+  | { ok: false; error: string; field?: string; dbError?: string };
 
 export async function createReserva(
   formData: unknown
@@ -70,6 +70,11 @@ export async function createReserva(
 
   if (data.website && data.website.length > 0) {
     return { ok: true, id: "honeypot", estado: "confirmada" };
+  }
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.error("Missing Supabase env vars");
+    return { ok: false, error: "generic", dbError: "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY" };
   }
 
   const ip = getClientIp();
@@ -176,7 +181,7 @@ export async function createReserva(
 
   if (error) {
     console.error("Error inserting reserva:", JSON.stringify(error));
-    return { ok: false, error: "generic" };
+    return { ok: false, error: "generic", dbError: `${error.code}: ${error.message}` };
   }
 
   const emailData = {
