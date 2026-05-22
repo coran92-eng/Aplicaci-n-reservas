@@ -28,10 +28,10 @@ export default async function ConfirmadaPage({
 
   if (id === "honeypot") {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border p-8 text-center">
-          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">{t("title")}</h1>
+      <main className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-card rounded-xl border border-border p-8 text-center">
+          <CheckCircle className="h-12 w-12 text-primary mx-auto mb-4" />
+          <h1 className="font-heading text-2xl font-bold mb-2">{t("title")}</h1>
         </div>
       </main>
     );
@@ -51,11 +51,11 @@ export default async function ConfirmadaPage({
   const isPending = reserva.estado === "pendiente_aprobacion";
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-sm border p-8">
+    <main className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-card rounded-xl border border-border p-8">
         <div className="text-center mb-8">
-          <CheckCircle className="h-14 w-14 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">
+          <CheckCircle className="h-14 w-14 text-primary mx-auto mb-4" />
+          <h1 className="font-heading text-2xl font-bold mb-2">
             {isPending ? t("title_pending") : t("title")}
           </h1>
           <p className="text-muted-foreground">
@@ -63,7 +63,7 @@ export default async function ConfirmadaPage({
           </p>
         </div>
 
-        <div className="rounded-lg border p-4 space-y-3 mb-6">
+        <div className="rounded-lg border border-border p-4 space-y-3 mb-6">
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
             {t("details")}
           </p>
@@ -88,14 +88,14 @@ export default async function ConfirmadaPage({
         </div>
 
         {reserva.notas_cliente && (
-          <div className="rounded-lg bg-gray-50 border p-4 mb-6">
+          <div className="rounded-lg bg-muted border border-border p-4 mb-6">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Comentarios</p>
             <p className="text-sm">{reserva.notas_cliente}</p>
           </div>
         )}
 
         {isPending ? (
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+          <p className="text-sm text-amber-400 bg-amber-900/20 border border-amber-700/40 rounded-lg p-3 mb-6">
             {t("pending_info")}
           </p>
         ) : (

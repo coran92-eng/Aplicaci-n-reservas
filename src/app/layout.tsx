@@ -1,5 +1,20 @@
 import type { Metadata } from "next";
+import { Syne, Inter } from "next/font/google";
 import "./globals.css";
+
+const syne = Syne({
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  variable: "--font-syne",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "600"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Corte de Manga · Reservas",
@@ -19,7 +34,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Corte de Manga",
   },
   other: {
@@ -31,17 +46,13 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#1a1a1a",
+  themeColor: "#050505",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
-      <body>{children}</body>
+      <body className={`${syne.variable} ${inter.variable} font-sans`}>{children}</body>
     </html>
   );
 }

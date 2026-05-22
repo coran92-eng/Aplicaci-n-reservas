@@ -34,17 +34,17 @@ export default async function SolicitudRecibidaPage({
   if (!reserva) notFound();
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-sm border p-8">
+    <main className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-card rounded-xl border border-border p-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-100 rounded-full mb-4">
-            <Clock className="h-7 w-7 text-amber-600" />
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-900/30 rounded-full mb-4">
+            <Clock className="h-7 w-7 text-amber-400" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">{t("title_pending")}</h1>
+          <h1 className="font-heading text-2xl font-bold mb-2">{t("title_pending")}</h1>
           <p className="text-muted-foreground">{t("subtitle_pending")}</p>
         </div>
 
-        <div className="rounded-lg border p-4 space-y-3 mb-6">
+        <div className="rounded-lg border border-border p-4 space-y-3 mb-6">
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
             {t("details")}
           </p>
@@ -66,8 +66,8 @@ export default async function SolicitudRecibidaPage({
           </div>
         </div>
 
-        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 mb-6">
-          <p className="text-sm text-amber-800">{t("pending_info")}</p>
+        <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 p-4 mb-6">
+          <p className="text-sm text-amber-400">{t("pending_info")}</p>
         </div>
 
         <div className="space-y-3">
