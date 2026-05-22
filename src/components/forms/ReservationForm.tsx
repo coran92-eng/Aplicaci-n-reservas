@@ -155,6 +155,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [personas, setPersonas] = useState(2);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const timeSlotsRef = useRef<HTMLDivElement>(null);
 
@@ -230,10 +231,12 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   async function onSubmit(data: ReservaInput) {
     setSubmitting(true);
     setServerError(null);
+    setDbError(null);
     try {
       const result = await createReserva(data);
       if (!result.ok) {
         setServerError(result.error ?? "generic");
+        if ("dbError" in result && result.dbError) setDbError(result.dbError);
         return;
       }
       if (result.estado === "pendiente_aprobacion") {
@@ -455,6 +458,9 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
           {serverError && (
             <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3">
               <p className="text-sm text-red-400">{errMsg(serverError) ?? t("errors.generic")}</p>
+              {dbError && (
+                <p className="text-xs text-red-300 mt-1 font-mono break-all">Error: {dbError}</p>
+              )}
             </div>
           )}
 
