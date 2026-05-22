@@ -56,7 +56,8 @@ export function todayBarcelona(): string {
 }
 
 export function nowBarcelona(): Date {
-  const barcelonaStr = new Intl.DateTimeFormat("sv-SE", {
+  // Construir fecha correcta con DST de Europe/Madrid usando Intl
+  const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Madrid",
     year: "numeric",
     month: "2-digit",
@@ -64,8 +65,20 @@ export function nowBarcelona(): Date {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-  }).format(new Date());
-  return new Date(barcelonaStr.replace(" ", "T") + "+02:00");
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "0";
+
+  return new Date(
+    parseInt(get("year")),
+    parseInt(get("month")) - 1,
+    parseInt(get("day")),
+    parseInt(get("hour")),
+    parseInt(get("minute")),
+    parseInt(get("second"))
+  );
 }
 
 export function dateToISO(date: Date): string {

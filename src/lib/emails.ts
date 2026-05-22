@@ -27,6 +27,40 @@ function formatDateForEmail(fecha: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function generateGoogleCalendarLink(data: ReservaEmailData): string {
+  const [year, month, day] = data.fecha.split("-").map(Number);
+  const [hour, minute] = data.hora.slice(0, 5).split(":").map(Number);
+
+  // Formato: YYYYMMDDTHHMMSS (sin Z, es hora local)
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const startDt = `${year}${pad(month)}${pad(day)}T${pad(hour)}${pad(minute)}00`;
+  // Duración estimada: 1.5 horas
+  const endHour = hour + 1;
+  const endDt = `${year}${pad(month)}${pad(day)}T${pad(endHour)}${pad(minute)}00`;
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `Reserva en ${RESTAURANT_NAME}`,
+    dates: `${startDt}/${endDt}`,
+    details: `Reserva para ${data.personas} personas.`,
+    location: RESTAURANT_ADDRESS,
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function formatFechaEmail(fecha: string, idioma: string): string {
+  const [y, m, d] = fecha.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const localeMap: Record<string, string> = { es: "es-ES", ca: "ca-ES", en: "en-GB" };
+  return date.toLocaleDateString(localeMap[idioma] ?? "es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function subjectConfirmation(idioma: string, fecha: string, hora: string): string {
   const displayDate = formatDateForEmail(fecha);
   const displayHora = hora.slice(0, 5);
@@ -40,8 +74,9 @@ function subjectConfirmation(idioma: string, fecha: string, hora: string): strin
 
 function confirmationHtml(data: ReservaEmailData): string {
   const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
-  const displayDate = formatDateForEmail(data.fecha);
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
+  const calendarUrl = generateGoogleCalendarLink(data);
 
   const texts: Record<string, Record<string, string>> = {
     es: {
@@ -51,7 +86,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       time_label: "Hora",
       people_label: "Personas",
       cancel: "Cancelar mi reserva",
-      footer: `Si necesitas ayuda, llámanos al ${RESTAURANT_PHONE}`,
+      footer: `Si necesitas ayuda, llámanos al`,
     },
     ca: {
       greeting: `Hola ${data.nombre},`,
@@ -60,7 +95,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       time_label: "Hora",
       people_label: "Persones",
       cancel: "Cancel·lar la meva reserva",
-      footer: `Si necessites ajuda, truca'ns al ${RESTAURANT_PHONE}`,
+      footer: `Si necessites ajuda, truca'ns al`,
     },
     en: {
       greeting: `Hi ${data.nombre},`,
@@ -69,7 +104,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       time_label: "Time",
       people_label: "Guests",
       cancel: "Cancel my booking",
-      footer: `If you need help, call us at ${RESTAURANT_PHONE}`,
+      footer: `If you need help, call us at`,
     },
   };
 
@@ -103,12 +138,18 @@ function confirmationHtml(data: ReservaEmailData): string {
       </table>
       <p style="font-size:13px;color:#666">${RESTAURANT_ADDRESS}</p>
       <a href="${RESTAURANT_MAPS}" style="display:inline-block;margin-bottom:24px;font-size:13px;color:#1a1a1a">📍 Ver en Google Maps</a>
+      <div style="text-align:center;margin:24px 0">
+        <a href="${calendarUrl}"
+           style="display:inline-block;background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:500">
+          📅 Añadir al calendario
+        </a>
+      </div>
       <div style="text-align:center;margin-top:24px">
         <a href="${cancelUrl}" style="font-size:13px;color:#999;text-decoration:underline">${t.cancel}</a>
       </div>
     </div>
     <div style="background:#f5f5f5;padding:16px;text-align:center">
-      <p style="font-size:12px;color:#999;margin:0">${t.footer}</p>
+      <p style="font-size:12px;color:#999;margin:0">${t.footer} <a href="tel:${RESTAURANT_PHONE}" style="color:#999;text-decoration:none">${RESTAURANT_PHONE}</a></p>
     </div>
   </div>
 </body>

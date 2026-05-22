@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# No indexar panel admin ni datos de reservas
+Disallow: /admin/
+Disallow: /*/confirmada/
+Disallow: /*/cancelar/
+Disallow: /*/solicitud-recibida/
+
+Sitemap: https://reservas.cortedemanga.es/sitemap.xml

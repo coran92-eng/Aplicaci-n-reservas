@@ -84,11 +84,50 @@ export default async function PrivacidadPage({
             de Protección de Datos (www.aepd.es).
           </p>
 
+          <h2>Revocación del consentimiento</h2>
+          <p>
+            Puede retirar su consentimiento en cualquier momento enviando un correo
+            a reservas@cortedemanga.es con el asunto &quot;Retirar consentimiento&quot;.
+            La retirada del consentimiento no afectará a la licitud del tratamiento
+            realizado con anterioridad.
+          </p>
+
+          <h2>Encargados de tratamiento</h2>
+          <p>
+            Los datos pueden ser procesados por los siguientes encargados de
+            tratamiento con los que mantenemos contratos de encargo (DPA):
+          </p>
+          <ul>
+            <li>
+              <strong>Supabase Inc.</strong> — Almacenamiento de base de datos (servidores
+              en la Unión Europea). Política de privacidad:{" "}
+              <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">
+                supabase.com/privacy
+              </a>
+            </li>
+            <li>
+              <strong>Resend Inc.</strong> — Envío de emails transaccionales. Política de
+              privacidad:{" "}
+              <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">
+                resend.com/legal/privacy-policy
+              </a>
+            </li>
+          </ul>
+
+          <h2>Eliminación de datos</h2>
+          <p>
+            Transcurrido el período de conservación (2 años desde la fecha de la
+            reserva), los datos personales serán eliminados de forma permanente e
+            irrecuperable de todos nuestros sistemas. Si solicita la eliminación
+            anticipada de sus datos, la procesaremos en un plazo máximo de 30 días
+            y le confirmaremos por email.
+          </p>
+
           <h2>Cookies</h2>
           <p>
-            Esta web no utiliza cookies de seguimiento ni publicidad. Solo
-            pueden usarse cookies técnicas necesarias para el funcionamiento
-            del formulario.
+            Esta web utiliza únicamente cookies técnicas estrictamente necesarias para
+            el funcionamiento del formulario (cookies de sesión de un solo uso). No se
+            utilizan cookies de seguimiento, publicidad ni analítica de terceros.
           </p>
         </div>
       </div>

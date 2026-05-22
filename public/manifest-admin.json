@@ -1,0 +1,17 @@
+{
+  "name": "Admin · Corte de Manga",
+  "short_name": "Admin CdM",
+  "description": "Panel de administración de reservas",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

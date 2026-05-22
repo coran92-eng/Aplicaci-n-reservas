@@ -1,12 +1,12 @@
 {
   "name": "Corte de Manga · Reservas",
-  "short_name": "Reservas",
-  "description": "Panel de reservas para Corte de Manga",
-  "start_url": "/admin",
+  "short_name": "Reservar Mesa",
+  "description": "Reserva tu mesa en Corte de Manga, Barcelona",
+  "start_url": "/es",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1a1a1a",
-  "orientation": "landscape",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192.png",

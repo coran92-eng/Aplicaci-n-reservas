@@ -7,6 +7,18 @@ import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
 
+function formatDateForDisplay(fecha: string, locale: string): string {
+  const [y, m, d] = fecha.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const localeMap: Record<string, string> = { es: "es-ES", ca: "ca-ES", en: "en-GB" };
+  return date.toLocaleDateString(localeMap[locale] ?? "es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default async function ConfirmadaPage({
   params: { locale, id },
 }: {
@@ -63,7 +75,7 @@ export default async function ConfirmadaPage({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t("date")}</span>
-            <span className="font-medium">{reserva.fecha}</span>
+            <span className="font-medium">{formatDateForDisplay(reserva.fecha, locale)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">{t("time")}</span>
@@ -74,6 +86,13 @@ export default async function ConfirmadaPage({
             <span className="font-medium">{reserva.personas}</span>
           </div>
         </div>
+
+        {reserva.notas_cliente && (
+          <div className="rounded-lg bg-gray-50 border p-4 mb-6">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Comentarios</p>
+            <p className="text-sm">{reserva.notas_cliente}</p>
+          </div>
+        )}
 
         {isPending ? (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
