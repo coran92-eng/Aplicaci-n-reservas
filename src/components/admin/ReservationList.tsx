@@ -155,13 +155,13 @@ export function ReservationList({ reservas: initialReservas }: Props) {
                 {formatTime(reserva.hora)}
               </span>
 
-              {/* Iniciales */}
-              <span className={cn("text-base font-medium w-12 shrink-0", isCancelled ? "text-gray-400" : "text-gray-700")}>
-                {initials}
+              {/* Nombre */}
+              <span className={cn("text-base font-medium flex-1 truncate", isCancelled ? "text-gray-400" : "text-gray-700")}>
+                {reserva.nombre} {reserva.apellido}
               </span>
 
               {/* Personas */}
-              <span className="flex items-center gap-1 text-sm text-gray-500 flex-1">
+              <span className="flex items-center gap-1 text-sm text-gray-500 shrink-0">
                 <Users className="h-4 w-4" />
                 {reserva.personas}
               </span>
