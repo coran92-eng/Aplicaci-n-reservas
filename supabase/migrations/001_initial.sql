@@ -68,6 +68,7 @@ begin
 end;
 $$;
 
+drop trigger if exists reservas_updated_at on reservas;
 create trigger reservas_updated_at
   before update on reservas
   for each row execute function update_updated_at();
@@ -118,31 +119,39 @@ alter table dias_cerrados enable row level security;
 alter table configuracion enable row level security;
 
 -- Anon puede insertar reservas (formulario público)
-create policy "anon_insert_reservas" on reservas
-  for insert to anon with check (true);
+do $$ begin
+  create policy "anon_insert_reservas" on reservas for insert to anon with check (true);
+exception when duplicate_object then null; end $$;
 
 -- Anon puede leer franjas bloqueadas y días cerrados (para el formulario)
-create policy "anon_read_franjas" on franjas_bloqueadas
-  for select to anon using (true);
+do $$ begin
+  create policy "anon_read_franjas" on franjas_bloqueadas for select to anon using (true);
+exception when duplicate_object then null; end $$;
 
-create policy "anon_read_dias_cerrados" on dias_cerrados
-  for select to anon using (true);
+do $$ begin
+  create policy "anon_read_dias_cerrados" on dias_cerrados for select to anon using (true);
+exception when duplicate_object then null; end $$;
 
-create policy "anon_read_configuracion" on configuracion
-  for select to anon using (true);
+do $$ begin
+  create policy "anon_read_configuracion" on configuracion for select to anon using (true);
+exception when duplicate_object then null; end $$;
 
 -- Service role tiene acceso total (panel admin usa service_role)
-create policy "service_role_all_reservas" on reservas
-  for all to service_role using (true) with check (true);
+do $$ begin
+  create policy "service_role_all_reservas" on reservas for all to service_role using (true) with check (true);
+exception when duplicate_object then null; end $$;
 
-create policy "service_role_all_franjas" on franjas_bloqueadas
-  for all to service_role using (true) with check (true);
+do $$ begin
+  create policy "service_role_all_franjas" on franjas_bloqueadas for all to service_role using (true) with check (true);
+exception when duplicate_object then null; end $$;
 
-create policy "service_role_all_dias" on dias_cerrados
-  for all to service_role using (true) with check (true);
+do $$ begin
+  create policy "service_role_all_dias" on dias_cerrados for all to service_role using (true) with check (true);
+exception when duplicate_object then null; end $$;
 
-create policy "service_role_all_config" on configuracion
-  for all to service_role using (true) with check (true);
+do $$ begin
+  create policy "service_role_all_config" on configuracion for all to service_role using (true) with check (true);
+exception when duplicate_object then null; end $$;
 
 -- ============================================================
 -- Habilitar Realtime (ejecutar desde Supabase dashboard si este SQL no es suficiente)
