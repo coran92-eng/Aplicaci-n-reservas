@@ -1,20 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { X, Phone, MessageCircle, Check, UserX, Ban, Save } from "lucide-react";
+import { X, Phone, MessageCircle, Check, UserX, Ban, Save, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn, formatTime } from "@/lib/utils";
-import { updateEstadoReserva, updateNotasInternas } from "@/actions/reservas";
+import { updateEstadoReserva, updateNotasInternas, updateReserva } from "@/actions/reservas";
 import type { Reserva } from "@/lib/supabase/types";
 
-const STATUS_CONFIG = {
-  confirmada: { label: "Confirmada", className: "bg-gray-100 text-gray-700" },
-  llegado: { label: "Ha llegado", className: "bg-green-100 text-green-700" },
-  no_show: { label: "No show", className: "bg-red-100 text-red-700" },
-  cancelada: { label: "Cancelada", className: "bg-gray-100 text-gray-400 line-through" },
-  pendiente_aprobacion: { label: "Pendiente", className: "bg-amber-100 text-amber-700" },
-  rechazada: { label: "Rechazada", className: "bg-red-100 text-red-400" },
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  confirmada:           { label: "Confirmada",  className: "bg-gray-100 text-gray-700" },
+  llegado:              { label: "Ha llegado",  className: "bg-green-100 text-green-700" },
+  no_show:              { label: "No show",     className: "bg-red-100 text-red-700" },
+  cancelada:            { label: "Cancelada",   className: "bg-gray-100 text-gray-400 line-through" },
+  pendiente_aprobacion: { label: "Pendiente",   className: "bg-amber-100 text-amber-700" },
+  rechazada:            { label: "Rechazada",   className: "bg-red-100 text-red-400" },
 };
 
 interface Props {
@@ -29,15 +29,29 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
+  // Edit mode
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    nombre: reserva.nombre,
+    apellido: reserva.apellido,
+    email: reserva.email,
+    telefono: reserva.telefono,
+    personas: reserva.personas,
+    fecha: reserva.fecha,
+    hora: reserva.hora.slice(0, 5),
+    notas_cliente: reserva.notas_cliente ?? "",
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   const whatsappNumber = reserva.telefono.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
+  const isClosed = reserva.estado === "cancelada" || reserva.estado === "rechazada";
 
   async function handleEstado(estado: Reserva["estado"]) {
     setLoading(estado);
     const result = await updateEstadoReserva(reserva.id, estado);
-    if (result.ok) {
-      onUpdate(reserva.id, { estado });
-    }
+    if (result.ok) onUpdate(reserva.id, { estado });
     setLoading(null);
     setConfirmCancel(false);
   }
@@ -45,165 +59,313 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
   async function handleSaveNotas() {
     setSaving(true);
     const result = await updateNotasInternas(reserva.id, notas);
-    if (result.ok) {
-      onUpdate(reserva.id, { notas_internas: notas || null });
-    }
+    if (result.ok) onUpdate(reserva.id, { notas_internas: notas || null });
     setSaving(false);
   }
 
-  const status = STATUS_CONFIG[reserva.estado];
+  async function handleSaveEdit() {
+    setEditSaving(true);
+    setEditError(null);
+    const result = await updateReserva(reserva.id, {
+      nombre: editData.nombre.trim(),
+      apellido: editData.apellido.trim(),
+      email: editData.email.trim().toLowerCase(),
+      telefono: editData.telefono.trim(),
+      personas: Number(editData.personas),
+      fecha: editData.fecha,
+      hora: editData.hora,
+      notas_cliente: editData.notas_cliente.trim() || null,
+    });
+    if (result.ok) {
+      onUpdate(reserva.id, {
+        nombre: editData.nombre.trim(),
+        apellido: editData.apellido.trim(),
+        email: editData.email.trim().toLowerCase(),
+        telefono: editData.telefono.trim(),
+        personas: Number(editData.personas),
+        fecha: editData.fecha,
+        hora: editData.hora + ":00",
+        notas_cliente: editData.notas_cliente.trim() || null,
+      });
+      setIsEditing(false);
+    } else {
+      setEditError("Error al guardar. Inténtalo de nuevo.");
+    }
+    setEditSaving(false);
+  }
+
+  const status = STATUS_CONFIG[reserva.estado] ?? STATUS_CONFIG.confirmada;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <div className="fixed inset-0 z-50 bg-white text-gray-900 flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b">
-        <Button variant="ghost" size="icon" onClick={onClose} className="admin-btn">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
+        <Button variant="ghost" size="icon" onClick={onClose} className="admin-btn text-gray-700 hover:bg-gray-100 shrink-0">
           <X className="h-5 w-5" />
         </Button>
-        <div className="flex-1">
-          <h2 className="text-xl font-bold">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-bold text-gray-900 truncate">
             {reserva.nombre} {reserva.apellido}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {formatTime(reserva.hora)} · {reserva.personas} personas
+          <p className="text-sm text-gray-500">
+            {formatTime(reserva.hora)} · {reserva.personas} pers.
           </p>
         </div>
-        <span className={cn("px-3 py-1 rounded-full text-sm font-medium", status.className)}>
+        <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium shrink-0", status.className)}>
           {status.label}
         </span>
+        {!isClosed && !isEditing && (
+          <Button
+            variant="ghost" size="icon"
+            className="admin-btn text-gray-500 hover:bg-gray-100 shrink-0"
+            onClick={() => setIsEditing(true)}
+            aria-label="Editar reserva"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-4 space-y-6">
-        {/* Contact */}
-        <div className="space-y-3">
-          <div className="flex gap-3">
-            <a href={`tel:${reserva.telefono}`} className="flex-1">
-              <Button variant="outline" size="lg" className="w-full admin-btn gap-2">
-                <Phone className="h-5 w-5" />
-                Llamar
-              </Button>
-            </a>
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
-              <Button variant="outline" size="lg" className="w-full admin-btn gap-2">
-                <MessageCircle className="h-5 w-5" />
-                WhatsApp
-              </Button>
-            </a>
-          </div>
-          <a href={`mailto:${reserva.email}`} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-            {reserva.email}
-          </a>
-        </div>
+      <div className="flex-1 overflow-auto p-4 space-y-5">
 
-        {/* Details */}
-        <div className="rounded-lg border p-4 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Fecha</span>
-            <span className="font-medium">{reserva.fecha}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Hora</span>
-            <span className="font-medium">{formatTime(reserva.hora)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Personas</span>
-            <span className="font-medium">{reserva.personas}</span>
-          </div>
-        </div>
+        {isEditing ? (
+          /* ── EDIT MODE ── */
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Nombre</label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  value={editData.nombre}
+                  onChange={e => setEditData(d => ({ ...d, nombre: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Apellido</label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  value={editData.apellido}
+                  onChange={e => setEditData(d => ({ ...d, apellido: e.target.value }))}
+                />
+              </div>
+            </div>
 
-        {/* Notas cliente */}
-        {reserva.notas_cliente && (
-          <div className="space-y-1.5">
-            <p className="text-sm font-medium">Notas del cliente</p>
-            <p className="text-sm text-muted-foreground rounded-lg bg-muted p-3">
-              {reserva.notas_cliente}
-            </p>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono</label>
+              <input
+                type="tel"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                value={editData.telefono}
+                onChange={e => setEditData(d => ({ ...d, telefono: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</label>
+              <input
+                type="email"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                value={editData.email}
+                onChange={e => setEditData(d => ({ ...d, email: e.target.value }))}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Fecha</label>
+                <input
+                  type="date"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  value={editData.fecha}
+                  onChange={e => setEditData(d => ({ ...d, fecha: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Hora</label>
+                <input
+                  type="time"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  value={editData.hora}
+                  onChange={e => setEditData(d => ({ ...d, hora: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Personas</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  value={editData.personas}
+                  onChange={e => setEditData(d => ({ ...d, personas: Number(e.target.value) }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Notas del cliente</label>
+              <Textarea
+                value={editData.notas_cliente}
+                onChange={e => setEditData(d => ({ ...d, notas_cliente: e.target.value }))}
+                rows={2}
+                className="text-sm text-gray-900 border-gray-300"
+                placeholder="Sin notas"
+              />
+            </div>
+
+            {editError && <p className="text-sm text-red-600">{editError}</p>}
           </div>
+        ) : (
+          /* ── VIEW MODE ── */
+          <>
+            {/* Contact */}
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <a href={`tel:${reserva.telefono}`} className="flex-1">
+                  <Button variant="outline" size="lg" className="w-full admin-btn gap-2 text-gray-700 border-gray-300">
+                    <Phone className="h-5 w-5" />
+                    Llamar
+                  </Button>
+                </a>
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                  <Button variant="outline" size="lg" className="w-full admin-btn gap-2 text-gray-700 border-gray-300">
+                    <MessageCircle className="h-5 w-5" />
+                    WhatsApp
+                  </Button>
+                </a>
+              </div>
+              <a href={`mailto:${reserva.email}`} className="block text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                {reserva.email}
+              </a>
+            </div>
+
+            {/* Details */}
+            <div className="rounded-lg border border-gray-200 p-4 space-y-2.5 text-sm">
+              {[
+                ["Fecha", reserva.fecha],
+                ["Hora", formatTime(reserva.hora)],
+                ["Personas", String(reserva.personas)],
+              ].map(([label, value]) => (
+                <div key={label} className="flex justify-between">
+                  <span className="text-gray-500">{label}</span>
+                  <span className="font-medium text-gray-900">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Notas cliente */}
+            {reserva.notas_cliente && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Notas del cliente</p>
+                <p className="text-sm text-gray-700 rounded-lg bg-gray-50 border border-gray-200 p-3">
+                  {reserva.notas_cliente}
+                </p>
+              </div>
+            )}
+
+            {/* Notas internas */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Notas internas</p>
+              <Textarea
+                value={notas}
+                onChange={e => setNotas(e.target.value)}
+                placeholder="Sin notas"
+                rows={3}
+                className="text-sm text-gray-900 border-gray-300"
+              />
+              <Button
+                variant="outline" size="sm"
+                onClick={handleSaveNotas}
+                disabled={saving}
+                className="gap-2 text-gray-700 border-gray-300"
+              >
+                <Save className="h-4 w-4" />
+                {saving ? "Guardando..." : "Guardar notas"}
+              </Button>
+            </div>
+          </>
         )}
-
-        {/* Notas internas */}
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Notas internas</p>
-          <Textarea
-            value={notas}
-            onChange={(e) => setNotas(e.target.value)}
-            placeholder="Sin notas"
-            rows={3}
-            className="text-sm"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSaveNotas}
-            disabled={saving}
-            className="gap-2"
-          >
-            <Save className="h-4 w-4" />
-            {saving ? "Guardando..." : "Guardar notas"}
-          </Button>
-        </div>
       </div>
 
       {/* Action buttons */}
-      {reserva.estado !== "cancelada" && reserva.estado !== "rechazada" && (
-        <div className="p-4 border-t space-y-3">
-          {reserva.estado !== "llegado" && (
+      <div className="p-4 border-t border-gray-200 space-y-3 bg-white">
+        {isEditing ? (
+          <div className="flex gap-2">
             <Button
-              size="xl"
-              className="w-full bg-green-600 hover:bg-green-700 text-white admin-btn gap-2"
-              onClick={() => handleEstado("llegado")}
-              disabled={loading === "llegado"}
+              size="lg"
+              className="flex-1 bg-gray-900 hover:bg-gray-800 text-white admin-btn gap-2"
+              onClick={handleSaveEdit}
+              disabled={editSaving}
             >
-              <Check className="h-5 w-5" />
-              {loading === "llegado" ? "..." : "Ha llegado"}
+              <Save className="h-5 w-5" />
+              {editSaving ? "Guardando..." : "Guardar cambios"}
             </Button>
-          )}
-          {reserva.estado !== "no_show" && (
-            <Button
-              size="xl"
-              variant="outline"
-              className="w-full border-red-300 text-red-600 hover:bg-red-50 admin-btn gap-2"
-              onClick={() => handleEstado("no_show")}
-              disabled={loading === "no_show"}
-            >
-              <UserX className="h-5 w-5" />
-              {loading === "no_show" ? "..." : "No show"}
-            </Button>
-          )}
-          {confirmCancel ? (
-            <div className="flex gap-2">
-              <Button
-                size="lg"
-                variant="destructive"
-                className="flex-1 admin-btn"
-                onClick={() => handleEstado("cancelada")}
-                disabled={loading === "cancelada"}
-              >
-                {loading === "cancelada" ? "..." : "Confirmar cancelación"}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="flex-1 admin-btn"
-                onClick={() => setConfirmCancel(false)}
-              >
-                No cancelar
-              </Button>
-            </div>
-          ) : (
             <Button
               size="lg"
               variant="outline"
-              className="w-full admin-btn gap-2 text-muted-foreground"
-              onClick={() => setConfirmCancel(true)}
+              className="flex-1 admin-btn text-gray-700 border-gray-300"
+              onClick={() => { setIsEditing(false); setEditError(null); }}
             >
-              <Ban className="h-4 w-4" />
-              Cancelar reserva
+              Cancelar
             </Button>
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          !isClosed && (
+            <>
+              {reserva.estado !== "llegado" && (
+                <Button
+                  size="lg"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white admin-btn gap-2"
+                  onClick={() => handleEstado("llegado")}
+                  disabled={loading === "llegado"}
+                >
+                  <Check className="h-5 w-5" />
+                  {loading === "llegado" ? "..." : "Ha llegado"}
+                </Button>
+              )}
+              {reserva.estado !== "no_show" && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-red-300 text-red-600 hover:bg-red-50 admin-btn gap-2"
+                  onClick={() => handleEstado("no_show")}
+                  disabled={loading === "no_show"}
+                >
+                  <UserX className="h-5 w-5" />
+                  {loading === "no_show" ? "..." : "No show"}
+                </Button>
+              )}
+              {confirmCancel ? (
+                <div className="flex gap-2">
+                  <Button
+                    size="lg"
+                    variant="destructive"
+                    className="flex-1 admin-btn"
+                    onClick={() => handleEstado("cancelada")}
+                    disabled={loading === "cancelada"}
+                  >
+                    {loading === "cancelada" ? "..." : "Confirmar cancelación"}
+                  </Button>
+                  <Button size="lg" variant="outline" className="flex-1 admin-btn text-gray-700 border-gray-300" onClick={() => setConfirmCancel(false)}>
+                    No cancelar
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full admin-btn gap-2 text-gray-500 border-gray-200 hover:border-gray-300"
+                  onClick={() => setConfirmCancel(true)}
+                >
+                  <Ban className="h-4 w-4" />
+                  Cancelar reserva
+                </Button>
+              )}
+            </>
+          )
+        )}
+      </div>
     </div>
   );
 }

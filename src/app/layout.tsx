@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Playfair_Display_SC, Karla } from "next/font/google";
+import { Syne, Inter } from "next/font/google";
 import "./globals.css";
 
-const playfair = Playfair_Display_SC({
-  weight: ["400", "700"],
+const syne = Syne({
   subsets: ["latin"],
-  variable: "--font-heading",
+  weight: ["700", "800"],
+  variable: "--font-syne",
   display: "swap",
 });
 
-const karla = Karla({
-  weight: ["300", "400", "500", "600", "700"],
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-body",
+  weight: ["300", "400", "600"],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Corte de Manga",
   },
   other: {
@@ -46,17 +46,13 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#1a1a1a",
+  themeColor: "#050505",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html className={`${playfair.variable} ${karla.variable}`}>
-      <body>{children}</body>
+    <html>
+      <body className={`${syne.variable} ${inter.variable} font-sans`}>{children}</body>
     </html>
   );
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { reservaSchema } from "@/lib/validations";
 import {
@@ -17,25 +18,30 @@ import type {
 
 // Rate limiter basado en Supabase (funciona en entornos serverless como Vercel)
 async function checkRateLimit(ip: string): Promise<boolean> {
-  const serviceClient = createServiceClient();
-  const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return true; // fail open si no está configurada
+  try {
+    const serviceClient = createServiceClient();
+    const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-  const { count, error } = await serviceClient
-    .from("rate_limits")
-    .select("id", { count: "exact", head: true })
-    .eq("identifier", ip)
-    .eq("action", "create_reserva")
-    .gte("created_at", windowStart);
+    const { count, error } = await serviceClient
+      .from("rate_limits")
+      .select("id", { count: "exact", head: true })
+      .eq("identifier", ip)
+      .eq("action", "create_reserva")
+      .gte("created_at", windowStart);
 
-  if (error) return true; // Si hay error en el check, permitir (fail open)
-  if ((count ?? 0) >= 3) return false;
+    if (error) return true;
+    if ((count ?? 0) >= 3) return false;
 
-  await serviceClient.from("rate_limits").insert({
-    identifier: ip,
-    action: "create_reserva",
-  });
+    await serviceClient.from("rate_limits").insert({
+      identifier: ip,
+      action: "create_reserva",
+    });
 
-  return true;
+    return true;
+  } catch {
+    return true; // fail open
+  }
 }
 
 function getClientIp(): string {
@@ -148,11 +154,14 @@ export async function createReserva(
     }
   }
 
-  const serviceClient = createServiceClient();
+  const id = randomUUID();
+  const cancelToken = randomUUID();
 
-  const { data: reserva, error } = (await serviceClient
+  const { error } = await supabase
     .from("reservas")
     .insert({
+      id,
+      cancel_token: cancelToken,
       nombre: data.nombre.trim(),
       apellido: data.apellido.trim(),
       telefono: data.telefono,
@@ -163,24 +172,22 @@ export async function createReserva(
       estado: esPendiente ? "pendiente_aprobacion" : "confirmada",
       notas_cliente: data.notas_cliente || null,
       idioma: data.idioma,
-    })
-    .select()
-    .single()) as { data: Reserva | null; error: unknown };
+    });
 
-  if (error || !reserva) {
-    console.error("Error inserting reserva:", error);
+  if (error) {
+    console.error("Error inserting reserva:", JSON.stringify(error));
     return { ok: false, error: "generic" };
   }
 
   const emailData = {
-    nombre: reserva.nombre,
-    apellido: reserva.apellido,
-    email: reserva.email,
-    fecha: reserva.fecha,
-    hora: reserva.hora,
-    personas: reserva.personas,
-    cancel_token: reserva.cancel_token,
-    idioma: reserva.idioma,
+    nombre: data.nombre.trim(),
+    apellido: data.apellido.trim(),
+    email: data.email.toLowerCase(),
+    fecha: data.fecha,
+    hora: data.hora + ":00",
+    personas: data.personas,
+    cancel_token: cancelToken,
+    idioma: data.idioma,
   };
 
   // Enviar email con manejo de error mejorado
@@ -194,22 +201,49 @@ export async function createReserva(
     emailSent = true;
   } catch (err) {
     console.error("[EMAIL_FAILED] Reserva creada pero email no enviado:", {
-      reservaId: reserva.id,
-      email: reserva.email,
+      reservaId: id,
+      email: emailData.email,
       error: err,
     });
     // Actualizar reserva con nota de fallo (para retry manual)
     try {
+      const serviceClient = createServiceClient();
       await serviceClient
         .from("reservas")
         .update({ notas_internas: "[EMAIL_PENDIENTE] Email no enviado automáticamente." })
-        .eq("id", reserva.id);
+        .eq("id", id);
     } catch {
       // No bloquear si esto también falla
     }
   }
 
-  return { ok: true, id: reserva.id, estado: reserva.estado, emailSent };
+  return { ok: true, id, estado: esPendiente ? "pendiente_aprobacion" : "confirmada", emailSent };
+}
+
+export async function updateReserva(
+  id: string,
+  updates: {
+    nombre?: string;
+    apellido?: string;
+    telefono?: string;
+    email?: string;
+    fecha?: string;
+    hora?: string;
+    personas?: number;
+    notas_cliente?: string | null;
+  }
+): Promise<{ ok: boolean; error?: string }> {
+  const serviceClient = createServiceClient();
+  const payload: Record<string, unknown> = { ...updates };
+  if (updates.hora) {
+    payload.hora = updates.hora.length === 5 ? updates.hora + ":00" : updates.hora;
+  }
+  const { error } = await serviceClient.from("reservas").update(payload).eq("id", id);
+  if (error) {
+    console.error("Error updating reserva:", error);
+    return { ok: false, error: String(error) };
+  }
+  return { ok: true };
 }
 
 export async function updateEstadoReserva(

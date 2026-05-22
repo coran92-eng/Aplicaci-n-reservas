@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 
 export default async function PrivacidadPage({
@@ -11,124 +10,179 @@ export default async function PrivacidadPage({
   const t = await getTranslations("privacy");
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-2xl px-4 py-8">
         <div className="mb-6">
-          <Link href={`/${locale}`}>
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              {t("back")}
-            </Button>
+          <Link
+            href={`/${locale}`}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {t("back")}
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-8 prose prose-sm max-w-none">
-          <h1>{t("title")}</h1>
+        <div className="bg-card rounded-xl border border-border p-8 space-y-6 text-sm leading-relaxed">
+          <div>
+            <h1 className="font-heading text-2xl font-bold text-foreground mb-1">{t("title")}</h1>
+            <p className="text-xs text-muted-foreground">Última actualización: mayo 2025</p>
+          </div>
 
-          <h2>Responsable del tratamiento</h2>
-          <p>
-            <strong>Corte de Manga</strong>
-            <br />
-            Comte d&apos;Urgell 108, 08011 Barcelona
-            <br />
-            Contacto: reservas@cortedemanga.es
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">1. Responsable del tratamiento</h2>
+            <div className="text-muted-foreground space-y-0.5">
+              <p><strong className="text-foreground">Corte de Manga</strong></p>
+              <p>CIF: B16965584</p>
+              <p>Domicilio: Comte d&apos;Urgell 108, 08011 Barcelona</p>
+              <p>Correo electrónico: reservas@cortedemanga.es</p>
+            </div>
+          </section>
 
-          <h2>Finalidad</h2>
-          <p>
-            Los datos personales recogidos a través de este formulario se
-            utilizan exclusivamente para gestionar la reserva de mesa y
-            comunicarse con el cliente respecto a la misma (confirmación,
-            cancelación o modificación de la reserva).
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">2. Finalidad del tratamiento</h2>
+            <p className="text-muted-foreground">
+              Los datos personales recogidos a través del formulario de reserva se tratan
+              exclusivamente para gestionar la reserva de mesa y comunicarse con el cliente
+              en relación con la misma: confirmación, modificación, cancelación y recordatorio
+              de la reserva.
+            </p>
+          </section>
 
-          <h2>Base legal</h2>
-          <p>
-            El tratamiento se basa en el consentimiento explícito del
-            interesado (art. 6.1.a RGPD) y en la ejecución de un precontrato
-            (gestión de la solicitud de reserva, art. 6.1.b RGPD).
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">3. Base jurídica</h2>
+            <ul className="text-muted-foreground space-y-1 list-disc list-inside">
+              <li>
+                <strong className="text-foreground">Ejecución de un precontrato</strong> (art. 6.1.b RGPD):
+                la gestión de la solicitud de reserva requiere tratar los datos
+                facilitados por el interesado.
+              </li>
+              <li>
+                <strong className="text-foreground">Consentimiento</strong> (art. 6.1.a RGPD):
+                para el envío de comunicaciones relacionadas con la reserva, prestado
+                de forma libre, específica e informada mediante la aceptación de esta
+                política en el formulario.
+              </li>
+            </ul>
+          </section>
 
-          <h2>Datos recogidos</h2>
-          <p>
-            Nombre y apellido, número de teléfono, dirección de correo
-            electrónico, fecha y hora de reserva, número de comensales y
-            comentarios opcionales.
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">4. Datos tratados</h2>
+            <p className="text-muted-foreground">
+              Nombre y apellidos, número de teléfono, dirección de correo electrónico,
+              fecha y hora de reserva, número de comensales y comentarios opcionales
+              (alergias, ocasiones especiales u otras peticiones).
+            </p>
+          </section>
 
-          <h2>Conservación</h2>
-          <p>
-            Los datos se conservarán durante el tiempo necesario para cumplir
-            con la finalidad para la que fueron recogidos, con un máximo de 2
-            años desde la fecha de la reserva, tras los cuales serán eliminados
-            de forma segura.
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">5. Plazo de conservación</h2>
+            <p className="text-muted-foreground">
+              Los datos se conservarán durante el tiempo necesario para gestionar la
+              reserva y durante un período máximo de <strong className="text-foreground">2 años</strong> desde
+              la fecha de la reserva, transcurrido el cual serán eliminados de forma segura
+              e irrecuperable. En caso de reclamación, los datos podrán conservarse durante
+              el tiempo de prescripción de las acciones legales correspondientes.
+            </p>
+          </section>
 
-          <h2>Destinatarios</h2>
-          <p>
-            No se cederán datos a terceros, salvo obligación legal. Los datos
-            se almacenan en servidores de Supabase (EU) y pueden ser
-            procesados por Resend (servicio de correo electrónico) para el
-            envío de comunicaciones relacionadas con la reserva.
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">6. Destinatarios y encargados de tratamiento</h2>
+            <p className="text-muted-foreground mb-2">
+              No se cederán datos a terceros salvo obligación legal. Los datos son tratados
+              por los siguientes encargados con los que se mantienen los correspondientes
+              contratos de encargo de tratamiento (DPA):
+            </p>
+            <div className="rounded-lg border border-border overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted">
+                    <th className="text-left px-4 py-2 font-semibold text-foreground">Encargado</th>
+                    <th className="text-left px-4 py-2 font-semibold text-foreground">Finalidad</th>
+                    <th className="text-left px-4 py-2 font-semibold text-foreground">País</th>
+                  </tr>
+                </thead>
+                <tbody className="text-muted-foreground">
+                  <tr className="border-b border-border">
+                    <td className="px-4 py-2 font-medium text-foreground">Supabase Inc.</td>
+                    <td className="px-4 py-2">Almacenamiento de datos</td>
+                    <td className="px-4 py-2">UE (Irlanda)</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 font-medium text-foreground">Resend Inc.</td>
+                    <td className="px-4 py-2">Envío de emails transaccionales</td>
+                    <td className="px-4 py-2">EE. UU.*</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              * Resend Inc. opera bajo las Cláusulas Contractuales Tipo aprobadas por la
+              Comisión Europea (art. 46.2.c RGPD), lo que garantiza un nivel de protección
+              adecuado para las transferencias internacionales de datos.
+            </p>
+          </section>
 
-          <h2>Derechos</h2>
-          <p>
-            Puede ejercer sus derechos de acceso, rectificación, supresión,
-            oposición, portabilidad y limitación del tratamiento enviando un
-            correo a reservas@cortedemanga.es con el asunto
-            &quot;Derechos RGPD&quot;, adjuntando copia de su DNI.
-          </p>
-          <p>
-            Tiene derecho a presentar una reclamación ante la Agencia Española
-            de Protección de Datos (www.aepd.es).
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">7. Derechos del interesado</h2>
+            <p className="text-muted-foreground mb-2">
+              En virtud del RGPD y la LOPDGDD, puede ejercer en cualquier momento los
+              siguientes derechos:
+            </p>
+            <ul className="text-muted-foreground space-y-1 list-disc list-inside">
+              <li><strong className="text-foreground">Acceso</strong>: conocer qué datos suyos tratamos.</li>
+              <li><strong className="text-foreground">Rectificación</strong>: corregir datos inexactos o incompletos.</li>
+              <li><strong className="text-foreground">Supresión</strong>: solicitar la eliminación de sus datos.</li>
+              <li><strong className="text-foreground">Oposición</strong>: oponerse al tratamiento de sus datos.</li>
+              <li><strong className="text-foreground">Limitación</strong>: solicitar que restrinjamos el tratamiento.</li>
+              <li><strong className="text-foreground">Portabilidad</strong>: recibir sus datos en formato estructurado.</li>
+              <li><strong className="text-foreground">Retirada del consentimiento</strong>: sin efecto retroactivo sobre el tratamiento previo.</li>
+            </ul>
+            <p className="text-muted-foreground mt-2">
+              Para ejercer cualquiera de estos derechos, envíe un correo a{" "}
+              <a href="mailto:reservas@cortedemanga.es" className="text-foreground underline">
+                reservas@cortedemanga.es
+              </a>{" "}
+              con el asunto <em>«Derechos RGPD»</em> adjuntando copia de su DNI o documento
+              identificativo equivalente. Responderemos en el plazo máximo de{" "}
+              <strong className="text-foreground">30 días hábiles</strong>.
+            </p>
+          </section>
 
-          <h2>Revocación del consentimiento</h2>
-          <p>
-            Puede retirar su consentimiento en cualquier momento enviando un correo
-            a reservas@cortedemanga.es con el asunto &quot;Retirar consentimiento&quot;.
-            La retirada del consentimiento no afectará a la licitud del tratamiento
-            realizado con anterioridad.
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">8. Reclamación ante la autoridad de control</h2>
+            <p className="text-muted-foreground">
+              Si considera que el tratamiento de sus datos no es conforme a la normativa
+              vigente, tiene derecho a presentar una reclamación ante la{" "}
+              <strong className="text-foreground">Agencia Española de Protección de Datos</strong> (AEPD),
+              autoridad de control competente en España:{" "}
+              <a
+                href="https://www.aepd.es"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline"
+              >
+                www.aepd.es
+              </a>.
+            </p>
+          </section>
 
-          <h2>Encargados de tratamiento</h2>
-          <p>
-            Los datos pueden ser procesados por los siguientes encargados de
-            tratamiento con los que mantenemos contratos de encargo (DPA):
-          </p>
-          <ul>
-            <li>
-              <strong>Supabase Inc.</strong> — Almacenamiento de base de datos (servidores
-              en la Unión Europea). Política de privacidad:{" "}
-              <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer">
-                supabase.com/privacy
-              </a>
-            </li>
-            <li>
-              <strong>Resend Inc.</strong> — Envío de emails transaccionales. Política de
-              privacidad:{" "}
-              <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">
-                resend.com/legal/privacy-policy
-              </a>
-            </li>
-          </ul>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">9. Cookies</h2>
+            <p className="text-muted-foreground">
+              Este sitio web utiliza únicamente cookies técnicas estrictamente necesarias
+              para el funcionamiento del formulario (cookies de sesión). No se utilizan
+              cookies de rastreo, publicidad ni analítica de terceros.
+            </p>
+          </section>
 
-          <h2>Eliminación de datos</h2>
-          <p>
-            Transcurrido el período de conservación (2 años desde la fecha de la
-            reserva), los datos personales serán eliminados de forma permanente e
-            irrecuperable de todos nuestros sistemas. Si solicita la eliminación
-            anticipada de sus datos, la procesaremos en un plazo máximo de 30 días
-            y le confirmaremos por email.
-          </p>
-
-          <h2>Cookies</h2>
-          <p>
-            Esta web utiliza únicamente cookies técnicas estrictamente necesarias para
-            el funcionamiento del formulario (cookies de sesión de un solo uso). No se
-            utilizan cookies de seguimiento, publicidad ni analítica de terceros.
-          </p>
+          <section className="space-y-2">
+            <h2 className="font-semibold text-foreground text-base">10. Modificaciones</h2>
+            <p className="text-muted-foreground">
+              Nos reservamos el derecho a actualizar esta política para adaptarla a cambios
+              legislativos o de servicio. La versión vigente siempre estará disponible en
+              esta página con la fecha de última actualización.
+            </p>
+          </section>
         </div>
       </div>
     </main>

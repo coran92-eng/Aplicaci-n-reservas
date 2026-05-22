@@ -31,11 +31,11 @@ export default async function HomePage({
   const antelacionMax = (config.antelacion_maxima_dias as number) ?? 90;
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="font-heading text-3xl font-bold tracking-tight">
+            <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
               Corte de Manga
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
@@ -45,8 +45,8 @@ export default async function HomePage({
           <LanguageSwitcher />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-semibold mb-6">{t("title")}</h2>
+        <div className="bg-card rounded-xl border border-border p-6">
+          <h2 className="font-heading text-xl font-bold mb-6 text-foreground">{t("title")}</h2>
           <ReservationForm
             franjasBloqueadas={franjasBloqueadas}
             diasCerrados={diasCerrados}
