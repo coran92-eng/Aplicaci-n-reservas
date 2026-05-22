@@ -220,6 +220,32 @@ export async function createReserva(
   return { ok: true, id, estado: esPendiente ? "pendiente_aprobacion" : "confirmada", emailSent };
 }
 
+export async function updateReserva(
+  id: string,
+  updates: {
+    nombre?: string;
+    apellido?: string;
+    telefono?: string;
+    email?: string;
+    fecha?: string;
+    hora?: string;
+    personas?: number;
+    notas_cliente?: string | null;
+  }
+): Promise<{ ok: boolean; error?: string }> {
+  const serviceClient = createServiceClient();
+  const payload: Record<string, unknown> = { ...updates };
+  if (updates.hora) {
+    payload.hora = updates.hora.length === 5 ? updates.hora + ":00" : updates.hora;
+  }
+  const { error } = await serviceClient.from("reservas").update(payload).eq("id", id);
+  if (error) {
+    console.error("Error updating reserva:", error);
+    return { ok: false, error: String(error) };
+  }
+  return { ok: true };
+}
+
 export async function updateEstadoReserva(
   id: string,
   estado: Reserva["estado"]

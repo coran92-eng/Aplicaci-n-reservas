@@ -9,37 +9,43 @@ import { createClient } from "@/lib/supabase/client";
 
 const STATUS_CONFIG: Record<
   string,
-  { label: string; dot: string; row: string }
+  { label: string; dot: string; row: string; text: string }
 > = {
   confirmada: {
     label: "Confirmada",
     dot: "bg-gray-400",
     row: "bg-white hover:bg-gray-50",
+    text: "text-gray-900",
   },
   llegado: {
     label: "Ha llegado",
     dot: "bg-green-500",
     row: "bg-green-50 hover:bg-green-100",
+    text: "text-green-900",
   },
   no_show: {
     label: "No show",
     dot: "bg-red-500",
-    row: "bg-red-50 hover:bg-red-50",
+    row: "bg-red-50",
+    text: "text-red-900",
   },
   cancelada: {
     label: "Cancelada",
     dot: "bg-gray-300",
     row: "bg-gray-50 opacity-60",
+    text: "text-gray-400",
   },
   pendiente_aprobacion: {
     label: "Pendiente",
     dot: "bg-amber-400",
     row: "bg-amber-50 hover:bg-amber-100",
+    text: "text-amber-900",
   },
   rechazada: {
     label: "Rechazada",
     dot: "bg-red-300",
     row: "bg-gray-50 opacity-60",
+    text: "text-gray-400",
   },
 };
 
@@ -117,9 +123,9 @@ export function ReservationList({ reservas: initialReservas }: Props) {
 
   if (reservas.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+      <div className="flex flex-col items-center justify-center py-24 text-gray-400">
         <Users className="h-12 w-12 mb-4 opacity-30" />
-        <p className="text-lg">No hay reservas para este día</p>
+        <p className="text-lg text-gray-500">No hay reservas para este día</p>
       </div>
     );
   }
@@ -145,27 +151,17 @@ export function ReservationList({ reservas: initialReservas }: Props) {
               )}
             >
               {/* Hora */}
-              <span
-                className={cn(
-                  "text-2xl font-bold tabular-nums w-14 shrink-0",
-                  isCancelled && "line-through text-muted-foreground"
-                )}
-              >
+              <span className={cn("text-2xl font-bold tabular-nums w-14 shrink-0", isCancelled ? "line-through text-gray-400" : "text-gray-900")}>
                 {formatTime(reserva.hora)}
               </span>
 
               {/* Iniciales */}
-              <span
-                className={cn(
-                  "text-base font-medium w-12 shrink-0",
-                  isCancelled && "text-muted-foreground"
-                )}
-              >
+              <span className={cn("text-base font-medium w-12 shrink-0", isCancelled ? "text-gray-400" : "text-gray-700")}>
                 {initials}
               </span>
 
               {/* Personas */}
-              <span className="flex items-center gap-1 text-sm text-muted-foreground flex-1">
+              <span className="flex items-center gap-1 text-sm text-gray-500 flex-1">
                 <Users className="h-4 w-4" />
                 {reserva.personas}
               </span>
@@ -173,17 +169,12 @@ export function ReservationList({ reservas: initialReservas }: Props) {
               {/* Estado */}
               <span className="flex items-center gap-1.5 text-sm">
                 <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", status.dot)} />
-                <span
-                  className={cn(
-                    "hidden sm:inline",
-                    isCancelled && "line-through text-muted-foreground"
-                  )}
-                >
+                <span className={cn("hidden sm:inline text-gray-600", isCancelled && "line-through text-gray-400")}>
                   {status.label}
                 </span>
               </span>
 
-              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
             </button>
           );
         })}
