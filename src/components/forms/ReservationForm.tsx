@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -188,6 +189,7 @@ export function ReservationForm({
         <Input
           id="telefono"
           type="tel"
+          inputMode="tel"
           autoComplete="tel"
           placeholder="+34 600 000 000"
           onBlur={(e) => {
@@ -318,7 +320,8 @@ export function ReservationForm({
         </Select>
         <input type="hidden" {...register("personas", { valueAsNumber: true })} />
         {showGroupWarning && (
-          <div className="rounded-md bg-amber-50 border border-amber-200 p-3">
+          <div className="rounded-md bg-amber-50 border border-amber-200 p-3 flex gap-2 items-start">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" aria-hidden />
             <p className="text-sm text-amber-800">
               {t("group_warning", { limite: limiteGrupo })}
             </p>
@@ -370,7 +373,7 @@ export function ReservationForm({
 
       {/* Server error */}
       {serverError && (
-        <div className="rounded-md bg-red-50 border border-red-200 p-3">
+        <div role="alert" aria-live="assertive" className="rounded-md bg-red-50 border border-red-200 p-3">
           <p className="text-sm text-red-800">
             {getErrorMessage(serverError) ?? t("errors.generic")}
           </p>

@@ -35,7 +35,7 @@ export default async function HomePage({
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="font-heading text-3xl font-bold tracking-tight">
               Corte de Manga
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
