@@ -1,33 +1,158 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-import { AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { reservaSchema, type ReservaInput } from "@/lib/validations";
 import { createReserva } from "@/actions/reservas";
-import {
-  generateTimeSlots,
-  todayBarcelona,
-  addDaysToDate,
-  nowBarcelona,
-} from "@/lib/utils";
+import { generateTimeSlots, todayBarcelona, addDaysToDate, nowBarcelona } from "@/lib/utils";
 import type { FranjaBloqueada, DiaCerrado } from "@/lib/supabase/types";
 import Link from "next/link";
+
+type Franja = "todo" | "almuerzo" | "cena";
+
+function localeCode(locale: string) {
+  return locale === "ca" ? "ca-ES" : locale === "en" ? "en-GB" : "es-ES";
+}
+
+function getMonthLabel(year: number, month: number, locale: string) {
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleDateString(localeCode(locale), { month: "long", year: "numeric" });
+}
+
+function getDayHeaders(locale: string): string[] {
+  // Mon 6 Jan 2025 is a Monday — use as anchor
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(2025, 0, 6 + i);
+    return d.toLocaleDateString(localeCode(locale), { weekday: "short" }).slice(0, 2);
+  });
+}
+
+function formatDateShort(dateStr: string, locale: string) {
+  const date = new Date(dateStr + "T00:00:00");
+  return date.toLocaleDateString(localeCode(locale), {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+interface CalendarProps {
+  year: number;
+  month: number;
+  selectedDate: string | null;
+  today: string;
+  maxDate: string;
+  closedDates: Set<string>;
+  locale: string;
+  onSelect: (date: string) => void;
+  onPrev: () => void;
+  onNext: () => void;
+}
+
+function Calendar({ year, month, selectedDate, today, maxDate, closedDates, locale, onSelect, onPrev, onNext }: CalendarProps) {
+  const dayHeaders = getDayHeaders(locale);
+
+  const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7; // Mon=0
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  const cells: (number | null)[] = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const [ty, tm, td] = today.split("-").map(Number);
+  const [my, mm] = maxDate.split("-").map(Number);
+  const maxDay = Number(maxDate.split("-")[2]);
+
+  function pad(n: number) { return String(n).padStart(2, "0"); }
+  function toStr(d: number) { return `${year}-${pad(month)}-${pad(d)}`; }
+
+  function isDisabled(d: number) {
+    // past
+    if (year < ty || (year === ty && month < tm) || (year === ty && month === tm && d < td)) return true;
+    // beyond max
+    if (year > my || (year === my && month > mm) || (year === my && month === mm && d > maxDay)) return true;
+    // closed
+    if (closedDates.has(toStr(d))) return true;
+    return false;
+  }
+
+  const [curY, curM] = [new Date().getFullYear(), new Date().getMonth() + 1];
+  const canGoPrev = year > curY || (year === curY && month > curM);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={!canGoPrev}
+          className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <span className="font-semibold capitalize text-sm">
+          {getMonthLabel(year, month, locale)}
+        </span>
+        <button
+          type="button"
+          onClick={onNext}
+          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 mb-1">
+        {dayHeaders.map((h) => (
+          <div key={h} className="text-center text-xs text-muted-foreground font-medium py-1 capitalize">
+            {h}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((day, i) => {
+          if (day === null) return <div key={`e-${i}`} />;
+
+          const disabled = isDisabled(day);
+          const selected = selectedDate === toStr(day);
+          const isToday = year === ty && month === tm && day === td;
+          const isClosed = closedDates.has(toStr(day));
+
+          return (
+            <button
+              key={day}
+              type="button"
+              disabled={disabled}
+              onClick={() => onSelect(toStr(day))}
+              className={[
+                "mx-auto w-9 h-9 flex items-center justify-center rounded-full text-sm transition-colors",
+                disabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
+                isClosed && !selected ? "line-through" : "",
+                selected ? "bg-black text-white" : "",
+                !disabled && !selected ? "hover:bg-gray-100" : "",
+                isToday && !selected ? "ring-2 ring-black ring-offset-1" : "",
+              ].filter(Boolean).join(" ")}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   franjasBloqueadas: FranjaBloqueada[];
@@ -36,26 +161,32 @@ interface Props {
   antelacionMax: number;
 }
 
-export function ReservationForm({
-  franjasBloqueadas,
-  diasCerrados,
-  limiteGrupo,
-  antelacionMax,
-}: Props) {
+export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, antelacionMax }: Props) {
   const t = useTranslations("form");
   const locale = useLocale();
   const router = useRouter();
 
   const today = todayBarcelona();
   const maxDate = addDaysToDate(today, antelacionMax);
-
   const closedDates = new Set(diasCerrados.map((d) => d.fecha));
+
+  const now = new Date();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [personas, setPersonas] = useState(2);
+  const [franja, setFranja] = useState<Franja>("todo");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const isSubmittingRef = useRef(false);
+  const timeSlotsRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<ReservaInput>({
     resolver: zodResolver(reservaSchema),
@@ -66,57 +197,84 @@ export function ReservationForm({
     },
   });
 
-  const isSubmittingRef = useRef(false);
-
-  const selectedDate = watch("fecha");
-  const selectedPersonas = watch("personas");
-  const [serverError, setServerError] = useState<string | null>(null);
-
   const allSlots = generateTimeSlots();
 
   const availableSlots = (() => {
     if (!selectedDate) return allSlots;
 
-    const blockedForDate = new Set(
+    const blocked = new Set(
       franjasBloqueadas
         .filter((f) => f.fecha === selectedDate)
         .map((f) => f.hora.slice(0, 5))
     );
 
-    const nowMins = (() => {
-      if (selectedDate !== today) return -1;
-      const now = nowBarcelona();
-      return now.getHours() * 60 + now.getMinutes();
-    })();
+    const nowMins = selectedDate === today
+      ? (() => { const n = nowBarcelona(); return n.getHours() * 60 + n.getMinutes(); })()
+      : -1;
 
     return allSlots.filter((slot) => {
-      if (blockedForDate.has(slot)) return false;
+      if (blocked.has(slot)) return false;
       if (nowMins >= 0) {
         const [hh, mm] = slot.split(":").map(Number);
-        // midnight slots (00:xx) are treated as next day — always available
         if (hh === 0) return true;
-        const slotMins = hh * 60 + mm;
-        if (slotMins - nowMins < 15) return false;
+        if (hh * 60 + mm - nowMins < 15) return false;
       }
       return true;
     });
   })();
 
-  const isClosed = selectedDate ? closedDates.has(selectedDate) : false;
+  const filteredSlots = availableSlots.filter((slot) => {
+    if (franja === "todo") return true;
+    const hh = Number(slot.split(":")[0]);
+    if (franja === "almuerzo") return hh !== 0 && hh < 16;
+    return hh === 0 || hh >= 16;
+  });
+
+  useEffect(() => {
+    if (selectedDate && timeSlotsRef.current) {
+      setTimeout(() => timeSlotsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+    }
+  }, [selectedDate]);
+
+  async function handleContinue() {
+    const valid = await trigger(["nombre", "apellido", "email", "telefono", "consentimiento"]);
+    if (valid) setStep(2);
+  }
+
+  function handleDateSelect(date: string) {
+    setSelectedDate(date);
+    setSelectedTime(null);
+    setValue("fecha", date, { shouldValidate: true });
+    setValue("hora", "", { shouldValidate: false });
+  }
+
+  function handleTimeSelect(time: string) {
+    setSelectedTime(time);
+    setValue("hora", time, { shouldValidate: true });
+  }
+
+  function handlePersonas(p: number) {
+    setPersonas(p);
+    setValue("personas", p, { shouldValidate: true });
+  }
+
+  function prevMonth() {
+    if (calMonth === 1) { setCalYear(calYear - 1); setCalMonth(12); }
+    else setCalMonth(calMonth - 1);
+  }
+
+  function nextMonth() {
+    if (calMonth === 12) { setCalYear(calYear + 1); setCalMonth(1); }
+    else setCalMonth(calMonth + 1);
+  }
 
   async function onSubmit(data: ReservaInput) {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
     setServerError(null);
-
     try {
       const result = await createReserva(data);
-
-      if (!result.ok) {
-        setServerError(result.error);
-        return;
-      }
-
+      if (!result.ok) { setServerError(result.error); return; }
       if (result.estado === "pendiente_aprobacion") {
         router.push(`/${locale}/solicitud-recibida/${result.id}`);
       } else {
@@ -127,270 +285,227 @@ export function ReservationForm({
     }
   }
 
-  const showGroupWarning =
-    selectedPersonas !== undefined && selectedPersonas > limiteGrupo;
-
-  function getErrorMessage(errorKey: string | undefined): string | null {
-    if (!errorKey) return null;
-    try {
-      return t(`errors.${errorKey}` as Parameters<typeof t>[0]);
-    } catch {
-      return t("errors.generic");
-    }
+  function errMsg(key: string | undefined): string | null {
+    if (!key) return null;
+    try { return t(`errors.${key}` as Parameters<typeof t>[0]); }
+    catch { return t("errors.generic"); }
   }
 
+  // Step progress indicator
+  const StepIndicator = () => (
+    <div className="flex items-center gap-2 mb-6 select-none">
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 1 ? "bg-black text-white" : "bg-gray-100 text-gray-500"}`}>1</div>
+      <span className={`text-sm transition-colors ${step === 1 ? "font-medium" : "text-muted-foreground"}`}>{t("paso_datos")}</span>
+      <div className="flex-1 h-px bg-gray-200" />
+      <span className={`text-sm transition-colors ${step === 2 ? "font-medium" : "text-muted-foreground"}`}>{t("paso_fecha")}</span>
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 2 ? "bg-black text-white" : "bg-gray-100 text-gray-500"}`}>2</div>
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-      {/* Honeypot — hidden from real users */}
-      <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }} aria-hidden>
-        <input
-          type="text"
-          {...register("website")}
-          tabIndex={-1}
-          autoComplete="off"
-        />
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* Hidden fields */}
+      <div style={{ position: "absolute", left: "-9999px" }} aria-hidden>
+        <input type="text" {...register("website")} tabIndex={-1} autoComplete="off" />
       </div>
-
-      {/* Nombre + Apellido */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="nombre">{t("nombre")} *</Label>
-          <Input
-            id="nombre"
-            autoComplete="given-name"
-            {...register("nombre")}
-            aria-invalid={!!errors.nombre}
-          />
-          {errors.nombre && (
-            <p className="text-xs text-destructive">
-              {getErrorMessage(errors.nombre.message)}
-            </p>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="apellido">{t("apellido")} *</Label>
-          <Input
-            id="apellido"
-            autoComplete="family-name"
-            {...register("apellido")}
-            aria-invalid={!!errors.apellido}
-          />
-          {errors.apellido && (
-            <p className="text-xs text-destructive">
-              {getErrorMessage(errors.apellido.message)}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Teléfono */}
-      <div className="space-y-1.5">
-        <Label htmlFor="telefono">{t("telefono")} *</Label>
-        <Input
-          id="telefono"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="+34 600 000 000"
-          onBlur={(e) => {
-            const val = e.target.value;
-            try {
-              const parsed = parsePhoneNumberFromString(val, "ES");
-              if (parsed?.isValid()) {
-                setValue("telefono", parsed.format("E.164"), { shouldValidate: true });
-                e.target.value = parsed.formatInternational();
-              } else {
-                setValue("telefono", val, { shouldValidate: true });
-              }
-            } catch {
-              setValue("telefono", val, { shouldValidate: true });
-            }
-          }}
-          onChange={(e) => {
-            setValue("telefono", e.target.value, { shouldValidate: false });
-          }}
-          defaultValue=""
-          aria-invalid={!!errors.telefono}
-        />
-        {errors.telefono && (
-          <p className="text-xs text-destructive">
-            {getErrorMessage(errors.telefono.message)}
-          </p>
-        )}
-      </div>
-
-      {/* Email */}
-      <div className="space-y-1.5">
-        <Label htmlFor="email">{t("email")} *</Label>
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          {...register("email")}
-          aria-invalid={!!errors.email}
-        />
-        {errors.email && (
-          <p className="text-xs text-destructive">
-            {getErrorMessage(errors.email.message)}
-          </p>
-        )}
-      </div>
-
-      {/* Fecha + Hora */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="fecha">{t("fecha")} *</Label>
-          <Input
-            id="fecha"
-            type="date"
-            min={today}
-            max={maxDate}
-            {...register("fecha")}
-            aria-invalid={!!errors.fecha}
-            onChange={(e) => {
-              register("fecha").onChange(e);
-              setValue("hora", ""); // reset hora when date changes
-            }}
-          />
-          {errors.fecha && (
-            <p className="text-xs text-destructive">
-              {getErrorMessage(errors.fecha.message)}
-            </p>
-          )}
-          {isClosed && (
-            <p className="text-xs text-destructive">{t("errors.dia_cerrado")}</p>
-          )}
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="hora">{t("hora")} *</Label>
-          <Select
-            disabled={!selectedDate || isClosed}
-            onValueChange={(val) => setValue("hora", val, { shouldValidate: true })}
-          >
-            <SelectTrigger id="hora" aria-invalid={!!errors.hora}>
-              <SelectValue
-                placeholder={
-                  !selectedDate
-                    ? t("select_date_first")
-                    : availableSlots.length === 0
-                    ? t("no_slots")
-                    : t("hora")
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {availableSlots.map((slot) => (
-                <SelectItem key={slot} value={slot}>
-                  {slot}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <input type="hidden" {...register("hora")} />
-          {errors.hora && (
-            <p className="text-xs text-destructive">
-              {getErrorMessage(errors.hora.message)}
-            </p>
-          )}
-          {selectedDate && (
-            <p className="text-xs text-muted-foreground">{t("midnight_note")}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Personas */}
-      <div className="space-y-1.5">
-        <Label htmlFor="personas">{t("personas")} *</Label>
-        <Select
-          defaultValue="2"
-          onValueChange={(val) =>
-            setValue("personas", parseInt(val), { shouldValidate: true })
-          }
-        >
-          <SelectTrigger id="personas">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
-              <SelectItem key={n} value={String(n)}>
-                {n}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <input type="hidden" {...register("personas", { valueAsNumber: true })} />
-        {showGroupWarning && (
-          <div className="rounded-md bg-amber-50 border border-amber-200 p-3 flex gap-2 items-start">
-            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" aria-hidden />
-            <p className="text-sm text-amber-800">
-              {t("group_warning", { limite: limiteGrupo })}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Notas */}
-      <div className="space-y-1.5">
-        <Label htmlFor="notas">{t("notas")}</Label>
-        <Textarea
-          id="notas"
-          placeholder={t("notas_placeholder")}
-          rows={3}
-          {...register("notas_cliente")}
-          aria-invalid={!!errors.notas_cliente}
-        />
-        {errors.notas_cliente && (
-          <p className="text-xs text-destructive">
-            {getErrorMessage(errors.notas_cliente.message)}
-          </p>
-        )}
-      </div>
-
-      {/* Consentimiento */}
-      <div className="flex items-start gap-3">
-        <input
-          id="consentimiento"
-          type="checkbox"
-          className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-black cursor-pointer"
-          {...register("consentimiento")}
-        />
-        <Label htmlFor="consentimiento" className="text-sm font-normal cursor-pointer">
-          {t("consentimiento")}{" "}
-          <Link
-            href={`/${locale}/privacidad`}
-            target="_blank"
-            className="underline"
-          >
-            {t("politica_privacidad")}
-          </Link>
-        </Label>
-      </div>
-      {errors.consentimiento && (
-        <p className="text-xs text-destructive">
-          {getErrorMessage(errors.consentimiento.message)}
-        </p>
-      )}
-
-      {/* Server error */}
-      {serverError && (
-        <div role="alert" aria-live="assertive" className="rounded-md bg-red-50 border border-red-200 p-3">
-          <p className="text-sm text-red-800">
-            {getErrorMessage(serverError) ?? t("errors.generic")}
-          </p>
-        </div>
-      )}
-
-      {/* Idioma hidden */}
       <input type="hidden" {...register("idioma")} value={locale} />
+      <input type="hidden" {...register("personas", { valueAsNumber: true })} />
+      <input type="hidden" {...register("fecha")} />
+      <input type="hidden" {...register("hora")} />
 
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full"
-        disabled={isSubmitting || isClosed}
-      >
-        {isSubmitting ? t("submitting") : t("submit")}
-      </Button>
+      <StepIndicator />
+
+      {/* ── STEP 1: Personal data ── */}
+      {step === 1 && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="nombre">{t("nombre")} *</Label>
+              <Input id="nombre" autoComplete="given-name" {...register("nombre")} aria-invalid={!!errors.nombre} />
+              {errors.nombre && <p className="text-xs text-destructive">{errMsg(errors.nombre.message)}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="apellido">{t("apellido")} *</Label>
+              <Input id="apellido" autoComplete="family-name" {...register("apellido")} aria-invalid={!!errors.apellido} />
+              {errors.apellido && <p className="text-xs text-destructive">{errMsg(errors.apellido.message)}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email">{t("email")} *</Label>
+            <Input id="email" type="email" autoComplete="email" {...register("email")} aria-invalid={!!errors.email} />
+            {errors.email && <p className="text-xs text-destructive">{errMsg(errors.email.message)}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="telefono">{t("telefono")} *</Label>
+            <Input
+              id="telefono"
+              type="tel"
+              autoComplete="tel"
+              placeholder="+34 600 000 000"
+              defaultValue=""
+              aria-invalid={!!errors.telefono}
+              onChange={(e) => setValue("telefono", e.target.value, { shouldValidate: false })}
+              onBlur={(e) => {
+                const val = e.target.value;
+                try {
+                  const parsed = parsePhoneNumberFromString(val, "ES");
+                  if (parsed?.isValid()) {
+                    setValue("telefono", parsed.format("E.164"), { shouldValidate: true });
+                    e.target.value = parsed.formatInternational();
+                  } else {
+                    setValue("telefono", val, { shouldValidate: true });
+                  }
+                } catch {
+                  setValue("telefono", val, { shouldValidate: true });
+                }
+              }}
+            />
+            {errors.telefono && <p className="text-xs text-destructive">{errMsg(errors.telefono.message)}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="notas">{t("notas")}</Label>
+            <Textarea id="notas" placeholder={t("notas_placeholder")} rows={2} {...register("notas_cliente")} />
+            {errors.notas_cliente && <p className="text-xs text-destructive">{errMsg(errors.notas_cliente.message)}</p>}
+          </div>
+
+          <div className="flex items-start gap-3">
+            <input id="consentimiento" type="checkbox" className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-black cursor-pointer" {...register("consentimiento")} />
+            <Label htmlFor="consentimiento" className="text-sm font-normal cursor-pointer leading-snug">
+              {t("consentimiento")}{" "}
+              <Link href={`/${locale}/privacidad`} target="_blank" className="underline">{t("politica_privacidad")}</Link>
+            </Label>
+          </div>
+          {errors.consentimiento && <p className="text-xs text-destructive">{errMsg(errors.consentimiento.message)}</p>}
+
+          <Button type="button" size="lg" className="w-full" onClick={handleContinue}>
+            {t("continuar")} →
+          </Button>
+        </div>
+      )}
+
+      {/* ── STEP 2: Date & time ── */}
+      {step === 2 && (
+        <div className="space-y-6">
+
+          {/* Personas */}
+          <div>
+            <p className="text-sm font-medium mb-3">{t("personas")}</p>
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: limiteGrupo }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => handlePersonas(n)}
+                  className={`w-10 h-10 rounded-full text-sm font-medium border transition-colors ${personas === n ? "bg-black text-white border-black" : "border-gray-300 hover:border-black"}`}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => handlePersonas(limiteGrupo + 1)}
+                className={`px-3 h-10 rounded-full text-sm font-medium border transition-colors ${personas > limiteGrupo ? "bg-black text-white border-black" : "border-gray-300 hover:border-black"}`}
+              >
+                {limiteGrupo + 1}+
+              </button>
+            </div>
+            {personas > limiteGrupo && (
+              <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 p-3">
+                <p className="text-sm text-amber-800">{t("group_warning", { limite: limiteGrupo })}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Franja */}
+          <div>
+            <p className="text-sm font-medium mb-3">{t("franja_horaria")}</p>
+            <div className="flex gap-2 flex-wrap">
+              {(["todo", "almuerzo", "cena"] as Franja[]).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => { setFranja(f); setSelectedTime(null); setValue("hora", ""); }}
+                  className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${franja === f ? "bg-black text-white border-black" : "border-gray-300 hover:border-black"}`}
+                >
+                  {t(`franja_${f}` as "franja_todo" | "franja_almuerzo" | "franja_cena")}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Calendar */}
+          <div className="bg-gray-50 rounded-xl p-4">
+            <Calendar
+              year={calYear}
+              month={calMonth}
+              selectedDate={selectedDate}
+              today={today}
+              maxDate={maxDate}
+              closedDates={closedDates}
+              locale={locale}
+              onSelect={handleDateSelect}
+              onPrev={prevMonth}
+              onNext={nextMonth}
+            />
+          </div>
+
+          {/* Time slots */}
+          {selectedDate && (
+            <div ref={timeSlotsRef}>
+              <p className="text-sm font-medium mb-3">
+                {t("hora_seccion")}
+                {" · "}
+                <span className="font-normal text-muted-foreground capitalize">
+                  {formatDateShort(selectedDate, locale)}
+                </span>
+              </p>
+              {filteredSlots.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">{t("no_slots")}</p>
+              ) : (
+                <div className="grid grid-cols-4 gap-2">
+                  {filteredSlots.map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => handleTimeSelect(slot)}
+                      className={`py-2.5 rounded-lg text-sm border transition-colors ${selectedTime === slot ? "bg-black text-white border-black" : "border-gray-200 hover:border-black hover:bg-gray-50"}`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {errors.hora && <p className="mt-2 text-xs text-destructive">{errMsg(errors.hora.message)}</p>}
+            </div>
+          )}
+
+          {/* Server error */}
+          {serverError && (
+            <div className="rounded-md bg-red-50 border border-red-200 p-3">
+              <p className="text-sm text-red-800">{errMsg(serverError) ?? t("errors.generic")}</p>
+            </div>
+          )}
+
+          {/* Submit */}
+          {selectedDate && selectedTime && (
+            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? t("submitting") : t("submit")}
+            </Button>
+          )}
+
+          {/* Back */}
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="w-full text-sm text-muted-foreground hover:text-black text-center py-1 transition-colors"
+          >
+            ← {t("volver")}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
