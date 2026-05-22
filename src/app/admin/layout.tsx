@@ -5,6 +5,7 @@ import { logoutAdmin } from "@/actions/admin";
 
 export const metadata: Metadata = {
   title: "Admin · Corte de Manga",
+  manifest: "/manifest-admin.json",
 };
 
 export default function AdminLayout({

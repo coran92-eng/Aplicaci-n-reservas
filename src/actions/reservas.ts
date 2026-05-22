@@ -15,19 +15,26 @@ import type {
   CancelarReservaResult,
 } from "@/lib/supabase/types";
 
-// Simple in-memory rate limiter: { ip → [timestamps] }
-const rateLimitStore = new Map<string, number[]>();
+// Rate limiter basado en Supabase (funciona en entornos serverless como Vercel)
+async function checkRateLimit(ip: string): Promise<boolean> {
+  const serviceClient = createServiceClient();
+  const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const windowMs = 60 * 60 * 1000;
-  const max = 3;
-  const timestamps = (rateLimitStore.get(ip) ?? []).filter(
-    (t) => now - t < windowMs
-  );
-  if (timestamps.length >= max) return false;
-  timestamps.push(now);
-  rateLimitStore.set(ip, timestamps);
+  const { count, error } = await serviceClient
+    .from("rate_limits")
+    .select("id", { count: "exact", head: true })
+    .eq("identifier", ip)
+    .eq("action", "create_reserva")
+    .gte("created_at", windowStart);
+
+  if (error) return true; // Si hay error en el check, permitir (fail open)
+  if ((count ?? 0) >= 3) return false;
+
+  await serviceClient.from("rate_limits").insert({
+    identifier: ip,
+    action: "create_reserva",
+  });
+
   return true;
 }
 
@@ -41,7 +48,7 @@ function getClientIp(): string {
 }
 
 export type CreateReservaResult =
-  | { ok: true; id: string; estado: string }
+  | { ok: true; id: string; estado: string; emailSent?: boolean }
   | { ok: false; error: string; field?: string };
 
 export async function createReserva(
@@ -60,7 +67,7 @@ export async function createReserva(
   }
 
   const ip = getClientIp();
-  if (!checkRateLimit(ip)) {
+  if (!(await checkRateLimit(ip))) {
     return { ok: false, error: "rate_limit" };
   }
 
@@ -176,13 +183,33 @@ export async function createReserva(
     idioma: reserva.idioma,
   };
 
-  if (esPendiente) {
-    sendPendingEmail(emailData).catch(console.error);
-  } else {
-    sendConfirmationEmail(emailData).catch(console.error);
+  // Enviar email con manejo de error mejorado
+  let emailSent = false;
+  try {
+    if (esPendiente) {
+      await sendPendingEmail(emailData);
+    } else {
+      await sendConfirmationEmail(emailData);
+    }
+    emailSent = true;
+  } catch (err) {
+    console.error("[EMAIL_FAILED] Reserva creada pero email no enviado:", {
+      reservaId: reserva.id,
+      email: reserva.email,
+      error: err,
+    });
+    // Actualizar reserva con nota de fallo (para retry manual)
+    try {
+      await serviceClient
+        .from("reservas")
+        .update({ notas_internas: "[EMAIL_PENDIENTE] Email no enviado automáticamente." })
+        .eq("id", reserva.id);
+    } catch {
+      // No bloquear si esto también falla
+    }
   }
 
-  return { ok: true, id: reserva.id, estado: reserva.estado };
+  return { ok: true, id: reserva.id, estado: reserva.estado, emailSent };
 }
 
 export async function updateEstadoReserva(

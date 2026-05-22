@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations, useLocale } from "next-intl";
@@ -65,10 +65,11 @@ export function ReservationForm({
     },
   });
 
+  const isSubmittingRef = useRef(false);
+
   const selectedDate = watch("fecha");
   const selectedPersonas = watch("personas");
   const [serverError, setServerError] = useState<string | null>(null);
-  const [phoneValue, setPhoneValue] = useState("");
 
   const allSlots = generateTimeSlots();
 
@@ -103,32 +104,25 @@ export function ReservationForm({
   const isClosed = selectedDate ? closedDates.has(selectedDate) : false;
 
   async function onSubmit(data: ReservaInput) {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setServerError(null);
-    const result = await createReserva(data);
 
-    if (!result.ok) {
-      setServerError(result.error);
-      return;
-    }
-
-    if (result.estado === "pendiente_aprobacion") {
-      router.push(`/${locale}/solicitud-recibida/${result.id}`);
-    } else {
-      router.push(`/${locale}/confirmada/${result.id}`);
-    }
-  }
-
-  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const val = e.target.value;
-    setPhoneValue(val);
-    // Try to parse and normalize
     try {
-      const parsed = parsePhoneNumberFromString(val, "ES");
-      setValue("telefono", parsed?.format("E.164") ?? val, {
-        shouldValidate: false,
-      });
-    } catch {
-      setValue("telefono", val, { shouldValidate: false });
+      const result = await createReserva(data);
+
+      if (!result.ok) {
+        setServerError(result.error);
+        return;
+      }
+
+      if (result.estado === "pendiente_aprobacion") {
+        router.push(`/${locale}/solicitud-recibida/${result.id}`);
+      } else {
+        router.push(`/${locale}/confirmada/${result.id}`);
+      }
+    } finally {
+      isSubmittingRef.current = false;
     }
   }
 
@@ -196,11 +190,26 @@ export function ReservationForm({
           type="tel"
           autoComplete="tel"
           placeholder="+34 600 000 000"
-          value={phoneValue}
-          onChange={handlePhoneChange}
+          onBlur={(e) => {
+            const val = e.target.value;
+            try {
+              const parsed = parsePhoneNumberFromString(val, "ES");
+              if (parsed?.isValid()) {
+                setValue("telefono", parsed.format("E.164"), { shouldValidate: true });
+                e.target.value = parsed.formatInternational();
+              } else {
+                setValue("telefono", val, { shouldValidate: true });
+              }
+            } catch {
+              setValue("telefono", val, { shouldValidate: true });
+            }
+          }}
+          onChange={(e) => {
+            setValue("telefono", e.target.value, { shouldValidate: false });
+          }}
+          defaultValue=""
           aria-invalid={!!errors.telefono}
         />
-        <input type="hidden" {...register("telefono")} />
         {errors.telefono && (
           <p className="text-xs text-destructive">
             {getErrorMessage(errors.telefono.message)}

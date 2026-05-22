@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronRight, Users } from "lucide-react";
 import { cn, formatTime, getInitials } from "@/lib/utils";
 import { ReservationModal } from "./ReservationModal";
 import type { Reserva } from "@/lib/supabase/types";
+import { createClient } from "@/lib/supabase/client";
 
 const STATUS_CONFIG: Record<
   string,
@@ -49,6 +50,50 @@ interface Props {
 export function ReservationList({ reservas: initialReservas }: Props) {
   const [reservas, setReservas] = useState(initialReservas);
   const [selected, setSelected] = useState<Reserva | null>(null);
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel("admin-reservas")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "reservas" },
+        (payload) => {
+          const nueva = payload.new as Reserva;
+          setReservas((prev) => {
+            // Evitar duplicados
+            if (prev.some((r) => r.id === nueva.id)) return prev;
+            return [...prev, nueva];
+          });
+          // Flash visual — añadir a lista de nuevas
+          setNewIds((prev) => new Set([...prev, nueva.id]));
+          setTimeout(() => {
+            setNewIds((prev) => {
+              const next = new Set(prev);
+              next.delete(nueva.id);
+              return next;
+            });
+          }, 30000); // Highlight 30 segundos
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "reservas" },
+        (payload) => {
+          const updated = payload.new as Reserva;
+          setReservas((prev) =>
+            prev.map((r) => (r.id === updated.id ? updated : r))
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   function handleUpdate(id: string, updates: Partial<Reserva>) {
     setReservas((prev) =>
@@ -87,6 +132,7 @@ export function ReservationList({ reservas: initialReservas }: Props) {
           const initials = getInitials(reserva.nombre, reserva.apellido);
           const isCancelled =
             reserva.estado === "cancelada" || reserva.estado === "rechazada";
+          const isNew = newIds.has(reserva.id);
 
           return (
             <button
@@ -94,7 +140,8 @@ export function ReservationList({ reservas: initialReservas }: Props) {
               onClick={() => setSelected(reserva)}
               className={cn(
                 "w-full flex items-center gap-4 px-4 py-4 text-left transition-colors",
-                status.row
+                status.row,
+                isNew && "!bg-yellow-50 border-l-4 border-l-yellow-400"
               )}
             >
               {/* Hora */}
