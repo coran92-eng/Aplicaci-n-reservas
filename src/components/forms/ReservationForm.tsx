@@ -239,10 +239,13 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
         if ("dbError" in result && result.dbError) setDbError(result.dbError);
         return;
       }
+      const emailQs = result.emailError
+        ? `?emailError=${encodeURIComponent(result.emailError)}`
+        : "";
       if (result.estado === "pendiente_aprobacion") {
-        router.push(`/${locale}/solicitud-recibida/${result.id}`);
+        router.push(`/${locale}/solicitud-recibida/${result.id}${emailQs}`);
       } else {
-        router.push(`/${locale}/confirmada/${result.id}`);
+        router.push(`/${locale}/confirmada/${result.id}${emailQs}`);
       }
     } catch {
       setServerError("generic");

@@ -18,9 +18,12 @@ function formatDateForDisplay(fecha: string, locale: string): string {
 
 export default async function SolicitudRecibidaPage({
   params: { locale, id },
+  searchParams,
 }: {
   params: { locale: string; id: string };
+  searchParams: { emailError?: string };
 }) {
+  const emailError = searchParams.emailError;
   const t = await getTranslations("confirmation");
 
   const supabase = createServiceClient();
@@ -69,6 +72,13 @@ export default async function SolicitudRecibidaPage({
         <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 p-4 mb-6">
           <p className="text-sm text-amber-400">{t("pending_info")}</p>
         </div>
+
+        {emailError && (
+          <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3 mb-6">
+            <p className="text-sm text-red-400 font-medium">Email no enviado</p>
+            <p className="text-xs text-red-300 mt-1 font-mono break-all">{emailError}</p>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div className="flex items-start gap-2 text-sm text-muted-foreground">
