@@ -17,29 +17,27 @@ import { generateTimeSlots, todayBarcelona, addDaysToDate, nowBarcelona } from "
 import type { FranjaBloqueada, DiaCerrado } from "@/lib/supabase/types";
 import Link from "next/link";
 
-type Franja = "todo" | "almuerzo" | "cena";
-
 function localeCode(locale: string) {
   return locale === "ca" ? "ca-ES" : locale === "en" ? "en-GB" : "es-ES";
 }
 
 function getMonthLabel(year: number, month: number, locale: string) {
-  const date = new Date(year, month - 1, 1);
-  return date.toLocaleDateString(localeCode(locale), { month: "long", year: "numeric" });
+  return new Date(year, month - 1, 1).toLocaleDateString(localeCode(locale), {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function getDayHeaders(locale: string): string[] {
-  // Mon 6 Jan 2025 is a Monday — use as anchor
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(2025, 0, 6 + i);
+    const d = new Date(2025, 0, 6 + i); // Mon 6 Jan 2025
     return d.toLocaleDateString(localeCode(locale), { weekday: "short" }).slice(0, 2);
   });
 }
 
 function formatDateShort(dateStr: string, locale: string) {
-  const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString(localeCode(locale), {
-    weekday: "short",
+  return new Date(dateStr + "T00:00:00").toLocaleDateString(localeCode(locale), {
+    weekday: "long",
     day: "numeric",
     month: "long",
   });
@@ -60,8 +58,7 @@ interface CalendarProps {
 
 function Calendar({ year, month, selectedDate, today, maxDate, closedDates, locale, onSelect, onPrev, onNext }: CalendarProps) {
   const dayHeaders = getDayHeaders(locale);
-
-  const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7; // Mon=0
+  const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month, 0).getDate();
 
   const cells: (number | null)[] = [
@@ -71,65 +68,46 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
   while (cells.length % 7 !== 0) cells.push(null);
 
   const [ty, tm, td] = today.split("-").map(Number);
-  const [my, mm] = maxDate.split("-").map(Number);
-  const maxDay = Number(maxDate.split("-")[2]);
+  const [my, mm, md] = maxDate.split("-").map(Number);
 
   function pad(n: number) { return String(n).padStart(2, "0"); }
   function toStr(d: number) { return `${year}-${pad(month)}-${pad(d)}`; }
 
   function isDisabled(d: number) {
-    // past
     if (year < ty || (year === ty && month < tm) || (year === ty && month === tm && d < td)) return true;
-    // beyond max
-    if (year > my || (year === my && month > mm) || (year === my && month === mm && d > maxDay)) return true;
-    // closed
+    if (year > my || (year === my && month > mm) || (year === my && month === mm && d > md)) return true;
     if (closedDates.has(toStr(d))) return true;
     return false;
   }
 
-  const [curY, curM] = [new Date().getFullYear(), new Date().getMonth() + 1];
-  const canGoPrev = year > curY || (year === curY && month > curM);
+  const canGoPrev = year > new Date().getFullYear() || (year === new Date().getFullYear() && month > new Date().getMonth() + 1);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <button
-          type="button"
-          onClick={onPrev}
-          disabled={!canGoPrev}
-          className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
+      <div className="flex items-center justify-between mb-4">
+        <button type="button" onClick={onPrev} disabled={!canGoPrev}
+          className="p-2 rounded-full hover:bg-accent disabled:opacity-25 disabled:cursor-not-allowed transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <span className="font-semibold capitalize text-sm">
-          {getMonthLabel(year, month, locale)}
-        </span>
-        <button
-          type="button"
-          onClick={onNext}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-        >
+        <span className="font-medium capitalize text-base">{getMonthLabel(year, month, locale)}</span>
+        <button type="button" onClick={onNext}
+          className="p-2 rounded-full hover:bg-accent transition-colors">
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 mb-1">
+      <div className="grid grid-cols-7 mb-2">
         {dayHeaders.map((h) => (
-          <div key={h} className="text-center text-xs text-muted-foreground font-medium py-1 capitalize">
-            {h}
-          </div>
+          <div key={h} className="text-center text-xs text-muted-foreground font-medium py-1 capitalize">{h}</div>
         ))}
       </div>
 
       <div className="grid grid-cols-7 gap-y-1">
         {cells.map((day, i) => {
           if (day === null) return <div key={`e-${i}`} />;
-
           const disabled = isDisabled(day);
           const selected = selectedDate === toStr(day);
           const isToday = year === ty && month === tm && day === td;
-          const isClosed = closedDates.has(toStr(day));
-
           return (
             <button
               key={day}
@@ -137,12 +115,11 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
               disabled={disabled}
               onClick={() => onSelect(toStr(day))}
               className={[
-                "mx-auto w-9 h-9 flex items-center justify-center rounded-full text-sm transition-colors",
-                disabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer",
-                isClosed && !selected ? "line-through" : "",
-                selected ? "bg-black text-white" : "",
-                !disabled && !selected ? "hover:bg-gray-100" : "",
-                isToday && !selected ? "ring-2 ring-black ring-offset-1" : "",
+                "mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm transition-colors",
+                disabled ? "opacity-25 cursor-not-allowed" : "cursor-pointer",
+                selected ? "bg-primary text-primary-foreground" : "",
+                !disabled && !selected ? "hover:bg-accent" : "",
+                isToday && !selected ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "",
               ].filter(Boolean).join(" ")}
             >
               {day}
@@ -177,19 +154,13 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [personas, setPersonas] = useState(2);
-  const [franja, setFranja] = useState<Franja>("todo");
   const [serverError, setServerError] = useState<string | null>(null);
-  const isSubmittingRef = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
   const timeSlotsRef = useRef<HTMLDivElement>(null);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    trigger,
-    formState: { errors, isSubmitting },
-  } = useForm<ReservaInput>({
+  const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm<ReservaInput>({
     resolver: zodResolver(reservaSchema),
+    shouldUnregister: false,
     defaultValues: {
       idioma: locale as "es" | "ca" | "en",
       personas: 2,
@@ -201,17 +172,12 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
 
   const availableSlots = (() => {
     if (!selectedDate) return allSlots;
-
     const blocked = new Set(
-      franjasBloqueadas
-        .filter((f) => f.fecha === selectedDate)
-        .map((f) => f.hora.slice(0, 5))
+      franjasBloqueadas.filter((f) => f.fecha === selectedDate).map((f) => f.hora.slice(0, 5))
     );
-
     const nowMins = selectedDate === today
       ? (() => { const n = nowBarcelona(); return n.getHours() * 60 + n.getMinutes(); })()
       : -1;
-
     return allSlots.filter((slot) => {
       if (blocked.has(slot)) return false;
       if (nowMins >= 0) {
@@ -223,16 +189,9 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     });
   })();
 
-  const filteredSlots = availableSlots.filter((slot) => {
-    if (franja === "todo") return true;
-    const hh = Number(slot.split(":")[0]);
-    if (franja === "almuerzo") return hh !== 0 && hh < 16;
-    return hh === 0 || hh >= 16;
-  });
-
   useEffect(() => {
     if (selectedDate && timeSlotsRef.current) {
-      setTimeout(() => timeSlotsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+      setTimeout(() => timeSlotsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
     }
   }, [selectedDate]);
 
@@ -269,20 +228,30 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   }
 
   async function onSubmit(data: ReservaInput) {
-    if (isSubmittingRef.current) return;
-    isSubmittingRef.current = true;
+    setSubmitting(true);
     setServerError(null);
     try {
       const result = await createReserva(data);
-      if (!result.ok) { setServerError(result.error); return; }
+      if (!result.ok) {
+        setServerError(result.error ?? "generic");
+        return;
+      }
       if (result.estado === "pendiente_aprobacion") {
         router.push(`/${locale}/solicitud-recibida/${result.id}`);
       } else {
         router.push(`/${locale}/confirmada/${result.id}`);
       }
+    } catch {
+      setServerError("generic");
     } finally {
-      isSubmittingRef.current = false;
+      setSubmitting(false);
     }
+  }
+
+  function onValidationError(errs: typeof errors) {
+    const step1Fields = ["nombre", "apellido", "email", "telefono", "consentimiento"] as const;
+    const hasStep1Error = step1Fields.some((f) => errs[f]);
+    if (hasStep1Error) setStep(1);
   }
 
   function errMsg(key: string | undefined): string | null {
@@ -291,31 +260,28 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     catch { return t("errors.generic"); }
   }
 
-  // Step progress indicator
-  const StepIndicator = () => (
-    <div className="flex items-center gap-2 mb-6 select-none">
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 1 ? "bg-black text-white" : "bg-gray-100 text-gray-500"}`}>1</div>
-      <span className={`text-sm transition-colors ${step === 1 ? "font-medium" : "text-muted-foreground"}`}>{t("paso_datos")}</span>
-      <div className="flex-1 h-px bg-gray-200" />
-      <span className={`text-sm transition-colors ${step === 2 ? "font-medium" : "text-muted-foreground"}`}>{t("paso_fecha")}</span>
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 2 ? "bg-black text-white" : "bg-gray-100 text-gray-500"}`}>2</div>
-    </div>
-  );
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      {/* Hidden fields */}
+    <form onSubmit={handleSubmit(onSubmit, onValidationError)} noValidate>
+      {/* Honeypot */}
       <div style={{ position: "absolute", left: "-9999px" }} aria-hidden>
         <input type="text" {...register("website")} tabIndex={-1} autoComplete="off" />
       </div>
+      {/* Hidden synced fields */}
       <input type="hidden" {...register("idioma")} value={locale} />
-      <input type="hidden" {...register("personas", { valueAsNumber: true })} />
       <input type="hidden" {...register("fecha")} />
       <input type="hidden" {...register("hora")} />
+      <input type="hidden" {...register("personas", { valueAsNumber: true })} />
 
-      <StepIndicator />
+      {/* Step indicator */}
+      <div className="flex items-center gap-2 mb-7 select-none">
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>1</div>
+        <span className={`text-sm ${step === 1 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_datos")}</span>
+        <div className="flex-1 h-px bg-border" />
+        <span className={`text-sm ${step === 2 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_fecha")}</span>
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>2</div>
+      </div>
 
-      {/* ── STEP 1: Personal data ── */}
+      {/* ── STEP 1 ── */}
       {step === 1 && (
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -372,7 +338,9 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
           </div>
 
           <div className="flex items-start gap-3">
-            <input id="consentimiento" type="checkbox" className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-black cursor-pointer" {...register("consentimiento")} />
+            <input id="consentimiento" type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+              {...register("consentimiento")} />
             <Label htmlFor="consentimiento" className="text-sm font-normal cursor-pointer leading-snug">
               {t("consentimiento")}{" "}
               <Link href={`/${locale}/privacidad`} target="_blank" className="underline">{t("politica_privacidad")}</Link>
@@ -380,99 +348,71 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
           </div>
           {errors.consentimiento && <p className="text-xs text-destructive">{errMsg(errors.consentimiento.message)}</p>}
 
-          <Button type="button" size="lg" className="w-full" onClick={handleContinue}>
+          <Button type="button" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleContinue}>
             {t("continuar")} →
           </Button>
         </div>
       )}
 
-      {/* ── STEP 2: Date & time ── */}
+      {/* ── STEP 2 ── */}
       {step === 2 && (
         <div className="space-y-6">
 
           {/* Personas */}
           <div>
-            <p className="text-sm font-medium mb-3">{t("personas")}</p>
+            <p className="text-sm font-medium mb-3 text-foreground">{t("personas")}</p>
             <div className="flex flex-wrap gap-2">
               {Array.from({ length: limiteGrupo }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => handlePersonas(n)}
-                  className={`w-10 h-10 rounded-full text-sm font-medium border transition-colors ${personas === n ? "bg-black text-white border-black" : "border-gray-300 hover:border-black"}`}
-                >
+                <button key={n} type="button" onClick={() => handlePersonas(n)}
+                  className={`w-10 h-10 rounded-full text-sm font-medium border-2 transition-colors
+                    ${personas === n ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-foreground"}`}>
                   {n}
                 </button>
               ))}
-              <button
-                type="button"
-                onClick={() => handlePersonas(limiteGrupo + 1)}
-                className={`px-3 h-10 rounded-full text-sm font-medium border transition-colors ${personas > limiteGrupo ? "bg-black text-white border-black" : "border-gray-300 hover:border-black"}`}
-              >
+              <button type="button" onClick={() => handlePersonas(limiteGrupo + 1)}
+                className={`px-3 h-10 rounded-full text-sm font-medium border-2 transition-colors
+                  ${personas > limiteGrupo ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-foreground"}`}>
                 {limiteGrupo + 1}+
               </button>
             </div>
             {personas > limiteGrupo && (
-              <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 p-3">
-                <p className="text-sm text-amber-800">{t("group_warning", { limite: limiteGrupo })}</p>
+              <div className="mt-3 rounded-lg bg-amber-900/20 border border-amber-700/40 px-4 py-3">
+                <p className="text-sm text-amber-400">{t("group_warning", { limite: limiteGrupo })}</p>
               </div>
             )}
           </div>
 
-          {/* Franja */}
-          <div>
-            <p className="text-sm font-medium mb-3">{t("franja_horaria")}</p>
-            <div className="flex gap-2 flex-wrap">
-              {(["todo", "almuerzo", "cena"] as Franja[]).map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => { setFranja(f); setSelectedTime(null); setValue("hora", ""); }}
-                  className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${franja === f ? "bg-black text-white border-black" : "border-gray-300 hover:border-black"}`}
-                >
-                  {t(`franja_${f}` as "franja_todo" | "franja_almuerzo" | "franja_cena")}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Calendar */}
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className="rounded-xl border border-border p-4 bg-card">
             <Calendar
-              year={calYear}
-              month={calMonth}
+              year={calYear} month={calMonth}
               selectedDate={selectedDate}
-              today={today}
-              maxDate={maxDate}
-              closedDates={closedDates}
-              locale={locale}
+              today={today} maxDate={maxDate}
+              closedDates={closedDates} locale={locale}
               onSelect={handleDateSelect}
-              onPrev={prevMonth}
-              onNext={nextMonth}
+              onPrev={prevMonth} onNext={nextMonth}
             />
           </div>
 
           {/* Time slots */}
           {selectedDate && (
             <div ref={timeSlotsRef}>
-              <p className="text-sm font-medium mb-3">
+              <p className="text-sm font-medium mb-3 text-foreground">
                 {t("hora_seccion")}
-                {" · "}
-                <span className="font-normal text-muted-foreground capitalize">
+                <span className="font-normal text-muted-foreground ml-2 capitalize">
                   {formatDateShort(selectedDate, locale)}
                 </span>
               </p>
-              {filteredSlots.length === 0 ? (
+              {availableSlots.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-2">{t("no_slots")}</p>
               ) : (
                 <div className="grid grid-cols-4 gap-2">
-                  {filteredSlots.map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => handleTimeSelect(slot)}
-                      className={`py-2.5 rounded-lg text-sm border transition-colors ${selectedTime === slot ? "bg-black text-white border-black" : "border-gray-200 hover:border-black hover:bg-gray-50"}`}
-                    >
+                  {availableSlots.map((slot) => (
+                    <button key={slot} type="button" onClick={() => handleTimeSelect(slot)}
+                      className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-colors
+                        ${selectedTime === slot
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border hover:border-primary text-foreground"}`}>
                       {slot}
                     </button>
                   ))}
@@ -484,24 +424,20 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
 
           {/* Server error */}
           {serverError && (
-            <div className="rounded-md bg-red-50 border border-red-200 p-3">
-              <p className="text-sm text-red-800">{errMsg(serverError) ?? t("errors.generic")}</p>
+            <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3">
+              <p className="text-sm text-red-400">{errMsg(serverError) ?? t("errors.generic")}</p>
             </div>
           )}
 
           {/* Submit */}
           {selectedDate && selectedTime && (
-            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? t("submitting") : t("submit")}
+            <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={submitting}>
+              {submitting ? t("submitting") : t("submit")}
             </Button>
           )}
 
-          {/* Back */}
-          <button
-            type="button"
-            onClick={() => setStep(1)}
-            className="w-full text-sm text-muted-foreground hover:text-black text-center py-1 transition-colors"
-          >
+          <button type="button" onClick={() => setStep(1)}
+            className="w-full text-sm text-muted-foreground hover:text-foreground text-center py-1 transition-colors">
             ← {t("volver")}
           </button>
         </div>

@@ -14,7 +14,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-theme min-h-screen bg-background">
       <div className="flex items-center justify-between px-4 py-2 bg-black text-white text-xs">
         <span className="font-semibold">Corte de Manga · Admin</span>
         <div className="flex items-center gap-3">
