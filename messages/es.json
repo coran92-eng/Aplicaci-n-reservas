@@ -15,6 +15,7 @@
     "politica_privacidad": "política de privacidad",
     "submit": "Reservar",
     "submitting": "Enviando...",
+    "personas_grupo": "¿Cuántas personas sois?",
     "group_warning": "Los grupos de más de {limite} personas requieren confirmación. Te enviaremos un email cuando aprobemos tu solicitud.",
     "midnight_note": "Las horas entre 00:00 y 00:45 corresponden a la madrugada del día seleccionado.",
     "select_date_first": "Selecciona primero una fecha",

@@ -15,6 +15,7 @@
     "politica_privacidad": "privacy policy",
     "submit": "Book",
     "submitting": "Sending...",
+    "personas_grupo": "How many people are you?",
     "group_warning": "Groups of more than {limite} guests require confirmation. We'll send you an email when we approve your request.",
     "midnight_note": "Times between 00:00 and 00:45 are in the early hours of the selected day.",
     "select_date_first": "Please select a date first",

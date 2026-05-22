@@ -387,8 +387,26 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
               </button>
             </div>
             {personas > limiteGrupo && (
-              <div className="mt-3 rounded-lg bg-amber-900/20 border border-amber-700/40 px-4 py-3">
-                <p className="text-sm text-amber-400">{t("group_warning", { limite: limiteGrupo })}</p>
+              <div className="mt-3 space-y-3">
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-foreground">
+                    {t("personas_grupo")}
+                  </label>
+                  <input
+                    type="number"
+                    min={limiteGrupo + 1}
+                    max={50}
+                    value={personas}
+                    onChange={e => {
+                      const v = Math.max(limiteGrupo + 1, Math.min(50, Number(e.target.value) || limiteGrupo + 1));
+                      handlePersonas(v);
+                    }}
+                    className="w-20 rounded-lg border-2 border-primary bg-transparent px-3 py-1.5 text-sm font-semibold text-foreground text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 px-4 py-3">
+                  <p className="text-sm text-amber-400">{t("group_warning", { limite: limiteGrupo })}</p>
+                </div>
               </div>
             )}
           </div>

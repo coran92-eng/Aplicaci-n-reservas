@@ -15,6 +15,7 @@
     "politica_privacidad": "política de privacitat",
     "submit": "Reservar",
     "submitting": "Enviant...",
+    "personas_grupo": "Quantes persones sou?",
     "group_warning": "Els grups de més de {limite} persones requereixen confirmació. T'enviarem un correu quan aprovem la teva sol·licitud.",
     "midnight_note": "Les hores entre 00:00 i 00:45 corresponen a la matinada del dia seleccionat.",
     "select_date_first": "Selecciona primer una data",
