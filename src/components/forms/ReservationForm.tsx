@@ -86,7 +86,7 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
     <div>
       <div className="flex items-center justify-between mb-4">
         <button type="button" onClick={onPrev} disabled={!canGoPrev}
-          className="p-2 rounded-full hover:bg-accent disabled:opacity-25 disabled:cursor-not-allowed transition-colors">
+          className="p-2 rounded-full hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </button>
         <span className="font-medium capitalize text-base">{getMonthLabel(year, month, locale)}</span>
@@ -116,7 +116,7 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
               onClick={() => onSelect(toStr(day))}
               className={[
                 "mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm transition-colors",
-                disabled ? "opacity-25 cursor-not-allowed" : "cursor-pointer",
+                disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
                 selected ? "bg-primary text-primary-foreground" : "",
                 !disabled && !selected ? "hover:bg-accent" : "",
                 isToday && !selected ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "",
@@ -158,6 +158,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   const [dbError, setDbError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const timeSlotsRef = useRef<HTMLDivElement>(null);
+  const step2Ref = useRef<HTMLDivElement>(null);
 
   const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm<ReservaInput>({
     resolver: zodResolver(reservaSchema),
@@ -195,6 +196,15 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
       setTimeout(() => timeSlotsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (step === 2 && step2Ref.current) {
+      const first = step2Ref.current.querySelector<HTMLElement>(
+        "button:not([disabled]), [href], input, select, textarea"
+      );
+      first?.focus();
+    }
+  }, [step]);
 
   async function handleContinue() {
     const valid = await trigger(["nombre", "apellido", "email", "telefono", "consentimiento"]);
@@ -261,20 +271,12 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
 
   function errMsg(key: string | undefined): string | null {
     if (!key) return null;
-    try { return t(`errors.${key}` as Parameters<typeof t>[0]); }
-    catch { return t("errors.generic"); }
+    try {
+      if (key === "fecha_max") return t("errors.fecha_max", { dias: antelacionMax });
+      if (key === "personas_max") return t("errors.personas_max", { max: limiteGrupo });
+      return t(`errors.${key}` as Parameters<typeof t>[0]);
+    } catch { return t("errors.generic"); }
   }
-
-  // Step progress indicator
-  const StepIndicator = () => (
-    <div className="flex items-center gap-2 mb-6 select-none">
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 1 ? "bg-black text-white" : "bg-gray-100 text-gray-500"}`}>1</div>
-      <span className={`text-sm transition-colors ${step === 1 ? "font-medium" : "text-muted-foreground"}`}>{t("paso_datos")}</span>
-      <div className="flex-1 h-px bg-gray-200" />
-      <span className={`text-sm transition-colors ${step === 2 ? "font-medium" : "text-muted-foreground"}`}>{t("paso_fecha")}</span>
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 2 ? "bg-black text-white" : "bg-gray-100 text-gray-500"}`}>2</div>
-    </div>
-  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit, onValidationError)} noValidate>
@@ -303,20 +305,20 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="nombre">{t("nombre")} *</Label>
-              <Input id="nombre" autoComplete="given-name" {...register("nombre")} aria-invalid={!!errors.nombre} />
-              {errors.nombre && <p className="text-xs text-destructive">{errMsg(errors.nombre.message)}</p>}
+              <Input id="nombre" autoComplete="given-name" {...register("nombre")} aria-invalid={!!errors.nombre} aria-describedby={errors.nombre ? "nombre-error" : undefined} />
+              {errors.nombre && <p id="nombre-error" className="text-xs text-destructive">{errMsg(errors.nombre.message)}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="apellido">{t("apellido")} *</Label>
-              <Input id="apellido" autoComplete="family-name" {...register("apellido")} aria-invalid={!!errors.apellido} />
-              {errors.apellido && <p className="text-xs text-destructive">{errMsg(errors.apellido.message)}</p>}
+              <Input id="apellido" autoComplete="family-name" {...register("apellido")} aria-invalid={!!errors.apellido} aria-describedby={errors.apellido ? "apellido-error" : undefined} />
+              {errors.apellido && <p id="apellido-error" className="text-xs text-destructive">{errMsg(errors.apellido.message)}</p>}
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="email">{t("email")} *</Label>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} aria-invalid={!!errors.email} />
-            {errors.email && <p className="text-xs text-destructive">{errMsg(errors.email.message)}</p>}
+            <Input id="email" type="email" autoComplete="email" {...register("email")} aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} />
+            {errors.email && <p id="email-error" className="text-xs text-destructive">{errMsg(errors.email.message)}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -328,6 +330,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
               placeholder="+34 600 000 000"
               defaultValue=""
               aria-invalid={!!errors.telefono}
+              aria-describedby={errors.telefono ? "telefono-error" : undefined}
               onChange={(e) => setValue("telefono", e.target.value, { shouldValidate: false })}
               onBlur={(e) => {
                 const val = e.target.value;
@@ -344,7 +347,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
                 }
               }}
             />
-            {errors.telefono && <p className="text-xs text-destructive">{errMsg(errors.telefono.message)}</p>}
+            {errors.telefono && <p id="telefono-error" className="text-xs text-destructive">{errMsg(errors.telefono.message)}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -372,7 +375,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
 
       {/* ── STEP 2 ── */}
       {step === 2 && (
-        <div className="space-y-6">
+        <div className="space-y-6" ref={step2Ref}>
 
           {/* Personas */}
           <div>
@@ -452,7 +455,10 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
                   ))}
                 </div>
               )}
-              {errors.hora && <p className="mt-2 text-xs text-destructive">{errMsg(errors.hora.message)}</p>}
+              {availableSlots.some((s) => s.startsWith("00:")) && (
+                <p className="mt-2 text-xs text-muted-foreground">{t("midnight_note")}</p>
+              )}
+              {errors.hora && <p id="hora-error" className="mt-2 text-xs text-destructive">{errMsg(errors.hora.message)}</p>}
             </div>
           )}
 

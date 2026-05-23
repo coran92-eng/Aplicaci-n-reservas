@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Syne, Inter } from "next/font/google";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 
 const syne = Syne({
@@ -49,10 +50,12 @@ export const viewport = {
   themeColor: "#050505",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  let lang = "es";
+  try { lang = await getLocale(); } catch {}
   return (
-    <html>
-      <body className={`${syne.variable} ${inter.variable} font-sans`}>{children}</body>
+    <html lang={lang} className={`${syne.variable} ${inter.variable}`}>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }

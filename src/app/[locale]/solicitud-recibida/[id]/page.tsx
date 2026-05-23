@@ -75,7 +75,7 @@ export default async function SolicitudRecibidaPage({
 
         {emailError && (
           <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3 mb-6">
-            <p className="text-sm text-red-400 font-medium">Email no enviado</p>
+            <p className="text-sm text-red-400 font-medium">{t("email_not_sent")}</p>
             <p className="text-xs text-red-300 mt-1 font-mono break-all">{emailError}</p>
           </div>
         )}

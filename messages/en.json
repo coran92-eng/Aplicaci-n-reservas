@@ -61,10 +61,25 @@
     "time": "Time",
     "people": "Guests",
     "name": "Name",
+    "comments": "Comments",
+    "email_not_sent": "Email not sent",
     "cancel_info": "Need to cancel? Use the link we sent to your email.",
     "pending_info": "Groups of more than 7 guests require manual confirmation. You'll receive a confirmation email within the next few hours.",
     "address": "How to get here",
     "back_home": "Back to home"
+  },
+  "errors_page": {
+    "title": "Something went wrong",
+    "message": "An unexpected error occurred. Please try again.",
+    "phone_help": "If the problem persists, call us at",
+    "retry": "Try again",
+    "home": "Go home"
+  },
+  "not_found": {
+    "title": "Page not found",
+    "message": "The link may have expired or be incorrect.",
+    "phone_help": "Need help? Call us at",
+    "home": "Back home"
   },
   "cancellation": {
     "title": "Cancel booking",
@@ -76,6 +91,7 @@
     "error_not_found": "We couldn't find your booking. The link may have expired.",
     "error_already_cancelled": "This booking was already cancelled.",
     "error_cannot_cancel": "This booking cannot be cancelled. Please call us for help.",
+    "error_title": "Error",
     "error_generic": "An error occurred. Please call us."
   },
   "privacy": {

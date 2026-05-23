@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronRight, Users } from "lucide-react";
-import { cn, formatTime, getInitials } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 import { ReservationModal } from "./ReservationModal";
 import type { Reserva } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
@@ -135,7 +135,6 @@ export function ReservationList({ reservas: initialReservas }: Props) {
       <div className="divide-y">
         {sorted.map((reserva) => {
           const status = STATUS_CONFIG[reserva.estado] ?? STATUS_CONFIG.confirmada;
-          const initials = getInitials(reserva.nombre, reserva.apellido);
           const isCancelled =
             reserva.estado === "cancelada" || reserva.estado === "rechazada";
           const isNew = newIds.has(reserva.id);

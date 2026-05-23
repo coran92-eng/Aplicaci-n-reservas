@@ -61,10 +61,25 @@
     "time": "Hora",
     "people": "Personas",
     "name": "Nombre",
+    "comments": "Comentarios",
+    "email_not_sent": "Email no enviado",
     "cancel_info": "¿Necesitas cancelar? Usa el enlace que hemos enviado a tu email.",
     "pending_info": "Los grupos de más de 7 personas requieren confirmación manual. Recibirás un email con la confirmación en las próximas horas.",
     "address": "Cómo llegar",
     "back_home": "Volver al inicio"
+  },
+  "errors_page": {
+    "title": "Algo ha ido mal",
+    "message": "Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.",
+    "phone_help": "Si el problema persiste, llámanos al",
+    "retry": "Reintentar",
+    "home": "Ir al inicio"
+  },
+  "not_found": {
+    "title": "Página no encontrada",
+    "message": "El enlace puede haber caducado o no ser correcto.",
+    "phone_help": "¿Necesitas ayuda? Llámanos al",
+    "home": "Volver al inicio"
   },
   "cancellation": {
     "title": "Cancelar reserva",
@@ -76,6 +91,7 @@
     "error_not_found": "No hemos encontrado tu reserva. Es posible que el enlace haya caducado.",
     "error_already_cancelled": "Esta reserva ya estaba cancelada.",
     "error_cannot_cancel": "No es posible cancelar esta reserva. Llámanos si necesitas ayuda.",
+    "error_title": "Error",
     "error_generic": "Ha ocurrido un error. Por favor, llámanos."
   },
   "privacy": {

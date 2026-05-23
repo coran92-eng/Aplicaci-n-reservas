@@ -61,10 +61,25 @@
     "time": "Hora",
     "people": "Persones",
     "name": "Nom",
+    "comments": "Comentaris",
+    "email_not_sent": "Correu no enviat",
     "cancel_info": "Necessites cancel·lar? Fes servir l'enllaç que t'hem enviat per correu.",
     "pending_info": "Els grups de més de 7 persones requereixen confirmació manual. Rebràs un correu amb la confirmació en les properes hores.",
     "address": "Com arribar",
     "back_home": "Tornar a l'inici"
+  },
+  "errors_page": {
+    "title": "Alguna cosa ha anat malament",
+    "message": "Ha ocorregut un error inesperat. Si us plau, torna-ho a intentar.",
+    "phone_help": "Si el problema persisteix, truca'ns al",
+    "retry": "Tornar a intentar",
+    "home": "Anar a l'inici"
+  },
+  "not_found": {
+    "title": "Pàgina no trobada",
+    "message": "L'enllaç pot haver caducat o no ser correcte.",
+    "phone_help": "Necessites ajuda? Truca'ns al",
+    "home": "Tornar a l'inici"
   },
   "cancellation": {
     "title": "Cancel·lar reserva",
@@ -76,6 +91,7 @@
     "error_not_found": "No hem trobat la teva reserva. És possible que l'enllaç hagi caducat.",
     "error_already_cancelled": "Aquesta reserva ja estava cancel·lada.",
     "error_cannot_cancel": "No és possible cancel·lar aquesta reserva. Truca'ns si necessites ajuda.",
+    "error_title": "Error",
     "error_generic": "S'ha produït un error. Si us plau, truca'ns."
   },
   "privacy": {
