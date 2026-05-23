@@ -24,7 +24,7 @@ export default async function ConfirmadaPage({
   searchParams,
 }: {
   params: { locale: string; id: string };
-  searchParams: { emailError?: string };
+  searchParams: { emailError?: string; token?: string };
 }) {
   const emailError = searchParams.emailError;
   const t = await getTranslations("confirmation");
@@ -49,7 +49,7 @@ export default async function ConfirmadaPage({
 
   const reserva = data as Reserva | null;
 
-  if (!reserva) notFound();
+  if (!reserva || reserva.cancel_token !== searchParams.token) notFound();
 
   const isPending = reserva.estado === "pendiente_aprobacion";
 

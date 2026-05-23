@@ -7,7 +7,9 @@ import {
   sendConfirmationEmail,
   sendPendingEmail,
   sendCancellationEmail,
+  sendRejectionEmail,
 } from "@/lib/emails";
+import { requireAdmin } from "@/lib/require-admin";
 import { todayBarcelona, nowBarcelona } from "@/lib/utils";
 import { headers } from "next/headers";
 import type {
@@ -54,7 +56,7 @@ function getClientIp(): string {
 }
 
 export type CreateReservaResult =
-  | { ok: true; id: string; estado: string; emailSent?: boolean; emailError?: string }
+  | { ok: true; id: string; estado: string; cancelToken: string; emailSent?: boolean; emailError?: string }
   | { ok: false; error: string; field?: string; dbError?: string };
 
 export async function createReserva(
@@ -69,7 +71,7 @@ export async function createReserva(
   const data = parsed.data;
 
   if (data.website && data.website.length > 0) {
-    return { ok: true, id: "honeypot", estado: "confirmada" };
+    return { ok: true, id: "honeypot", estado: "confirmada", cancelToken: "honeypot" };
   }
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -181,7 +183,8 @@ export async function createReserva(
 
   if (error) {
     console.error("Error inserting reserva:", JSON.stringify(error));
-    return { ok: false, error: "generic", dbError: `${error.code}: ${error.message}` };
+    const dbError = process.env.NODE_ENV !== "production" ? `${error.code}: ${error.message}` : undefined;
+    return { ok: false, error: "generic", dbError };
   }
 
   const emailData = {
@@ -224,7 +227,7 @@ export async function createReserva(
     }
   }
 
-  return { ok: true, id, estado: esPendiente ? "pendiente_aprobacion" : "confirmada", emailSent, emailError };
+  return { ok: true, id, estado: esPendiente ? "pendiente_aprobacion" : "confirmada", cancelToken, emailSent, emailError };
 }
 
 export async function updateReserva(
@@ -240,6 +243,7 @@ export async function updateReserva(
     notas_cliente?: string | null;
   }
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const serviceClient = createServiceClient();
   const payload: Record<string, unknown> = { ...updates };
   if (updates.hora) {
@@ -257,12 +261,15 @@ export async function updateEstadoReserva(
   id: string,
   estado: Reserva["estado"]
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const serviceClient = createServiceClient();
 
   const { error } = await serviceClient
     .from("reservas")
     .update({ estado })
-    .eq("id", id);
+    .eq("id", id)
+    .neq("estado", "cancelada")
+    .neq("estado", "rechazada");
 
   if (error) {
     console.error("Error updating estado:", error);
@@ -276,6 +283,7 @@ export async function updateNotasInternas(
   id: string,
   notas: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const serviceClient = createServiceClient();
 
   const { error } = await serviceClient
@@ -337,6 +345,7 @@ export async function cancelarPorToken(token: string): Promise<{
 export async function approveReserva(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const serviceClient = createServiceClient();
 
   const { data: reserva, error: fetchError } = await serviceClient
@@ -375,11 +384,33 @@ export async function approveReserva(
 export async function rejectReserva(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const serviceClient = createServiceClient();
+
+  const { data: reserva, error: fetchError } = await serviceClient
+    .from("reservas")
+    .select("nombre,apellido,email,fecha,hora,personas,idioma")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !reserva) return { ok: false, error: "not_found" };
+
   const { error } = await serviceClient
     .from("reservas")
     .update({ estado: "rechazada" })
     .eq("id", id);
+
   if (error) return { ok: false, error: String(error) };
+
+  sendRejectionEmail({
+    nombre: reserva.nombre,
+    apellido: reserva.apellido,
+    email: reserva.email,
+    fecha: reserva.fecha,
+    hora: reserva.hora,
+    personas: reserva.personas,
+    idioma: reserva.idioma,
+  }).catch((err) => console.error("[EMAIL_FAILED] Rejection email failed:", err));
+
   return { ok: true };
 }

@@ -379,6 +379,82 @@ function cancellationHtml(data: ReservaEmailData): string {
   return layout(body, `${displayDate} · ${displayHora}`, data.idioma);
 }
 
+// ── Email 4: Rechazo ──────────────────────────────────────────
+
+function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const bookUrl     = `${APP_URL}/${data.idioma}`;
+
+  const t: Record<string, Record<string, string>> = {
+    es: {
+      eyebrow:  "Solicitud no disponible",
+      heading:  "Lo sentimos.",
+      sub:      `Hola ${data.nombre}, lamentablemente no podemos confirmar tu solicitud para ${data.personas} personas el ${displayDate} a las ${displayHora}.`,
+      notice:   "En estas fechas no tenemos disponibilidad para grupos de este tamaño. Te invitamos a intentarlo con otra fecha o a llamarnos directamente.",
+      call:     "¿Hablamos?",
+      rebook:   "Intentar otra fecha",
+    },
+    ca: {
+      eyebrow:  "Sol·licitud no disponible",
+      heading:  "Ho sentim.",
+      sub:      `Hola ${data.nombre}, lamentablement no podem confirmar la teva sol·licitud per a ${data.personas} persones el ${displayDate} a les ${displayHora}.`,
+      notice:   "En aquestes dates no tenim disponibilitat per a grups d'aquesta mida. T'invitem a intentar-ho amb una altra data o a trucar-nos directament.",
+      call:     "Parlem?",
+      rebook:   "Intentar una altra data",
+    },
+    en: {
+      eyebrow:  "Request unavailable",
+      heading:  "We're sorry.",
+      sub:      `Hi ${data.nombre}, unfortunately we cannot confirm your request for ${data.personas} guests on ${displayDate} at ${displayHora}.`,
+      notice:   "We don't have availability for groups of this size on those dates. We invite you to try another date or give us a call.",
+      call:     "Shall we talk?",
+      rebook:   "Try another date",
+    },
+  };
+  const tx = t[data.idioma] ?? t.es;
+
+  const body = `
+    <!--eyebrow-->
+    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#b12a2a">${tx.eyebrow}</p>
+
+    <!--heading-->
+    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+
+    <!--subtext-->
+    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+
+    <!--notice — left red border-->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
+      <tr>
+        <td width="3" style="background-color:#b12a2a;border-radius:2px">&nbsp;</td>
+        <td style="padding:14px 0 14px 20px">
+          <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:14px;font-weight:300;color:#888888;line-height:1.7">${tx.notice}</p>
+        </td>
+      </tr>
+    </table>
+
+    <!--call-->
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#444444">
+      ${tx.call} &nbsp;
+      <a href="tel:${RESTAURANT_PHONE.replace(/\s/g, "")}" style="color:#ebebeb;text-decoration:none;font-weight:600">${RESTAURANT_PHONE}</a>
+    </p>
+
+    <!--rebook CTA — outlined-->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="border:1px solid #333333;border-radius:2px">
+          <a href="${bookUrl}" class="syne"
+             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:16px 32px">
+            ${tx.rebook}
+          </a>
+        </td>
+      </tr>
+    </table>`;
+
+  return layout(body, `${displayDate} · ${displayHora}`, data.idioma);
+}
+
 // ── Exports ────────────────────────────────────────────────────
 
 export async function sendConfirmationEmail(data: ReservaEmailData) {
@@ -406,6 +482,20 @@ export async function sendPendingEmail(data: ReservaEmailData) {
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: pendingHtml(data),
+  });
+}
+
+export async function sendRejectionEmail(data: Omit<ReservaEmailData, "cancel_token">) {
+  const subjects: Record<string, string> = {
+    es: `Tu solicitud · ${RESTAURANT_NAME}`,
+    ca: `La teva sol·licitud · ${RESTAURANT_NAME}`,
+    en: `Your request · ${RESTAURANT_NAME}`,
+  };
+  await getResend().emails.send({
+    from: FROM,
+    to: data.email,
+    subject: subjects[data.idioma] ?? subjects.es,
+    html: rejectionHtml(data),
   });
 }
 

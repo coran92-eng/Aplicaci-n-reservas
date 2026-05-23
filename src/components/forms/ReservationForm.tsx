@@ -239,13 +239,12 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
         if ("dbError" in result && result.dbError) setDbError(result.dbError);
         return;
       }
-      const emailQs = result.emailError
-        ? `?emailError=${encodeURIComponent(result.emailError)}`
-        : "";
+      const qs = new URLSearchParams({ token: result.cancelToken });
+      if (result.emailError) qs.set("emailError", result.emailError);
       if (result.estado === "pendiente_aprobacion") {
-        router.push(`/${locale}/solicitud-recibida/${result.id}${emailQs}`);
+        router.push(`/${locale}/solicitud-recibida/${result.id}?${qs}`);
       } else {
-        router.push(`/${locale}/confirmada/${result.id}${emailQs}`);
+        router.push(`/${locale}/confirmada/${result.id}?${qs}`);
       }
     } catch {
       setServerError("generic");
@@ -461,7 +460,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
           {serverError && (
             <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3">
               <p className="text-sm text-red-400">{errMsg(serverError) ?? t("errors.generic")}</p>
-              {dbError && (
+              {process.env.NODE_ENV !== "production" && dbError && (
                 <p className="text-xs text-red-300 mt-1 font-mono break-all">Error: {dbError}</p>
               )}
             </div>

@@ -21,7 +21,7 @@ export default async function SolicitudRecibidaPage({
   searchParams,
 }: {
   params: { locale: string; id: string };
-  searchParams: { emailError?: string };
+  searchParams: { emailError?: string; token?: string };
 }) {
   const emailError = searchParams.emailError;
   const t = await getTranslations("confirmation");
@@ -34,7 +34,7 @@ export default async function SolicitudRecibidaPage({
     .single();
 
   const reserva = data as Reserva | null;
-  if (!reserva) notFound();
+  if (!reserva || reserva.cancel_token !== searchParams.token) notFound();
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">

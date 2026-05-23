@@ -50,6 +50,9 @@ export default function AdminLoginPage() {
           {state?.error === "incorrect" && (
             <p className="text-sm text-red-600">Contraseña incorrecta.</p>
           )}
+          {state?.error === "rate_limit" && (
+            <p className="text-sm text-red-600">Demasiados intentos. Espera unos minutos.</p>
+          )}
           <SubmitButton />
         </form>
       </div>
