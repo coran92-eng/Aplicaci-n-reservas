@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { reservaSchema, type ReservaInput } from "@/lib/validations";
-import { createReserva } from "@/actions/reservas";
+import { createReserva, getAvailableSlots } from "@/actions/reservas";
 import { generateTimeSlots, todayBarcelona, addDaysToDate, nowBarcelona } from "@/lib/utils";
 import type { FranjaBloqueada, DiaCerrado } from "@/lib/supabase/types";
 import Link from "next/link";
@@ -30,7 +30,7 @@ function getMonthLabel(year: number, month: number, locale: string) {
 
 function getDayHeaders(locale: string): string[] {
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(2025, 0, 6 + i); // Mon 6 Jan 2025
+    const d = new Date(2025, 0, 6 + i);
     return d.toLocaleDateString(localeCode(locale), { weekday: "short" }).slice(0, 2);
   });
 }
@@ -131,6 +131,8 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
   );
 }
 
+const ALERGIAS_KEYS = ["vegano", "celiaco", "lactosa", "frutos_secos"] as const;
+
 interface Props {
   franjasBloqueadas: FranjaBloqueada[];
   diasCerrados: DiaCerrado[];
@@ -157,16 +159,18 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   const [serverError, setServerError] = useState<string | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [alternatives, setAlternatives] = useState<string[]>([]);
   const timeSlotsRef = useRef<HTMLDivElement>(null);
   const step2Ref = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, setValue, trigger, formState: { errors } } = useForm<ReservaInput>({
+  const { register, handleSubmit, setValue, trigger, watch, formState: { errors } } = useForm<ReservaInput>({
     resolver: zodResolver(reservaSchema),
     shouldUnregister: false,
     defaultValues: {
       idioma: locale as "es" | "ca" | "en",
       personas: 2,
       consentimiento: false,
+      alergias: [],
     },
   });
 
@@ -206,20 +210,27 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     }
   }, [step]);
 
+  // Step 1 → 2: validate fecha + hora are set
   async function handleContinue() {
-    const valid = await trigger(["nombre", "apellido", "email", "telefono", "consentimiento"]);
-    if (valid) setStep(2);
+    if (!selectedDate || !selectedTime) {
+      await trigger(["fecha", "hora"]);
+      return;
+    }
+    setStep(2);
   }
 
   function handleDateSelect(date: string) {
     setSelectedDate(date);
     setSelectedTime(null);
+    setAlternatives([]);
     setValue("fecha", date, { shouldValidate: true });
     setValue("hora", "", { shouldValidate: false });
   }
 
   function handleTimeSelect(time: string) {
     setSelectedTime(time);
+    setServerError(null);
+    setAlternatives([]);
     setValue("hora", time, { shouldValidate: true });
   }
 
@@ -242,11 +253,17 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     setSubmitting(true);
     setServerError(null);
     setDbError(null);
+    setAlternatives([]);
     try {
       const result = await createReserva(data);
       if (!result.ok) {
         setServerError(result.error ?? "generic");
         if ("dbError" in result && result.dbError) setDbError(result.dbError);
+        if (result.error === "franja_bloqueada" && selectedDate) {
+          getAvailableSlots(selectedDate, personas)
+            .then((slots) => setAlternatives(slots.filter((s) => s !== selectedTime)))
+            .catch(() => {});
+        }
         return;
       }
       const qs = new URLSearchParams({ token: result.cancelToken });
@@ -264,7 +281,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   }
 
   function onValidationError(errs: typeof errors) {
-    const step1Fields = ["nombre", "apellido", "email", "telefono", "consentimiento"] as const;
+    const step1Fields = ["fecha", "hora"] as const;
     const hasStep1Error = step1Fields.some((f) => errs[f]);
     if (hasStep1Error) setStep(1);
   }
@@ -290,93 +307,18 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
       <input type="hidden" {...register("hora")} />
       <input type="hidden" {...register("personas", { valueAsNumber: true })} />
 
-      {/* Step indicator */}
+      {/* Step indicator — step 1 = Disponibilidad, step 2 = Tus datos */}
       <div className="flex items-center gap-2 mb-7 select-none">
         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>1</div>
-        <span className={`text-sm ${step === 1 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_datos")}</span>
+        <span className={`text-sm ${step === 1 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_fecha")}</span>
         <div className="flex-1 h-px bg-border" />
-        <span className={`text-sm ${step === 2 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_fecha")}</span>
+        <span className={`text-sm ${step === 2 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_datos")}</span>
         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>2</div>
       </div>
 
-      {/* ── STEP 1 ── */}
+      {/* ── STEP 1: Disponibilidad ── */}
       {step === 1 && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="nombre">{t("nombre")} *</Label>
-              <Input id="nombre" autoComplete="given-name" {...register("nombre")} aria-invalid={!!errors.nombre} aria-describedby={errors.nombre ? "nombre-error" : undefined} />
-              {errors.nombre && <p id="nombre-error" className="text-xs text-destructive">{errMsg(errors.nombre.message)}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="apellido">{t("apellido")} *</Label>
-              <Input id="apellido" autoComplete="family-name" {...register("apellido")} aria-invalid={!!errors.apellido} aria-describedby={errors.apellido ? "apellido-error" : undefined} />
-              {errors.apellido && <p id="apellido-error" className="text-xs text-destructive">{errMsg(errors.apellido.message)}</p>}
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="email">{t("email")} *</Label>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} />
-            {errors.email && <p id="email-error" className="text-xs text-destructive">{errMsg(errors.email.message)}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="telefono">{t("telefono")} *</Label>
-            <Input
-              id="telefono"
-              type="tel"
-              autoComplete="tel"
-              placeholder="+34 600 000 000"
-              defaultValue=""
-              aria-invalid={!!errors.telefono}
-              aria-describedby={errors.telefono ? "telefono-error" : undefined}
-              onChange={(e) => setValue("telefono", e.target.value, { shouldValidate: false })}
-              onBlur={(e) => {
-                const val = e.target.value;
-                try {
-                  const parsed = parsePhoneNumberFromString(val, "ES");
-                  if (parsed?.isValid()) {
-                    setValue("telefono", parsed.format("E.164"), { shouldValidate: true });
-                    e.target.value = parsed.formatInternational();
-                  } else {
-                    setValue("telefono", val, { shouldValidate: true });
-                  }
-                } catch {
-                  setValue("telefono", val, { shouldValidate: true });
-                }
-              }}
-            />
-            {errors.telefono && <p id="telefono-error" className="text-xs text-destructive">{errMsg(errors.telefono.message)}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="notas">{t("notas")}</Label>
-            <Textarea id="notas" placeholder={t("notas_placeholder")} rows={2} {...register("notas_cliente")} />
-            {errors.notas_cliente && <p className="text-xs text-destructive">{errMsg(errors.notas_cliente.message)}</p>}
-          </div>
-
-          <div className="flex items-start gap-3">
-            <input id="consentimiento" type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer"
-              {...register("consentimiento")} />
-            <Label htmlFor="consentimiento" className="text-sm font-normal cursor-pointer leading-snug">
-              {t("consentimiento")}{" "}
-              <Link href={`/${locale}/privacidad`} target="_blank" className="underline">{t("politica_privacidad")}</Link>
-            </Label>
-          </div>
-          {errors.consentimiento && <p className="text-xs text-destructive">{errMsg(errors.consentimiento.message)}</p>}
-
-          <Button type="button" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleContinue}>
-            {t("continuar")} →
-          </Button>
-        </div>
-      )}
-
-      {/* ── STEP 2 ── */}
-      {step === 2 && (
-        <div className="space-y-6" ref={step2Ref}>
-
+        <div className="space-y-6">
           {/* Personas */}
           <div>
             <p className="text-sm font-medium mb-3 text-foreground">{t("personas")}</p>
@@ -397,9 +339,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
             {personas > limiteGrupo && (
               <div className="mt-3 space-y-3">
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-foreground">
-                    {t("personas_grupo")}
-                  </label>
+                  <label className="text-sm text-foreground">{t("personas_grupo")}</label>
                   <input
                     type="number"
                     min={limiteGrupo + 1}
@@ -458,9 +398,107 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
               {availableSlots.some((s) => s.startsWith("00:")) && (
                 <p className="mt-2 text-xs text-muted-foreground">{t("midnight_note")}</p>
               )}
-              {errors.hora && <p id="hora-error" className="mt-2 text-xs text-destructive">{errMsg(errors.hora.message)}</p>}
+              {errors.hora && <p className="mt-2 text-xs text-destructive">{errMsg(errors.hora.message)}</p>}
             </div>
           )}
+
+          <Button
+            type="button"
+            size="lg"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            disabled={!selectedDate || !selectedTime}
+            onClick={handleContinue}
+          >
+            {t("continuar")} →
+          </Button>
+        </div>
+      )}
+
+      {/* ── STEP 2: Datos personales ── */}
+      {step === 2 && (
+        <div className="space-y-5" ref={step2Ref}>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="nombre">{t("nombre")} *</Label>
+              <Input id="nombre" autoComplete="given-name" {...register("nombre")} aria-invalid={!!errors.nombre} aria-describedby={errors.nombre ? "nombre-error" : undefined} />
+              {errors.nombre && <p id="nombre-error" className="text-xs text-destructive">{errMsg(errors.nombre.message)}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="apellido">{t("apellido")} *</Label>
+              <Input id="apellido" autoComplete="family-name" {...register("apellido")} aria-invalid={!!errors.apellido} aria-describedby={errors.apellido ? "apellido-error" : undefined} />
+              {errors.apellido && <p id="apellido-error" className="text-xs text-destructive">{errMsg(errors.apellido.message)}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email">{t("email")} *</Label>
+            <Input id="email" type="email" autoComplete="email" {...register("email")} aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} />
+            {errors.email && <p id="email-error" className="text-xs text-destructive">{errMsg(errors.email.message)}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="telefono">{t("telefono")} *</Label>
+            <Input
+              id="telefono"
+              type="tel"
+              autoComplete="tel"
+              placeholder="+34 600 000 000"
+              defaultValue=""
+              aria-invalid={!!errors.telefono}
+              aria-describedby={errors.telefono ? "telefono-error" : undefined}
+              onChange={(e) => setValue("telefono", e.target.value, { shouldValidate: false })}
+              onBlur={(e) => {
+                const val = e.target.value;
+                try {
+                  const parsed = parsePhoneNumberFromString(val, "ES");
+                  if (parsed?.isValid()) {
+                    setValue("telefono", parsed.format("E.164"), { shouldValidate: true });
+                    e.target.value = parsed.formatInternational();
+                  } else {
+                    setValue("telefono", val, { shouldValidate: true });
+                  }
+                } catch {
+                  setValue("telefono", val, { shouldValidate: true });
+                }
+              }}
+            />
+            {errors.telefono && <p id="telefono-error" className="text-xs text-destructive">{errMsg(errors.telefono.message)}</p>}
+          </div>
+
+          {/* Alergias */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">{t("alergias")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {ALERGIAS_KEYS.map((key) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    value={key}
+                    className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                    {...register("alergias")}
+                  />
+                  <span className="text-sm text-foreground">{t(`alergias_${key}` as Parameters<typeof t>[0])}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="notas">{t("notas")}</Label>
+            <Textarea id="notas" placeholder={t("notas_placeholder")} rows={2} {...register("notas_cliente")} />
+            {errors.notas_cliente && <p className="text-xs text-destructive">{errMsg(errors.notas_cliente.message)}</p>}
+          </div>
+
+          <div className="flex items-start gap-3">
+            <input id="consentimiento" type="checkbox"
+              className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+              {...register("consentimiento")} />
+            <Label htmlFor="consentimiento" className="text-sm font-normal cursor-pointer leading-snug">
+              {t("consentimiento")}{" "}
+              <Link href={`/${locale}/privacidad`} target="_blank" className="underline">{t("politica_privacidad")}</Link>
+            </Label>
+          </div>
+          {errors.consentimiento && <p className="text-xs text-destructive">{errMsg(errors.consentimiento.message)}</p>}
 
           {/* Server error */}
           {serverError && (
@@ -472,12 +510,28 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
             </div>
           )}
 
-          {/* Submit */}
-          {selectedDate && selectedTime && (
-            <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={submitting}>
-              {submitting ? t("submitting") : t("submit")}
-            </Button>
+          {/* Horas alternativas */}
+          {serverError === "franja_bloqueada" && alternatives.length > 0 && (
+            <div className="rounded-lg border border-border p-4 space-y-3">
+              <p className="text-sm font-medium text-foreground">{t("alternativas")}</p>
+              <div className="flex flex-wrap gap-2">
+                {alternatives.map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => handleTimeSelect(slot)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
+
+          <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={submitting}>
+            {submitting ? t("submitting") : t("submit")}
+          </Button>
 
           <button type="button" onClick={() => setStep(1)}
             className="w-full text-sm text-muted-foreground hover:text-foreground text-center py-1 transition-colors">

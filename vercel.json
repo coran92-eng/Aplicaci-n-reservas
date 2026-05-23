@@ -3,5 +3,12 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "installCommand": "npm ci"
+  "installCommand": "npm ci",
+  "crons": [
+    {
+      "path": "/api/cron/recordatorio",
+      "schedule": "0 10 * * *"
+    }
+  ]
 }
+

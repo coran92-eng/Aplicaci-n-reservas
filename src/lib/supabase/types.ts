@@ -20,6 +20,7 @@ export interface Reserva {
   estado: EstadoReserva;
   notas_cliente: string | null;
   notas_internas: string | null;
+  alergias: string[];
   idioma: Idioma;
   cancel_token: string;
   created_at: string;

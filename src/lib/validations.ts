@@ -55,6 +55,7 @@ export const reservaSchema = z.object({
   hora: z.string().min(1, "hora_required"),
   personas: z.number().min(1, "personas_min").max(50, "personas_max"),
   notas_cliente: z.string().max(300, "notas_max").optional().or(z.literal("")),
+  alergias: z.array(z.string()).optional().default([]),
   consentimiento: z.boolean().refine((v) => v === true, "consentimiento_required"),
   idioma: z.enum(["es", "ca", "en"]).default("es"),
   website: z.string().max(0).optional(), // honeypot

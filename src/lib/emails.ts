@@ -25,6 +25,32 @@ interface ReservaEmailData {
   idioma: string;
 }
 
+// ── ICS calendar attachment ────────────────────────────────────
+
+function generateICS(data: ReservaEmailData): string {
+  const [year, month, day] = data.fecha.split("-").map(Number);
+  const [hour, minute] = data.hora.slice(0, 5).split(":").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dtstart = `${year}${pad(month)}${pad(day)}T${pad(hour)}${pad(minute)}00`;
+  const dtend   = `${year}${pad(month)}${pad(day)}T${pad(hour + 2)}${pad(minute)}00`;
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    `PRODID:-//${RESTAURANT_NAME}//Reservas//ES`,
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `DTSTART:${dtstart}`,
+    `DTEND:${dtend}`,
+    `SUMMARY:Reserva en ${RESTAURANT_NAME}`,
+    `DESCRIPTION:Reserva para ${data.personas} personas.`,
+    `LOCATION:${RESTAURANT_ADDRESS}`,
+    `UID:${data.cancel_token}@reservas`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
 // ── Helpers ────────────────────────────────────────────────────
 
 function langAttr(idioma: string): string {
@@ -458,30 +484,41 @@ function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
 // ── Exports ────────────────────────────────────────────────────
 
 export async function sendConfirmationEmail(data: ReservaEmailData) {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
   const subjects: Record<string, string> = {
-    es: `Reserva confirmada · ${data.hora.slice(0, 5)} · ${formatFechaEmail(data.fecha, "es")}`,
-    ca: `Reserva confirmada · ${data.hora.slice(0, 5)} · ${formatFechaEmail(data.fecha, "ca")}`,
-    en: `Booking confirmed · ${formatFechaEmail(data.fecha, "en")} at ${data.hora.slice(0, 5)}`,
+    es: `Reserva confirmada · ${displayHora} · ${formatFechaEmail(data.fecha, "es")}`,
+    ca: `Reserva confirmada · ${displayHora} · ${formatFechaEmail(data.fecha, "ca")}`,
+    en: `Booking confirmed · ${formatFechaEmail(data.fecha, "en")} at ${displayHora}`,
   };
+  const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const text = `${RESTAURANT_NAME}\n\n${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
+  const icsContent = generateICS(data);
   await getResend().emails.send({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: confirmationHtml(data),
+    text,
+    attachments: [{ filename: "reserva.ics", content: Buffer.from(icsContent).toString("base64") }],
   });
 }
 
 export async function sendPendingEmail(data: ReservaEmailData) {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
   const subjects: Record<string, string> = {
     es: `Solicitud recibida · ${RESTAURANT_NAME}`,
     ca: `Sol·licitud rebuda · ${RESTAURANT_NAME}`,
     en: `Request received · ${RESTAURANT_NAME}`,
   };
+  const text = `${RESTAURANT_NAME}\n\nSolicitud recibida: ${data.personas} pers. · ${displayDate} · ${displayHora}\n\nTe avisaremos en las próximas horas.\n\n${RESTAURANT_PHONE}`;
   await getResend().emails.send({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: pendingHtml(data),
+    text,
   });
 }
 
@@ -491,11 +528,13 @@ export async function sendRejectionEmail(data: Omit<ReservaEmailData, "cancel_to
     ca: `La teva sol·licitud · ${RESTAURANT_NAME}`,
     en: `Your request · ${RESTAURANT_NAME}`,
   };
+  const text = `${RESTAURANT_NAME}\n\nLo sentimos, no podemos confirmar tu solicitud.\n\n${RESTAURANT_PHONE}`;
   await getResend().emails.send({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: rejectionHtml(data),
+    text,
   });
 }
 
@@ -505,15 +544,101 @@ export async function sendCancellationEmail(data: ReservaEmailData) {
     ca: `Fins aviat · ${RESTAURANT_NAME}`,
     en: `Until next time · ${RESTAURANT_NAME}`,
   };
+  const text = `${RESTAURANT_NAME}\n\nTu reserva ha sido cancelada. ¡Hasta pronto!\n\n${RESTAURANT_PHONE}`;
   await getResend().emails.send({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: cancellationHtml(data),
+    text,
   });
 }
 
-// ── Email 5: Notificación admin ────────────────────────────────
+// ── Email 5: Recordatorio 24h ──────────────────────────────────
+
+function reminderHtml(data: ReservaEmailData): string {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const cancelUrl   = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+
+  const t: Record<string, Record<string, string>> = {
+    es: {
+      eyebrow:  "Recordatorio · mañana",
+      heading:  "Te esperamos.",
+      sub:      `Hola ${data.nombre}, este es un recordatorio de tu reserva de mañana. ¡Te esperamos!`,
+      date:     "Fecha",
+      time:     "Hora",
+      guests:   "Personas",
+      address:  "Dónde",
+      cancel:   "Cancelar reserva",
+    },
+    ca: {
+      eyebrow:  "Recordatori · demà",
+      heading:  "T'esperem.",
+      sub:      `Hola ${data.nombre}, aquest és un recordatori de la teva reserva de demà. T'esperem!`,
+      date:     "Data",
+      time:     "Hora",
+      guests:   "Persones",
+      address:  "On",
+      cancel:   "Cancel·lar reserva",
+    },
+    en: {
+      eyebrow:  "Reminder · tomorrow",
+      heading:  "See you tomorrow.",
+      sub:      `Hi ${data.nombre}, this is a reminder about your booking tomorrow. We look forward to seeing you!`,
+      date:     "Date",
+      time:     "Time",
+      guests:   "Guests",
+      address:  "Where",
+      cancel:   "Cancel booking",
+    },
+  };
+  const tx = t[data.idioma] ?? t.es;
+
+  const body = `
+    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
+    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:48px">
+      ${detalleRows([
+        [tx.date,    displayDate],
+        [tx.time,    displayHora],
+        [tx.guests,  `${data.personas}`],
+        [tx.address, RESTAURANT_ADDRESS],
+      ])}
+    </table>
+    <p style="margin:0">
+      <a href="${cancelUrl}" class="inter"
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#333333;text-decoration:underline;letter-spacing:1px">
+        ${tx.cancel}
+      </a>
+    </p>`;
+
+  return layout(body, `${tx.eyebrow} · ${displayHora}`, data.idioma);
+}
+
+export async function sendReminderEmail(data: ReservaEmailData) {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const subjects: Record<string, string> = {
+    es: `Recordatorio: mañana a las ${displayHora} · ${RESTAURANT_NAME}`,
+    ca: `Recordatori: demà a les ${displayHora} · ${RESTAURANT_NAME}`,
+    en: `Reminder: tomorrow at ${displayHora} · ${RESTAURANT_NAME}`,
+  };
+  const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
+  const icsContent = generateICS(data);
+  await getResend().emails.send({
+    from: FROM,
+    to: data.email,
+    subject: subjects[data.idioma] ?? subjects.es,
+    html: reminderHtml(data),
+    text,
+    attachments: [{ filename: "reserva.ics", content: Buffer.from(icsContent).toString("base64") }],
+  });
+}
+
+// ── Email 6: Notificación admin ────────────────────────────────
 
 export async function sendAdminNotification(data: {
   tipo: "nueva_pendiente" | "cancelacion";

@@ -11,7 +11,7 @@ import {
   sendAdminNotification,
 } from "@/lib/emails";
 import { requireAdmin } from "@/lib/require-admin";
-import { todayBarcelona, nowBarcelona } from "@/lib/utils";
+import { todayBarcelona, nowBarcelona, generateTimeSlots } from "@/lib/utils";
 import { headers } from "next/headers";
 import type {
   Reserva,
@@ -179,6 +179,7 @@ export async function createReserva(
       personas: data.personas,
       estado: esPendiente ? "pendiente_aprobacion" : "confirmada",
       notas_cliente: data.notas_cliente || null,
+      alergias: data.alergias ?? [],
       idioma: data.idioma,
     });
 
@@ -486,4 +487,108 @@ export async function getPendingCount(): Promise<number> {
     .select("id", { count: "exact", head: true })
     .eq("estado", "pendiente_aprobacion");
   return count ?? 0;
+}
+
+export type ModificarReservaResult = { ok: true } | { ok: false; error: string };
+
+export async function modificarReserva(
+  token: string,
+  updates: { fecha: string; hora: string }
+): Promise<ModificarReservaResult> {
+  const serviceClient = createServiceClient();
+
+  const { data: reserva } = await serviceClient
+    .from("reservas")
+    .select("*")
+    .eq("cancel_token", token)
+    .single();
+
+  if (!reserva) return { ok: false, error: "not_found" };
+  if (reserva.estado === "cancelada" || reserva.estado === "rechazada") {
+    return { ok: false, error: "cannot_modify" };
+  }
+
+  const today = todayBarcelona();
+  if (updates.fecha < today) return { ok: false, error: "fecha_past" };
+
+  const { data: diaCerrado } = await serviceClient
+    .from("dias_cerrados")
+    .select("id")
+    .eq("fecha", updates.fecha)
+    .maybeSingle();
+  if (diaCerrado) return { ok: false, error: "dia_cerrado" };
+
+  const { data: franja } = await serviceClient
+    .from("franjas_bloqueadas")
+    .select("id")
+    .eq("fecha", updates.fecha)
+    .eq("hora", updates.hora.length === 5 ? updates.hora + ":00" : updates.hora)
+    .maybeSingle();
+  if (franja) return { ok: false, error: "franja_bloqueada" };
+
+  const hora = updates.hora.length === 5 ? updates.hora + ":00" : updates.hora;
+  const { error } = await serviceClient
+    .from("reservas")
+    .update({ fecha: updates.fecha, hora })
+    .eq("cancel_token", token);
+
+  if (error) return { ok: false, error: "generic" };
+
+  sendConfirmationEmail({
+    nombre: reserva.nombre,
+    apellido: reserva.apellido,
+    email: reserva.email,
+    fecha: updates.fecha,
+    hora,
+    personas: reserva.personas,
+    cancel_token: reserva.cancel_token,
+    idioma: reserva.idioma,
+  }).catch(console.error);
+
+  return { ok: true };
+}
+
+export async function getAvailableSlots(
+  fecha: string,
+  personas: number
+): Promise<string[]> {
+  const serviceClient = createServiceClient();
+
+  const [{ data: configRows }, { data: bloqueadas }, { data: ocupadas }] =
+    await Promise.all([
+      serviceClient.from("configuracion").select("clave, valor"),
+      serviceClient.from("franjas_bloqueadas").select("hora").eq("fecha", fecha),
+      serviceClient
+        .from("reservas")
+        .select("hora, personas")
+        .eq("fecha", fecha)
+        .in("estado", ["confirmada", "llegado"]),
+    ]);
+
+  const config: Record<string, unknown> = {};
+  for (const row of configRows ?? []) config[row.clave] = row.valor;
+  const topeActivo = Boolean(config.tope_por_franja_activo);
+  const topePersonas = (config.tope_por_franja_personas as number) ?? 30;
+
+  const blocked = new Set((bloqueadas ?? []).map((f: { hora: string }) => f.hora.slice(0, 5)));
+  const occupancy: Record<string, number> = {};
+  for (const r of ocupadas ?? []) {
+    const key = (r as { hora: string; personas: number }).hora.slice(0, 5);
+    occupancy[key] = (occupancy[key] ?? 0) + (r as { hora: string; personas: number }).personas;
+  }
+
+  const today = todayBarcelona();
+  const now = nowBarcelona();
+  const nowMins = fecha === today ? now.getHours() * 60 + now.getMinutes() : -1;
+
+  return generateTimeSlots().filter((slot) => {
+    if (blocked.has(slot)) return false;
+    const [hh, mm] = slot.split(":").map(Number);
+    if (nowMins >= 0 && hh !== 0 && hh * 60 + mm - nowMins < 15) return false;
+    if (topeActivo) {
+      const used = occupancy[slot] ?? 0;
+      if (used + personas > topePersonas) return false;
+    }
+    return true;
+  });
 }

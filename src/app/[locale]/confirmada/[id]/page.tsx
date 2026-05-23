@@ -102,9 +102,17 @@ export default async function ConfirmadaPage({
             {t("pending_info")}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground text-center mb-6">
-            {t("cancel_info")}
-          </p>
+          <div className="space-y-2 mb-6">
+            <p className="text-sm text-muted-foreground text-center">{t("cancel_info")}</p>
+            <p className="text-center">
+              <Link
+                href={`/${locale}/modificar/${reserva.cancel_token}`}
+                className="text-sm text-muted-foreground underline hover:text-foreground"
+              >
+                {t("modify_link")}
+              </Link>
+            </p>
+          </div>
         )}
 
         {emailError && (
