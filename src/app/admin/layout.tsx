@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Search, Clock } from "lucide-react";
 import { logoutAdmin } from "@/actions/admin";
+import { PendingBadge } from "@/components/admin/PendingBadge";
 
 export const metadata: Metadata = {
   title: "Admin · Corte de Manga",
@@ -18,6 +19,21 @@ export default function AdminLayout({
       <div className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white text-xs">
         <span className="font-semibold">Corte de Manga · Admin</span>
         <div className="flex items-center gap-3">
+          <Link
+            href="/admin/pendientes"
+            className="flex items-center gap-1 opacity-70 hover:opacity-100"
+          >
+            <Clock className="h-3.5 w-3.5" />
+            Pendientes
+            <PendingBadge />
+          </Link>
+          <Link
+            href="/admin/buscar"
+            className="flex items-center gap-1 opacity-70 hover:opacity-100"
+          >
+            <Search className="h-3.5 w-3.5" />
+            Buscar
+          </Link>
           <Link
             href="/admin/ajustes"
             className="flex items-center gap-1 opacity-70 hover:opacity-100"

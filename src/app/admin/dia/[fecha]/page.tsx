@@ -31,7 +31,7 @@ export default async function DiaPage({
         totalReservas={active.length}
         totalPersonas={totalPersonas}
       />
-      <ReservationList reservas={reservas} />
+      <ReservationList reservas={reservas} currentDate={fecha} />
     </>
   );
 }

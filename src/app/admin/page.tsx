@@ -29,7 +29,7 @@ export default async function AdminPage() {
         totalReservas={active.length}
         totalPersonas={totalPersonas}
       />
-      <ReservationList reservas={reservas} />
+      <ReservationList reservas={reservas} currentDate={today} />
     </>
   );
 }

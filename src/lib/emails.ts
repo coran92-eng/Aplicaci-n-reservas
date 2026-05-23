@@ -512,3 +512,62 @@ export async function sendCancellationEmail(data: ReservaEmailData) {
     html: cancellationHtml(data),
   });
 }
+
+// ── Email 5: Notificación admin ────────────────────────────────
+
+export async function sendAdminNotification(data: {
+  tipo: "nueva_pendiente" | "cancelacion";
+  nombre: string;
+  apellido: string;
+  fecha: string;
+  hora: string;
+  personas: number;
+  telefono?: string;
+  email?: string;
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  const displayDate = formatFechaEmail(data.fecha, "es");
+  const displayHora = data.hora.slice(0, 5);
+
+  const subject =
+    data.tipo === "nueva_pendiente"
+      ? `Nueva solicitud pendiente — ${data.nombre} ${data.apellido} · ${displayHora}`
+      : `Cancelación — ${data.nombre} ${data.apellido} · ${displayHora}`;
+
+  const tipoBadge =
+    data.tipo === "nueva_pendiente"
+      ? `<span style="background:#f59e0b;color:#000;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">PENDIENTE</span>`
+      : `<span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">CANCELACIÓN</span>`;
+
+  const rows = [
+    ["Fecha", displayDate],
+    ["Hora", displayHora],
+    ["Personas", `${data.personas}`],
+    ...(data.telefono ? [["Teléfono", `<a href="tel:${data.telefono}">${data.telefono}</a>`]] : []),
+    ...(data.email ? [["Email", `<a href="mailto:${data.email}">${data.email}</a>`]] : []),
+  ]
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:6px 0;color:#6b7280;font-size:14px;width:90px">${label}</td><td style="padding:6px 0;font-weight:600;font-size:14px">${value}</td></tr>`
+    )
+    .join("");
+
+  const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f3f4f6;padding:24px;margin:0">
+<div style="max-width:480px;background:#fff;border-radius:8px;padding:24px;border:1px solid #e5e7eb">
+  <p style="margin:0 0 16px">${tipoBadge}</p>
+  <h2 style="margin:0 0 16px;font-size:20px;color:#111">${data.nombre} ${data.apellido}</h2>
+  <table style="width:100%;border-collapse:collapse">${rows}</table>
+  <div style="margin-top:24px">
+    <a href="${APP_URL}/admin" style="background:#111827;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600">Ir al panel →</a>
+  </div>
+</div>
+</body></html>`;
+
+  try {
+    await getResend().emails.send({ from: FROM, to: adminEmail, subject, html });
+  } catch (err) {
+    console.error("[ADMIN_NOTIFY] Failed:", err);
+  }
+}

@@ -8,6 +8,7 @@ import {
   sendPendingEmail,
   sendCancellationEmail,
   sendRejectionEmail,
+  sendAdminNotification,
 } from "@/lib/emails";
 import { requireAdmin } from "@/lib/require-admin";
 import { todayBarcelona, nowBarcelona } from "@/lib/utils";
@@ -198,6 +199,19 @@ export async function createReserva(
     idioma: data.idioma,
   };
 
+  if (esPendiente) {
+    sendAdminNotification({
+      tipo: "nueva_pendiente",
+      nombre: emailData.nombre,
+      apellido: emailData.apellido,
+      fecha: emailData.fecha,
+      hora: emailData.hora,
+      personas: emailData.personas,
+      telefono: data.telefono,
+      email: emailData.email,
+    }).catch(console.error);
+  }
+
   // Enviar email con manejo de error mejorado
   let emailSent = false;
   let emailError: string | undefined;
@@ -338,6 +352,15 @@ export async function cancelarPorToken(token: string): Promise<{
   };
 
   sendCancellationEmail(reservaData).catch(console.error);
+  sendAdminNotification({
+    tipo: "cancelacion",
+    nombre: reservaData.nombre,
+    apellido: reservaData.apellido,
+    fecha: reservaData.fecha,
+    hora: reservaData.hora,
+    personas: reservaData.personas,
+    email: reservaData.email,
+  }).catch(console.error);
 
   return { ok: true, reserva: reservaData };
 }
@@ -413,4 +436,54 @@ export async function rejectReserva(
   }).catch((err) => console.error("[EMAIL_FAILED] Rejection email failed:", err));
 
   return { ok: true };
+}
+
+export type CreateWalkinResult = { ok: true; id: string } | { ok: false; error: string };
+
+export async function createWalkin(data: {
+  nombre: string;
+  apellido: string;
+  personas: number;
+  fecha: string;
+  hora: string;
+  telefono: string;
+  email?: string;
+  notas_cliente?: string;
+}): Promise<CreateWalkinResult> {
+  await requireAdmin();
+  const serviceClient = createServiceClient();
+  const id = randomUUID();
+  const cancelToken = randomUUID();
+
+  const { error } = await serviceClient.from("reservas").insert({
+    id,
+    cancel_token: cancelToken,
+    nombre: data.nombre.trim(),
+    apellido: data.apellido.trim(),
+    telefono: data.telefono.trim(),
+    email: data.email?.trim().toLowerCase() || `walkin-${id}@internal.local`,
+    fecha: data.fecha,
+    hora: data.hora.length === 5 ? data.hora + ":00" : data.hora,
+    personas: data.personas,
+    estado: "llegado" as const,
+    notas_cliente: data.notas_cliente || null,
+    idioma: "es" as const,
+  });
+
+  if (error) {
+    console.error("Error creating walkin:", error);
+    return { ok: false, error: String(error) };
+  }
+
+  return { ok: true, id };
+}
+
+export async function getPendingCount(): Promise<number> {
+  await requireAdmin();
+  const serviceClient = createServiceClient();
+  const { count } = await serviceClient
+    .from("reservas")
+    .select("id", { count: "exact", head: true })
+    .eq("estado", "pendiente_aprobacion");
+  return count ?? 0;
 }

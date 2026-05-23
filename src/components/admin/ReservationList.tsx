@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronRight, Users } from "lucide-react";
-import { cn, formatTime } from "@/lib/utils";
+import { ChevronRight, Users, AlertCircle } from "lucide-react";
+import { cn, formatTime, todayBarcelona, nowBarcelona } from "@/lib/utils";
 import { ReservationModal } from "./ReservationModal";
 import type { Reserva } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
@@ -51,29 +51,41 @@ const STATUS_CONFIG: Record<
 
 interface Props {
   reservas: Reserva[];
+  currentDate: string;
 }
 
-export function ReservationList({ reservas: initialReservas }: Props) {
+export function ReservationList({ reservas: initialReservas, currentDate }: Props) {
   const [reservas, setReservas] = useState(initialReservas);
   const [selected, setSelected] = useState<Reserva | null>(null);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [now, setNow] = useState(() => nowBarcelona());
+
+  // Keep `now` fresh for late-arrival alerts (only matters when viewing today)
+  useEffect(() => {
+    if (currentDate !== todayBarcelona()) return;
+    const id = setInterval(() => setNow(nowBarcelona()), 30_000);
+    return () => clearInterval(id);
+  }, [currentDate]);
 
   useEffect(() => {
     const supabase = createClient();
 
     const channel = supabase
-      .channel("admin-reservas")
+      .channel(`admin-reservas-${currentDate}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "reservas" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "reservas",
+          filter: `fecha=eq.${currentDate}`,
+        },
         (payload) => {
           const nueva = payload.new as Reserva;
           setReservas((prev) => {
-            // Evitar duplicados
             if (prev.some((r) => r.id === nueva.id)) return prev;
             return [...prev, nueva];
           });
-          // Flash visual — añadir a lista de nuevas
           setNewIds((prev) => new Set([...prev, nueva.id]));
           setTimeout(() => {
             setNewIds((prev) => {
@@ -81,12 +93,17 @@ export function ReservationList({ reservas: initialReservas }: Props) {
               next.delete(nueva.id);
               return next;
             });
-          }, 30000); // Highlight 30 segundos
+          }, 30_000);
         }
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "reservas" },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "reservas",
+          filter: `fecha=eq.${currentDate}`,
+        },
         (payload) => {
           const updated = payload.new as Reserva;
           setReservas((prev) =>
@@ -99,7 +116,7 @@ export function ReservationList({ reservas: initialReservas }: Props) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [currentDate]);
 
   function handleUpdate(id: string, updates: Partial<Reserva>) {
     setReservas((prev) =>
@@ -110,10 +127,18 @@ export function ReservationList({ reservas: initialReservas }: Props) {
     }
   }
 
+  const isToday = currentDate === todayBarcelona();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  function isLate(reserva: Reserva): boolean {
+    if (!isToday || reserva.estado !== "confirmada") return false;
+    const [hh, mm] = reserva.hora.split(":").map(Number);
+    return hh * 60 + mm + 15 < nowMinutes;
+  }
+
   const sorted = [...reservas].sort((a, b) => {
     const aH = a.hora.slice(0, 5);
     const bH = b.hora.slice(0, 5);
-    // midnight slots (00:xx) come last
     const aIsNight = aH.startsWith("00:");
     const bIsNight = bH.startsWith("00:");
     if (aIsNight && !bIsNight) return 1;
@@ -138,15 +163,17 @@ export function ReservationList({ reservas: initialReservas }: Props) {
           const isCancelled =
             reserva.estado === "cancelada" || reserva.estado === "rechazada";
           const isNew = newIds.has(reserva.id);
+          const late = isLate(reserva);
 
           return (
             <button
               key={reserva.id}
               onClick={() => setSelected(reserva)}
               className={cn(
-                "w-full flex items-center gap-4 px-4 py-4 text-left transition-colors",
+                "w-full flex items-center gap-4 px-4 py-3 text-left transition-colors",
                 status.row,
-                isNew && "!bg-yellow-50 border-l-4 border-l-yellow-400"
+                isNew && "!bg-yellow-50 border-l-4 border-l-yellow-400",
+                late && "!bg-red-50 border-l-4 border-l-red-500"
               )}
             >
               {/* Hora */}
@@ -154,9 +181,16 @@ export function ReservationList({ reservas: initialReservas }: Props) {
                 {formatTime(reserva.hora)}
               </span>
 
-              {/* Nombre */}
-              <span className={cn("text-base font-medium flex-1 truncate", isCancelled ? "text-gray-400" : "text-gray-700")}>
-                {reserva.nombre} {reserva.apellido}
+              {/* Nombre + teléfono */}
+              <span className="flex-1 min-w-0">
+                <span className={cn("block text-base font-medium truncate", isCancelled ? "text-gray-400" : "text-gray-700")}>
+                  {reserva.nombre} {reserva.apellido}
+                </span>
+                {!isCancelled && reserva.telefono && (
+                  <span className="block text-xs text-gray-400 truncate mt-0.5">
+                    {reserva.telefono}
+                  </span>
+                )}
               </span>
 
               {/* Personas */}
@@ -165,13 +199,20 @@ export function ReservationList({ reservas: initialReservas }: Props) {
                 {reserva.personas}
               </span>
 
-              {/* Estado */}
-              <span className="flex items-center gap-1.5 text-sm">
-                <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", status.dot)} />
-                <span className={cn("hidden sm:inline text-gray-600", isCancelled && "line-through text-gray-400")}>
-                  {status.label}
+              {/* Late alert or Estado */}
+              {late ? (
+                <span className="flex items-center gap-1 text-sm text-red-600 font-medium shrink-0">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">Retraso</span>
                 </span>
-              </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-sm">
+                  <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", status.dot)} />
+                  <span className={cn("hidden sm:inline text-gray-600", isCancelled && "line-through text-gray-400")}>
+                    {status.label}
+                  </span>
+                </span>
+              )}
 
               <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
             </button>
