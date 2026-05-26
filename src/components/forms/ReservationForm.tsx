@@ -158,10 +158,20 @@ interface Props {
   antelacionMax: number;
   topePersonas: number;
   dayOccupancy: Record<string, number>;
+  embed?: boolean;
 }
 
-export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, antelacionMax, topePersonas, dayOccupancy }: Props) {
+type EmbedSuccess = {
+  estado: string;
+  fecha: string;
+  hora: string;
+  personas: number;
+  nombre: string;
+};
+
+export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, antelacionMax, topePersonas, dayOccupancy, embed }: Props) {
   const t = useTranslations("form");
+  const tConf = useTranslations("confirmation");
   const locale = useLocale();
   const router = useRouter();
 
@@ -180,6 +190,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   const [dbError, setDbError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [alternatives, setAlternatives] = useState<string[]>([]);
+  const [embedSuccess, setEmbedSuccess] = useState<EmbedSuccess | null>(null);
   const timeSlotsRef = useRef<HTMLDivElement>(null);
   const step2Ref = useRef<HTMLDivElement>(null);
 
@@ -286,6 +297,16 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
         }
         return;
       }
+      if (embed) {
+        setEmbedSuccess({
+          estado: result.estado,
+          fecha: watch("fecha"),
+          hora: watch("hora"),
+          personas: watch("personas"),
+          nombre: watch("nombre"),
+        });
+        return;
+      }
       const qs = new URLSearchParams({ token: result.cancelToken });
       if (result.emailError) qs.set("emailError", result.emailError);
       if (result.estado === "pendiente_aprobacion") {
@@ -313,6 +334,45 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
       if (key === "personas_max") return t("errors.personas_max", { max: limiteGrupo });
       return t(`errors.${key}` as Parameters<typeof t>[0]);
     } catch { return t("errors.generic"); }
+  }
+
+  if (embed && embedSuccess) {
+    const isPending = embedSuccess.estado === "pendiente_aprobacion";
+    const dateLabel = formatDateShort(embedSuccess.fecha, locale);
+    return (
+      <div className="py-8 text-center space-y-4">
+        <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto">
+          <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="font-heading text-xl font-bold text-foreground">
+            {isPending ? tConf("title_pending") : tConf("title")}
+          </h3>
+          <p className="text-muted-foreground text-sm mt-1">
+            {tConf("subtitle")}
+          </p>
+        </div>
+        <div className="bg-muted/30 rounded-lg p-4 text-left text-sm space-y-2 max-w-xs mx-auto">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{tConf("date")}</span>
+            <span className="font-medium text-foreground">{dateLabel}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{tConf("time")}</span>
+            <span className="font-medium text-foreground">{embedSuccess.hora}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{tConf("people")}</span>
+            <span className="font-medium text-foreground">{embedSuccess.personas}</span>
+          </div>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          {tConf("cancel_info")}
+        </p>
+      </div>
+    );
   }
 
   return (
