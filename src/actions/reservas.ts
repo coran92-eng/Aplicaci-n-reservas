@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "crypto";
+import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { reservaSchema } from "@/lib/validations";
 import {
@@ -189,6 +190,24 @@ export async function createReserva(
     return { ok: false, error: "generic", dbError };
   }
 
+  // Upsert cliente (fire-and-forget, no bloquea la respuesta al usuario)
+  try {
+    const sc = createServiceClient();
+    const { data: cliente } = await sc
+      .from("clientes")
+      .upsert(
+        { email: data.email.toLowerCase(), nombre: data.nombre.trim(), apellido: data.apellido.trim(), telefono: data.telefono },
+        { onConflict: "email" }
+      )
+      .select("id")
+      .single();
+    if (cliente?.id) {
+      await sc.from("reservas").update({ cliente_id: cliente.id }).eq("id", id);
+    }
+  } catch {
+    // Non-fatal: cliente upsert can fail gracefully before migration
+  }
+
   const emailData = {
     nombre: data.nombre.trim(),
     apellido: data.apellido.trim(),
@@ -269,6 +288,7 @@ export async function updateReserva(
     console.error("Error updating reserva:", error);
     return { ok: false, error: String(error) };
   }
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -291,6 +311,7 @@ export async function updateEstadoReserva(
     return { ok: false, error: String(error) };
   }
 
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -402,6 +423,7 @@ export async function approveReserva(
     console.error("[EMAIL_FAILED] Approve email failed:", err);
   }
 
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -436,6 +458,7 @@ export async function rejectReserva(
     idioma: reserva.idioma,
   }).catch((err) => console.error("[EMAIL_FAILED] Rejection email failed:", err));
 
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }
 
@@ -476,6 +499,24 @@ export async function createWalkin(data: {
     return { ok: false, error: String(error) };
   }
 
+  // Upsert cliente si hay email real
+  if (data.email) {
+    try {
+      const { data: cliente } = await serviceClient
+        .from("clientes")
+        .upsert(
+          { email: data.email.trim().toLowerCase(), nombre: data.nombre.trim(), apellido: data.apellido.trim(), telefono: data.telefono.trim() },
+          { onConflict: "email" }
+        )
+        .select("id")
+        .single();
+      if (cliente?.id) {
+        await serviceClient.from("reservas").update({ cliente_id: cliente.id }).eq("id", id);
+      }
+    } catch { /* non-fatal */ }
+  }
+
+  revalidatePath("/admin", "layout");
   return { ok: true, id };
 }
 

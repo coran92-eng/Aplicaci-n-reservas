@@ -23,6 +23,7 @@ export interface Reserva {
   alergias: string[];
   idioma: Idioma;
   cancel_token: string;
+  cliente_id: string | null;
   created_at: string;
   updated_at: string;
 }
