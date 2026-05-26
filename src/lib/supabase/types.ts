@@ -23,6 +23,7 @@ export interface Reserva {
   alergias: string[];
   idioma: Idioma;
   cancel_token: string;
+  cancel_token_expires_at: string | null;
   cliente_id: string | null;
   created_at: string;
   updated_at: string;
@@ -67,9 +68,10 @@ export type Database = {
     Tables: {
       reservas: {
         Row: Reserva;
-        Insert: Omit<Reserva, "id" | "created_at" | "updated_at" | "cancel_token"> & {
+        Insert: Omit<Reserva, "id" | "created_at" | "updated_at" | "cancel_token" | "cancel_token_expires_at"> & {
           id?: string;
           cancel_token?: string;
+          cancel_token_expires_at?: string;
         };
         Update: Partial<Omit<Reserva, "id" | "created_at">>;
         Relationships: [];

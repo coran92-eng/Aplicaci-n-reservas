@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import { modificarReserva } from "@/actions/reservas";
 
 function getMonthLabel(year: number, month: number, locale: string) {
@@ -33,6 +34,8 @@ interface Props {
 
 export function ModificarForm({ token, locale, today, maxDate, closedDates, franjasBloqueadas, allSlots }: Props) {
   const t = useTranslations("modification");
+  const currentLocale = useLocale();
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -75,7 +78,8 @@ export function ModificarForm({ token, locale, today, maxDate, closedDates, fran
     const result = await modificarReserva(token, { fecha: selectedDate, hora: selectedTime });
     setSaving(false);
     if (result.ok) {
-      setSuccess(true);
+      router.push(`/${locale || currentLocale}/confirmada/${result.reservaId}?token=${result.newToken}`);
+      return;
     } else {
       const key = `error_${result.error}` as Parameters<typeof t>[0];
       try { setError(t(key)); } catch { setError(t("error_generic")); }

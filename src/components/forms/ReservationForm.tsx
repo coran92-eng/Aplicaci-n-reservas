@@ -51,12 +51,14 @@ interface CalendarProps {
   maxDate: string;
   closedDates: Set<string>;
   locale: string;
+  dayOccupancy: Record<string, number>;
+  topePersonas: number;
   onSelect: (date: string) => void;
   onPrev: () => void;
   onNext: () => void;
 }
 
-function Calendar({ year, month, selectedDate, today, maxDate, closedDates, locale, onSelect, onPrev, onNext }: CalendarProps) {
+function Calendar({ year, month, selectedDate, today, maxDate, closedDates, locale, dayOccupancy, topePersonas, onSelect, onPrev, onNext }: CalendarProps) {
   const dayHeaders = getDayHeaders(locale);
   const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -78,6 +80,17 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
     if (year > my || (year === my && month > mm) || (year === my && month === mm && d > md)) return true;
     if (closedDates.has(toStr(d))) return true;
     return false;
+  }
+
+  function availabilityDot(d: number) {
+    const dateStr = toStr(d);
+    const occupied = dayOccupancy[dateStr] ?? 0;
+    // Approximate daily capacity (assume ~3 lunch slots + 3 dinner slots)
+    const dailyCap = topePersonas * 6;
+    const ratio = occupied / dailyCap;
+    if (ratio >= 0.9) return "bg-red-500";
+    if (ratio >= 0.6) return "bg-amber-400";
+    return "bg-green-500";
   }
 
   const canGoPrev = year > new Date().getFullYear() || (year === new Date().getFullYear() && month > new Date().getMonth() + 1);
@@ -108,22 +121,27 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
           const disabled = isDisabled(day);
           const selected = selectedDate === toStr(day);
           const isToday = year === ty && month === tm && day === td;
+          const dotColor = !disabled ? availabilityDot(day) : null;
           return (
-            <button
-              key={day}
-              type="button"
-              disabled={disabled}
-              onClick={() => onSelect(toStr(day))}
-              className={[
-                "mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm transition-colors",
-                disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
-                selected ? "bg-primary text-primary-foreground" : "",
-                !disabled && !selected ? "hover:bg-accent" : "",
-                isToday && !selected ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "",
-              ].filter(Boolean).join(" ")}
-            >
-              {day}
-            </button>
+            <div key={day} className="flex flex-col items-center gap-0.5">
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onSelect(toStr(day))}
+                className={[
+                  "w-10 h-10 flex items-center justify-center rounded-full text-sm transition-colors",
+                  disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
+                  selected ? "bg-primary text-primary-foreground" : "",
+                  !disabled && !selected ? "hover:bg-accent" : "",
+                  isToday && !selected ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "",
+                ].filter(Boolean).join(" ")}
+              >
+                {day}
+              </button>
+              {dotColor && !selected && (
+                <span className={`w-1 h-1 rounded-full ${dotColor}`} aria-hidden />
+              )}
+            </div>
           );
         })}
       </div>
@@ -138,9 +156,11 @@ interface Props {
   diasCerrados: DiaCerrado[];
   limiteGrupo: number;
   antelacionMax: number;
+  topePersonas: number;
+  dayOccupancy: Record<string, number>;
 }
 
-export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, antelacionMax }: Props) {
+export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, antelacionMax, topePersonas, dayOccupancy }: Props) {
   const t = useTranslations("form");
   const locale = useLocale();
   const router = useRouter();
@@ -366,6 +386,8 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
               selectedDate={selectedDate}
               today={today} maxDate={maxDate}
               closedDates={closedDates} locale={locale}
+              dayOccupancy={dayOccupancy}
+              topePersonas={topePersonas}
               onSelect={handleDateSelect}
               onPrev={prevMonth} onNext={nextMonth}
             />
@@ -528,6 +550,11 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
               </div>
             </div>
           )}
+
+          {/* Cancellation policy */}
+          <p className="text-xs text-muted-foreground text-center px-2 leading-relaxed">
+            {t("cancel_policy")}
+          </p>
 
           <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={submitting}>
             {submitting ? t("submitting") : t("submit")}

@@ -3,8 +3,9 @@
 import { timingSafeEqual } from "crypto";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createAdminSession } from "@/lib/admin-auth";
+import { createAdminSession, signMagicLink, verifyMagicLink } from "@/lib/admin-auth";
 import { createServiceClient } from "@/lib/supabase/server";
+import { sendAdminMagicLinkEmail } from "@/lib/emails";
 
 function getClientIp(): string {
   const h = headers();
@@ -82,4 +83,37 @@ export async function loginAdmin(
 export async function logoutAdmin() {
   cookies().delete("admin_session");
   redirect("/admin/login");
+}
+
+export async function sendAdminMagicLink(
+  _: unknown,
+  formData: FormData
+): Promise<{ error?: string; sent?: boolean }> {
+  const email = ((formData.get("email") as string) ?? "").trim().toLowerCase();
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "").toLowerCase();
+
+  if (!email || !adminEmail) return { error: "invalid" };
+  if (email !== adminEmail) {
+    // Don't reveal whether the email is correct
+    return { sent: true };
+  }
+
+  const ip = getClientIp();
+  if (!(await checkAdminRateLimit(ip))) return { error: "rate_limit" };
+
+  try {
+    const token = await signMagicLink();
+    const magicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/admin/magic?t=${encodeURIComponent(token)}`;
+    await sendAdminMagicLinkEmail(adminEmail, magicUrl);
+  } catch (err) {
+    console.error("[MAGIC_LINK] Failed:", err);
+    return { error: "generic" };
+  }
+
+  return { sent: true };
+}
+
+export async function verifyAdminMagicToken(token: string): Promise<boolean> {
+  if (!token) return false;
+  return verifyMagicLink(token);
 }

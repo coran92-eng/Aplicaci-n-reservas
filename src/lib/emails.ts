@@ -696,3 +696,25 @@ export async function sendAdminNotification(data: {
     console.error("[ADMIN_NOTIFY] Failed:", err);
   }
 }
+
+// ── Email 7: Admin magic link ──────────────────────────────────
+
+export async function sendAdminMagicLinkEmail(to: string, magicUrl: string): Promise<void> {
+  const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#111;padding:24px;margin:0">
+<div style="max-width:400px;background:#1a1a1a;border-radius:8px;padding:28px;border:1px solid #333;margin:0 auto">
+  <p style="color:#b12a2a;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 12px;font-weight:700">${RESTAURANT_NAME.toUpperCase()}</p>
+  <h2 style="margin:0 0 12px;font-size:20px;color:#ebebeb">Enlace de acceso al panel</h2>
+  <p style="margin:0 0 24px;font-size:14px;color:#9ca3af">Válido durante 15 minutos. Si no lo solicitaste, ignora este email.</p>
+  <a href="${magicUrl}" style="display:inline-block;background:#b12a2a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:700">Acceder al panel →</a>
+  <p style="margin:20px 0 0;font-size:12px;color:#6b7280">O copia este enlace en tu navegador:<br><span style="color:#9ca3af;word-break:break-all">${magicUrl}</span></p>
+</div>
+</body></html>`;
+
+  await getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `Acceso al panel — ${RESTAURANT_NAME}`,
+    html,
+    text: `Enlace de acceso al panel de ${RESTAURANT_NAME}:\n\n${magicUrl}\n\nVálido 15 minutos.`,
+  });
+}

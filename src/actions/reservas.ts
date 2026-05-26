@@ -165,12 +165,16 @@ export async function createReserva(
 
   const id = randomUUID();
   const cancelToken = randomUUID();
+  // Token expires 7 days after the reservation date
+  const [fy, fm, fd] = data.fecha.split("-").map(Number);
+  const tokenExpiry = new Date(Date.UTC(fy, fm - 1, fd + 7)).toISOString();
 
   const { error } = await supabase
     .from("reservas")
     .insert({
       id,
       cancel_token: cancelToken,
+      cancel_token_expires_at: tokenExpiry,
       nombre: data.nombre.trim(),
       apellido: data.apellido.trim(),
       telefono: data.telefono,
@@ -279,6 +283,40 @@ export async function updateReserva(
 ): Promise<{ ok: boolean; error?: string }> {
   await requireAdmin();
   const serviceClient = createServiceClient();
+
+  if (updates.fecha !== undefined || updates.hora !== undefined) {
+    const { data: current } = await serviceClient
+      .from("reservas")
+      .select("fecha, hora")
+      .eq("id", id)
+      .single();
+
+    if (!current) return { ok: false, error: "not_found" };
+
+    const newFecha = updates.fecha ?? current.fecha;
+    const rawHora = updates.hora ?? current.hora;
+    const newHora = rawHora.length === 5 ? rawHora + ":00" : rawHora;
+
+    if (newFecha < todayBarcelona()) {
+      return { ok: false, error: "fecha_past" };
+    }
+
+    const { data: diaCerrado } = await serviceClient
+      .from("dias_cerrados")
+      .select("id")
+      .eq("fecha", newFecha)
+      .maybeSingle();
+    if (diaCerrado) return { ok: false, error: "dia_cerrado" };
+
+    const { data: franjaBloqueada } = await serviceClient
+      .from("franjas_bloqueadas")
+      .select("id")
+      .eq("fecha", newFecha)
+      .eq("hora", newHora)
+      .maybeSingle();
+    if (franjaBloqueada) return { ok: false, error: "franja_bloqueada" };
+  }
+
   const payload: Record<string, unknown> = { ...updates };
   if (updates.hora) {
     payload.hora = updates.hora.length === 5 ? updates.hora + ":00" : updates.hora;
@@ -530,7 +568,7 @@ export async function getPendingCount(): Promise<number> {
   return count ?? 0;
 }
 
-export type ModificarReservaResult = { ok: true } | { ok: false; error: string };
+export type ModificarReservaResult = { ok: true; newToken: string; reservaId: string } | { ok: false; error: string };
 
 export async function modificarReserva(
   token: string,
@@ -568,9 +606,13 @@ export async function modificarReserva(
   if (franja) return { ok: false, error: "franja_bloqueada" };
 
   const hora = updates.hora.length === 5 ? updates.hora + ":00" : updates.hora;
+  const newToken = randomUUID();
+  const [fy, fm, fd] = updates.fecha.split("-").map(Number);
+  const newExpiry = new Date(Date.UTC(fy, fm - 1, fd + 7)).toISOString();
+
   const { error } = await serviceClient
     .from("reservas")
-    .update({ fecha: updates.fecha, hora })
+    .update({ fecha: updates.fecha, hora, cancel_token: newToken, cancel_token_expires_at: newExpiry })
     .eq("cancel_token", token);
 
   if (error) return { ok: false, error: "generic" };
@@ -582,11 +624,31 @@ export async function modificarReserva(
     fecha: updates.fecha,
     hora,
     personas: reserva.personas,
-    cancel_token: reserva.cancel_token,
+    cancel_token: newToken,
     idioma: reserva.idioma,
   }).catch(console.error);
 
-  return { ok: true };
+  return { ok: true, newToken, reservaId: reserva.id };
+}
+
+// Returns total confirmed persons per date for a date range (for availability dots)
+export async function getMonthOccupancy(
+  startDate: string,
+  endDate: string
+): Promise<Record<string, number>> {
+  const serviceClient = createServiceClient();
+  const { data } = await serviceClient
+    .from("reservas")
+    .select("fecha, personas")
+    .gte("fecha", startDate)
+    .lte("fecha", endDate)
+    .in("estado", ["confirmada", "llegado"]);
+
+  const result: Record<string, number> = {};
+  for (const row of data ?? []) {
+    result[row.fecha] = (result[row.fecha] ?? 0) + (row as { fecha: string; personas: number }).personas;
+  }
+  return result;
 }
 
 export async function getAvailableSlots(
