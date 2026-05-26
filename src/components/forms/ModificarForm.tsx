@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { modificarReserva } from "@/actions/reservas";
-
 function getMonthLabel(year: number, month: number, locale: string) {
   const code = locale === "ca" ? "ca-ES" : locale === "en" ? "en-GB" : "es-ES";
   return new Date(year, month - 1, 1).toLocaleDateString(code, { month: "long", year: "numeric" });
@@ -34,7 +33,7 @@ interface Props {
 
 export function ModificarForm({ token, locale, today, maxDate, closedDates, franjasBloqueadas, allSlots }: Props) {
   const t = useTranslations("modification");
-  const currentLocale = useLocale();
+  const currentLocale = useLocale(); // fallback if locale prop not forwarded
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -78,7 +77,7 @@ export function ModificarForm({ token, locale, today, maxDate, closedDates, fran
     const result = await modificarReserva(token, { fecha: selectedDate, hora: selectedTime });
     setSaving(false);
     if (result.ok) {
-      router.push(`/${locale || currentLocale}/confirmada/${result.reservaId}?token=${result.newToken}`);
+      router.push(`/${locale || currentLocale}/confirmada/${result.reservaId}?token=${encodeURIComponent(result.newToken)}`);
       return;
     } else {
       const key = `error_${result.error}` as Parameters<typeof t>[0];

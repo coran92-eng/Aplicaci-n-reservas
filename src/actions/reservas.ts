@@ -516,10 +516,13 @@ export async function createWalkin(data: {
   const serviceClient = createServiceClient();
   const id = randomUUID();
   const cancelToken = randomUUID();
+  const [wfy, wfm, wfd] = data.fecha.split("-").map(Number);
+  const walkinTokenExpiry = new Date(Date.UTC(wfy, wfm - 1, wfd + 7)).toISOString();
 
   const { error } = await serviceClient.from("reservas").insert({
     id,
     cancel_token: cancelToken,
+    cancel_token_expires_at: walkinTokenExpiry,
     nombre: data.nombre.trim(),
     apellido: data.apellido.trim(),
     telefono: data.telefono.trim(),
@@ -585,6 +588,9 @@ export async function modificarReserva(
   if (!reserva) return { ok: false, error: "not_found" };
   if (reserva.estado === "cancelada" || reserva.estado === "rechazada") {
     return { ok: false, error: "cannot_modify" };
+  }
+  if (reserva.cancel_token_expires_at && new Date(reserva.cancel_token_expires_at) < new Date()) {
+    return { ok: false, error: "token_expired" };
   }
 
   const today = todayBarcelona();

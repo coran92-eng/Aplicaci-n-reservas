@@ -85,6 +85,7 @@
     "success": "Booking updated. We've sent you a new confirmation email.",
     "error_not_found": "We couldn't find your booking.",
     "error_cannot_modify": "This booking cannot be modified. Please call us.",
+    "error_token_expired": "This link has expired. Please call us to change your reservation.",
     "error_fecha_past": "The new date cannot be in the past.",
     "error_dia_cerrado": "The restaurant is closed on that day.",
     "error_franja_bloqueada": "That time slot is not available.",

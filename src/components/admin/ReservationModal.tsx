@@ -90,7 +90,13 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
       });
       setIsEditing(false);
     } else {
-      setEditError("Error al guardar. Inténtalo de nuevo.");
+      const errorMessages: Record<string, string> = {
+        not_found: "Reserva no encontrada.",
+        fecha_past: "La fecha no puede ser en el pasado.",
+        dia_cerrado: "El restaurante está cerrado ese día.",
+        franja_bloqueada: "Esa franja horaria no está disponible.",
+      };
+      setEditError(errorMessages[result.error ?? ""] ?? "Error al guardar. Inténtalo de nuevo.");
     }
     setEditSaving(false);
   }

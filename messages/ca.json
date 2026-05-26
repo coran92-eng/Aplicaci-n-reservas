@@ -85,6 +85,7 @@
     "success": "Reserva modificada. T'hem enviat un nou correu de confirmació.",
     "error_not_found": "No hem trobat la teva reserva.",
     "error_cannot_modify": "Aquesta reserva no es pot modificar. Truca'ns si necessites ajuda.",
+    "error_token_expired": "L'enllaç ha caducat. Truca'ns per modificar la teva reserva.",
     "error_fecha_past": "La nova data no pot ser en el passat.",
     "error_dia_cerrado": "El restaurant està tancat aquest dia.",
     "error_franja_bloqueada": "Aquella franja horària no està disponible.",

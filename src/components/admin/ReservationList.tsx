@@ -167,11 +167,15 @@ export function ReservationList({ reservas: initialReservas, currentDate }: Prop
   const markArrived = useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setMarkingArrived(id);
-    // Optimistic update
-    setReservas((prev) => prev.map((r) => (r.id === id ? { ...r, estado: "llegado" } : r)));
+    // Capture current state before optimistic update for rollback
+    let prevEstado: Reserva["estado"] = "confirmada";
+    setReservas((prev) => {
+      const found = prev.find((r) => r.id === id);
+      if (found) prevEstado = found.estado;
+      return prev.map((r) => (r.id === id ? { ...r, estado: "llegado" } : r));
+    });
     await updateEstadoReserva(id, "llegado").catch(() => {
-      // Rollback on error
-      setReservas((prev) => prev.map((r) => (r.id === id ? { ...r, estado: "confirmada" } : r)));
+      setReservas((prev) => prev.map((r) => (r.id === id ? { ...r, estado: prevEstado } : r)));
     });
     setMarkingArrived(null);
   }, []);

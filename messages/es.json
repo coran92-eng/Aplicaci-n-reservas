@@ -85,6 +85,7 @@
     "success": "Reserva modificada. Te hemos enviado un email de confirmación.",
     "error_not_found": "No hemos encontrado tu reserva.",
     "error_cannot_modify": "Esta reserva no se puede modificar. Llámanos si necesitas ayuda.",
+    "error_token_expired": "El enlace ha caducado. Por favor, llámanos para modificar tu reserva.",
     "error_fecha_past": "La nueva fecha no puede ser en el pasado.",
     "error_dia_cerrado": "El restaurante está cerrado ese día.",
     "error_franja_bloqueada": "Esa franja horaria no está disponible.",
