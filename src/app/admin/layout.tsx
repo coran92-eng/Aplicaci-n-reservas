@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Settings, LogOut, Search, Clock } from "lucide-react";
+import { Settings, LogOut, Search, Clock, Map } from "lucide-react";
 import { logoutAdmin } from "@/actions/admin";
 import { PendingBadge } from "@/components/admin/PendingBadge";
 import { PushNotificationToggle } from "@/components/admin/PushNotificationToggle";
@@ -29,6 +29,13 @@ export default function AdminLayout({
             <Clock className="h-3.5 w-3.5" />
             Pendientes
             <PendingBadge />
+          </Link>
+          <Link
+            href="/admin/mapa"
+            className="flex items-center gap-1 opacity-70 hover:opacity-100"
+          >
+            <Map className="h-3.5 w-3.5" />
+            Mapa de sala
           </Link>
           <Link
             href="/admin/buscar"

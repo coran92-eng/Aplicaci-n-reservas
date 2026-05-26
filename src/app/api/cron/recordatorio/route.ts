@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendReminderWithReconfirmacion } from "@/lib/emails";
+import { sendReminderWhatsApp } from "@/lib/whatsapp";
 import { addDaysToDate, todayBarcelona } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
 
@@ -55,6 +56,31 @@ export async function GET(request: Request) {
     } catch (err) {
       console.error(`[CRON] Reminder failed for ${reserva.id}:`, err);
       failed++;
+    }
+
+    // WhatsApp reminder (fire-and-forget per reserva — non-blocking)
+    if (reserva.telefono) {
+      sendReminderWhatsApp({
+        phone: reserva.telefono,
+        nombre: reserva.nombre,
+        fecha: reserva.fecha,
+        hora: reserva.hora,
+        personas: reserva.personas,
+        locale: reserva.idioma,
+      })
+        .then((waResult) =>
+          supabase.from("whatsapp_logs").insert({
+            reserva_id: reserva.id,
+            template: "reserva_recordatorio",
+            phone: reserva.telefono,
+            status: waResult.error ? "failed" : "sent",
+            message_id: waResult.messageId ?? null,
+            error: waResult.error ?? null,
+          })
+        )
+        .catch((err) =>
+          console.error(`[CRON] WhatsApp reminder failed for ${reserva.id}:`, err)
+        );
     }
   }
 

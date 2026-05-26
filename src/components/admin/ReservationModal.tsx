@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn, formatTime, todayBarcelona } from "@/lib/utils";
 import { updateEstadoReserva, updateNotasInternas, updateReserva, approveReserva, rejectReserva } from "@/actions/reservas";
 import type { Reserva } from "@/lib/supabase/types";
+import { WhatsAppLog } from "@/components/admin/WhatsAppLog";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   confirmada:           { label: "Confirmada",  className: "bg-gray-100 text-gray-700" },
@@ -334,6 +335,13 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
                 {saving ? "Guardando..." : "Guardar notas"}
               </Button>
             </div>
+
+            {/* WhatsApp */}
+            {reserva.telefono && (
+              <div className="rounded-lg border border-gray-200 p-4">
+                <WhatsAppLog reservaId={reserva.id} telefono={reserva.telefono} />
+              </div>
+            )}
           </>
         )}
       </div>

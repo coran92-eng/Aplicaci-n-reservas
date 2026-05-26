@@ -13,6 +13,7 @@ import {
 } from "@/lib/emails";
 import { requireAdmin } from "@/lib/require-admin";
 import { sendPushToAll } from "@/lib/push";
+import { sendConfirmationWhatsApp, sendPendingWhatsApp } from "@/lib/whatsapp";
 import { todayBarcelona, nowBarcelona, generateTimeSlots } from "@/lib/utils";
 import { headers } from "next/headers";
 import type {
@@ -201,6 +202,48 @@ export async function createReserva(
     body: `${data.nombre} ${data.apellido} · ${data.personas} pers. · ${data.hora}`,
     url: "/admin",
   }).catch(() => {});
+
+  // Fire-and-forget WhatsApp notification to client
+  if (data.telefono) {
+    (async () => {
+      try {
+        const sc = createServiceClient();
+        let waResult: { messageId?: string; error?: string };
+        const waPhone = data.telefono;
+        const waLocale = data.idioma;
+
+        if (esPendiente) {
+          waResult = await sendPendingWhatsApp({
+            phone: waPhone,
+            nombre: data.nombre.trim(),
+            personas: data.personas,
+            locale: waLocale,
+          });
+        } else {
+          waResult = await sendConfirmationWhatsApp({
+            phone: waPhone,
+            nombre: data.nombre.trim(),
+            fecha: data.fecha,
+            hora: data.hora + ":00",
+            personas: data.personas,
+            locale: waLocale,
+            reservaId: id,
+          });
+        }
+
+        await sc.from("whatsapp_logs").insert({
+          reserva_id: id,
+          template: esPendiente ? "solicitud_pendiente" : "reserva_confirmada",
+          phone: waPhone,
+          status: waResult.error ? "failed" : "sent",
+          message_id: waResult.messageId ?? null,
+          error: waResult.error ?? null,
+        });
+      } catch (err) {
+        console.error("[WHATSAPP] Fire-and-forget failed:", err);
+      }
+    })();
+  }
 
   // Upsert cliente (fire-and-forget, no bloquea la respuesta al usuario)
   try {

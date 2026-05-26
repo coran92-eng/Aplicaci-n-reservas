@@ -79,6 +79,17 @@ export interface CancelarReservaResult {
   idioma?: string;
 }
 
+export interface WhatsAppLog {
+  id: string;
+  reserva_id: string;
+  template: string;
+  phone: string;
+  status: "sent" | "failed" | "delivered" | "read";
+  message_id: string | null;
+  error: string | null;
+  sent_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
