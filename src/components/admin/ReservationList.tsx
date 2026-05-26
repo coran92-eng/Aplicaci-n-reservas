@@ -287,6 +287,11 @@ export function ReservationList({ reservas: initialReservas, currentDate }: Prop
                     <span className={cn("hidden sm:inline text-gray-600", isCancelled && "line-through text-gray-400")}>
                       {status.label}
                     </span>
+                    {reserva.reconfirmado && reserva.estado === "confirmada" && (
+                      <span className="hidden sm:inline text-xs font-semibold text-green-600 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 leading-none">
+                        ✓ Conf.
+                      </span>
+                    )}
                   </span>
                 )}
 

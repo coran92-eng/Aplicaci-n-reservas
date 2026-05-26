@@ -275,9 +275,19 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
                   </Button>
                 </a>
               </div>
-              <a href={`mailto:${reserva.email}`} className="block text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                {reserva.email}
-              </a>
+              <div className="flex items-center justify-between">
+                <a href={`mailto:${reserva.email}`} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                  {reserva.email}
+                </a>
+                {reserva.cliente_id && (
+                  <a
+                    href={`/admin/clientes/${reserva.cliente_id}`}
+                    className="text-xs text-gray-400 hover:text-gray-900 transition-colors shrink-0 ml-3"
+                  >
+                    Ver perfil →
+                  </a>
+                )}
+              </div>
             </div>
 
             {/* Details */}

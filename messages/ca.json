@@ -122,6 +122,11 @@
     "title": "Política de privacitat",
     "back": "Tornar"
   },
+  "reconfirmado": {
+    "title": "Gràcies!",
+    "subtitle": "La teva assistència ha quedat confirmada. T'esperem!",
+    "back_home": "Tornar a l'inici"
+  },
   "nav": {
     "lang": "Idioma"
   },

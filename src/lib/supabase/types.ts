@@ -24,7 +24,23 @@ export interface Reserva {
   idioma: Idioma;
   cancel_token: string;
   cancel_token_expires_at: string | null;
+  reconfirmado: boolean;
+  reconfirmacion_token: string | null;
+  recordatorio_enviado: boolean;
   cliente_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Cliente {
+  id: string;
+  email: string;
+  nombre: string | null;
+  apellido: string | null;
+  telefono: string | null;
+  tags: string[];
+  notas: string | null;
+  visitas: number;
   created_at: string;
   updated_at: string;
 }

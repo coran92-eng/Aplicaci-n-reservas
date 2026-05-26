@@ -122,6 +122,11 @@
     "title": "Política de privacidad",
     "back": "Volver"
   },
+  "reconfirmado": {
+    "title": "¡Gracias!",
+    "subtitle": "Tu asistencia ha quedado confirmada. ¡Te esperamos!",
+    "back_home": "Volver al inicio"
+  },
   "nav": {
     "lang": "Idioma"
   },

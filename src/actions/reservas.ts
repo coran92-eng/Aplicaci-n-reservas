@@ -12,6 +12,7 @@ import {
   sendAdminNotification,
 } from "@/lib/emails";
 import { requireAdmin } from "@/lib/require-admin";
+import { sendPushToAll } from "@/lib/push";
 import { todayBarcelona, nowBarcelona, generateTimeSlots } from "@/lib/utils";
 import { headers } from "next/headers";
 import type {
@@ -193,6 +194,13 @@ export async function createReserva(
     const dbError = process.env.NODE_ENV !== "production" ? `${error.code}: ${error.message}` : undefined;
     return { ok: false, error: "generic", dbError };
   }
+
+  // Fire-and-forget push notification to all admin subscribers
+  sendPushToAll({
+    title: esPendiente ? "Nueva solicitud pendiente" : "Nueva reserva",
+    body: `${data.nombre} ${data.apellido} · ${data.personas} pers. · ${data.hora}`,
+    url: "/admin",
+  }).catch(() => {});
 
   // Upsert cliente (fire-and-forget, no bloquea la respuesta al usuario)
   try {

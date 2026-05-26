@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Settings, LogOut, Search, Clock } from "lucide-react";
 import { logoutAdmin } from "@/actions/admin";
 import { PendingBadge } from "@/components/admin/PendingBadge";
+import { PushNotificationToggle } from "@/components/admin/PushNotificationToggle";
+import { ServiceWorkerRegistrar } from "@/components/admin/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
   title: "Admin · Corte de Manga",
@@ -16,6 +18,7 @@ export default function AdminLayout({
 }) {
   return (
     <div className="admin-theme min-h-screen bg-white text-gray-900">
+      <ServiceWorkerRegistrar />
       <div className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white text-xs">
         <span className="font-semibold">Corte de Manga · Admin</span>
         <div className="flex items-center gap-3">
@@ -41,6 +44,7 @@ export default function AdminLayout({
             <Settings className="h-3.5 w-3.5" />
             Ajustes
           </Link>
+          <PushNotificationToggle />
           <form action={logoutAdmin}>
             <button
               type="submit"

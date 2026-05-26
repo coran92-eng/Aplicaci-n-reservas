@@ -122,6 +122,11 @@
     "title": "Privacy policy",
     "back": "Back"
   },
+  "reconfirmado": {
+    "title": "Thanks!",
+    "subtitle": "Your attendance has been confirmed. See you soon!",
+    "back_home": "Back to home"
+  },
   "nav": {
     "lang": "Language"
   },

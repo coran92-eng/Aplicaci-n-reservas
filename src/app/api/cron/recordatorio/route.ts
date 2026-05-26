@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { sendReminderEmail } from "@/lib/emails";
+import { sendReminderWithReconfirmacion } from "@/lib/emails";
 import { addDaysToDate, todayBarcelona } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
 
@@ -22,7 +22,8 @@ export async function GET(request: Request) {
     .from("reservas")
     .select("*")
     .eq("fecha", tomorrow)
-    .eq("estado", "confirmada");
+    .eq("estado", "confirmada")
+    .eq("recordatorio_enviado", false);
 
   if (error) {
     console.error("[CRON] Error fetching reservas:", error);
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
 
   for (const reserva of reservas) {
     try {
-      await sendReminderEmail({
+      await sendReminderWithReconfirmacion({
         nombre: reserva.nombre,
         apellido: reserva.apellido,
         email: reserva.email,
@@ -43,8 +44,13 @@ export async function GET(request: Request) {
         hora: reserva.hora,
         personas: reserva.personas,
         cancel_token: reserva.cancel_token,
+        reconfirmacion_token: reserva.reconfirmacion_token ?? "",
         idioma: reserva.idioma,
       });
+      await supabase
+        .from("reservas")
+        .update({ recordatorio_enviado: true })
+        .eq("id", reserva.id);
       sent++;
     } catch (err) {
       console.error(`[CRON] Reminder failed for ${reserva.id}:`, err);

@@ -638,7 +638,116 @@ export async function sendReminderEmail(data: ReservaEmailData) {
   });
 }
 
-// ── Email 6: Notificación admin ────────────────────────────────
+// ── Email 6: Recordatorio + reconfirmación 1-click ────────────
+
+interface ReminderReconfirmData {
+  nombre: string;
+  apellido: string;
+  email: string;
+  fecha: string;
+  hora: string;
+  personas: number;
+  cancel_token: string;
+  reconfirmacion_token: string;
+  idioma: string;
+}
+
+function reminderReconfirmHtml(data: ReminderReconfirmData): string {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const cancelUrl       = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const reconfirmUrl    = `${APP_URL}/api/reconfirmar?t=${data.reconfirmacion_token}`;
+
+  const t: Record<string, Record<string, string>> = {
+    es: {
+      eyebrow:   "Recordatorio · mañana",
+      heading:   "Te esperamos.",
+      sub:       `Hola ${data.nombre}, mañana tienes una reserva con nosotros. ¿Confirmas tu asistencia?`,
+      date:      "Fecha",
+      time:      "Hora",
+      guests:    "Personas",
+      address:   "Dónde",
+      cta:       "Confirmo mi asistencia ✓",
+      cancel:    "Cancelar reserva",
+    },
+    ca: {
+      eyebrow:   "Recordatori · demà",
+      heading:   "T'esperem.",
+      sub:       `Hola ${data.nombre}, demà tens una reserva amb nosaltres. Confirmes la teva assistència?`,
+      date:      "Data",
+      time:      "Hora",
+      guests:    "Persones",
+      address:   "On",
+      cta:       "Confirmo la meva assistència ✓",
+      cancel:    "Cancel·lar reserva",
+    },
+    en: {
+      eyebrow:   "Reminder · tomorrow",
+      heading:   "See you tomorrow.",
+      sub:       `Hi ${data.nombre}, you have a reservation with us tomorrow. Can you confirm your attendance?`,
+      date:      "Date",
+      time:      "Time",
+      guests:    "Guests",
+      address:   "Where",
+      cta:       "Confirm my attendance ✓",
+      cancel:    "Cancel booking",
+    },
+  };
+  const tx = t[data.idioma] ?? t.es;
+
+  const body = `
+    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
+    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
+      ${detalleRows([
+        [tx.date,    displayDate],
+        [tx.time,    displayHora],
+        [tx.guests,  `${data.personas}`],
+        [tx.address, RESTAURANT_ADDRESS],
+      ])}
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
+      <tr>
+        <td style="border-radius:2px;background-color:#b12a2a">
+          <a href="${reconfirmUrl}" class="syne"
+             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:18px 36px">
+            ${tx.cta}
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0">
+      <a href="${cancelUrl}" class="inter"
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#333333;text-decoration:underline;letter-spacing:1px">
+        ${tx.cancel}
+      </a>
+    </p>`;
+
+  return layout(body, `${tx.eyebrow} · ${displayHora}`, data.idioma);
+}
+
+export async function sendReminderWithReconfirmacion(data: ReminderReconfirmData): Promise<void> {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const subjects: Record<string, string> = {
+    es: `Recordatorio: tu reserva es mañana — ¿confirmas? · ${RESTAURANT_NAME}`,
+    ca: `Recordatori: la teva reserva és demà — confirmes? · ${RESTAURANT_NAME}`,
+    en: `Reminder: your booking is tomorrow — can you confirm? · ${RESTAURANT_NAME}`,
+  };
+  const cancelUrl      = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const reconfirmUrl   = `${APP_URL}/api/reconfirmar?t=${data.reconfirmacion_token}`;
+  const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nConfirmar asistencia: ${reconfirmUrl}\nCancelar: ${cancelUrl}`;
+  await getResend().emails.send({
+    from: FROM,
+    to: data.email,
+    subject: subjects[data.idioma] ?? subjects.es,
+    html: reminderReconfirmHtml(data),
+    text,
+  });
+}
+
+// ── Email 7: Notificación admin ────────────────────────────────
 
 export async function sendAdminNotification(data: {
   tipo: "nueva_pendiente" | "cancelacion";
@@ -697,7 +806,7 @@ export async function sendAdminNotification(data: {
   }
 }
 
-// ── Email 7: Admin magic link ──────────────────────────────────
+// ── Email 8: Admin magic link ──────────────────────────────────
 
 export async function sendAdminMagicLinkEmail(to: string, magicUrl: string): Promise<void> {
   const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#111;padding:24px;margin:0">
