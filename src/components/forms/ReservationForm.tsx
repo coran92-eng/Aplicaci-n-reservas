@@ -547,24 +547,6 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
             {errors.telefono && <p id="telefono-error" className="text-xs text-destructive">{errMsg(errors.telefono.message)}</p>}
           </div>
 
-          {/* Alergias */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">{t("alergias")}</p>
-            <div className="grid grid-cols-2 gap-2">
-              {ALERGIAS_KEYS.map((key) => (
-                <label key={key} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    value={key}
-                    className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
-                    {...register("alergias")}
-                  />
-                  <span className="text-sm text-foreground">{t(`alergias_${key}` as Parameters<typeof t>[0])}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="notas">{t("notas")}</Label>
             <Textarea id="notas" placeholder={t("notas_placeholder")} rows={2} {...register("notas_cliente")} />
@@ -610,11 +592,6 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
               </div>
             </div>
           )}
-
-          {/* Cancellation policy */}
-          <p className="text-xs text-muted-foreground text-center px-2 leading-relaxed">
-            {t("cancel_policy")}
-          </p>
 
           <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={submitting}>
             {submitting ? t("submitting") : t("submit")}

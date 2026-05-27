@@ -318,7 +318,7 @@ export function ReservationList({
               {formatTime(reserva.hora)}
             </span>
 
-            {/* Name + phone */}
+            {/* Name + phone + notes */}
             <div className="flex-1 min-w-0">
               <p
                 className={cn(
@@ -331,6 +331,11 @@ export function ReservationList({
               {!isCancelled && reserva.telefono && (
                 <p className="text-sm text-gray-400 mt-0.5 truncate">
                   {reserva.telefono}
+                </p>
+              )}
+              {!isCancelled && reserva.notas_cliente && (
+                <p className="text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 mt-1 line-clamp-2 leading-snug">
+                  {reserva.notas_cliente}
                 </p>
               )}
             </div>
