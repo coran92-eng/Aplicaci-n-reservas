@@ -6,13 +6,14 @@ function getResend(): Resend {
   return new Resend(key);
 }
 
-const FROM           = process.env.RESEND_FROM_EMAIL         ?? "onboarding@resend.dev";
-const APP_URL        = process.env.NEXT_PUBLIC_APP_URL       ?? "http://localhost:3000";
-const RESTAURANT_NAME    = process.env.RESTAURANT_NAME           ?? "Corte de Manga";
-const RESTAURANT_PHONE   = process.env.RESTAURANT_PHONE          ?? "+34 623 216 562";
-const RESTAURANT_ADDRESS = process.env.RESTAURANT_ADDRESS        ?? "Comte d'Urgell 108, 08011 Barcelona";
+const APP_URL            = process.env.NEXT_PUBLIC_APP_URL        ?? "http://localhost:3000";
+const RESTAURANT_NAME    = process.env.RESTAURANT_NAME            ?? "Corte de Manga";
+const RESTAURANT_PHONE   = process.env.RESTAURANT_PHONE           ?? "+34 623 216 562";
+const RESTAURANT_ADDRESS = process.env.RESTAURANT_ADDRESS         ?? "Comte d'Urgell 108, 08011 Barcelona";
 const RESTAURANT_MAPS    = process.env.RESTAURANT_GOOGLE_MAPS_URL ?? "https://maps.google.com";
-const RESTAURANT_LOGO    = process.env.RESTAURANT_LOGO_URL       ?? "";
+const RESTAURANT_LOGO    = process.env.RESTAURANT_LOGO_URL        ?? "";
+const FROM_EMAIL         = process.env.RESEND_FROM_EMAIL          ?? "onboarding@resend.dev";
+const FROM               = `${RESTAURANT_NAME} <${FROM_EMAIL}>`;
 
 interface ReservaEmailData {
   nombre: string;
