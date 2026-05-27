@@ -7,19 +7,23 @@ import { approveReserva, rejectReserva } from "@/actions/reservas";
 import { formatTime } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
 
+function formatDate(fecha: string): string {
+  const [y, m, d] = fecha.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
+    weekday: "short", day: "numeric", month: "short",
+  });
+}
+
 interface Props {
   reservas: Reserva[];
-  formatDate: (fecha: string) => string;
 }
 
 type CardState = "idle" | "approving" | "rejecting" | "done_ok" | "done_reject" | "error";
 
 function PendienteCard({
   reserva,
-  formatDate,
 }: {
   reserva: Reserva;
-  formatDate: (fecha: string) => string;
 }) {
   const [state, setState] = useState<CardState>("idle");
   const [confirmReject, setConfirmReject] = useState(false);
@@ -152,11 +156,11 @@ function PendienteCard({
   );
 }
 
-export function PendientesList({ reservas, formatDate }: Props) {
+export function PendientesList({ reservas }: Props) {
   return (
     <div className="space-y-4">
       {reservas.map((r) => (
-        <PendienteCard key={r.id} reserva={r} formatDate={formatDate} />
+        <PendienteCard key={r.id} reserva={r} />
       ))}
     </div>
   );

@@ -5,13 +5,6 @@ import { Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(fecha: string): string {
-  const [y, m, d] = fecha.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
-    weekday: "short", day: "numeric", month: "short",
-  });
-}
-
 export default async function PendientesPage() {
   let reservas: Reserva[] = [];
   let dbError: string | null = null;
@@ -67,7 +60,7 @@ export default async function PendientesPage() {
           <p className="text-gray-500">Todo al día</p>
         </div>
       ) : (
-        <PendientesList reservas={reservas} formatDate={formatDate} />
+        <PendientesList reservas={reservas} />
       )}
     </div>
   );
