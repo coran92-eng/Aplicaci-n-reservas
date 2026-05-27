@@ -2,6 +2,10 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+const EMBED_ORIGINS = [
+  "https://cartacorte.netlify.app",
+];
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -26,6 +30,24 @@ const securityHeaders = [
   },
 ];
 
+// Headers para la ruta /embed — permite framing desde los orígenes autorizados
+const embedHeaders = [
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: blob: https:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      "frame-src https://calendar.google.com https://www.google.com https://maps.google.com",
+      `frame-ancestors 'self' ${EMBED_ORIGINS.join(" ")}`,
+    ].join("; "),
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
@@ -33,6 +55,11 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+      // La regla más específica va después y sobreescribe los headers conflictivos
+      {
+        source: "/:locale/embed",
+        headers: embedHeaders,
       },
     ];
   },
