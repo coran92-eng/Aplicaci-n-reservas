@@ -24,7 +24,7 @@ export default async function ConfirmadaPage({
   searchParams,
 }: {
   params: { locale: string; id: string };
-  searchParams: { emailError?: string };
+  searchParams: { emailError?: string; token?: string };
 }) {
   const emailError = searchParams.emailError;
   const t = await getTranslations("confirmation");
@@ -49,7 +49,7 @@ export default async function ConfirmadaPage({
 
   const reserva = data as Reserva | null;
 
-  if (!reserva) notFound();
+  if (!reserva || reserva.cancel_token !== searchParams.token) notFound();
 
   const isPending = reserva.estado === "pendiente_aprobacion";
 
@@ -92,7 +92,7 @@ export default async function ConfirmadaPage({
 
         {reserva.notas_cliente && (
           <div className="rounded-lg bg-muted border border-border p-4 mb-6">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Comentarios</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{t("comments")}</p>
             <p className="text-sm">{reserva.notas_cliente}</p>
           </div>
         )}
@@ -102,9 +102,24 @@ export default async function ConfirmadaPage({
             {t("pending_info")}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground text-center mb-6">
-            {t("cancel_info")}
-          </p>
+          <div className="space-y-2 mb-6">
+            <p className="text-sm text-muted-foreground text-center">{t("cancel_info")}</p>
+            <p className="text-center">
+              <Link
+                href={`/${locale}/modificar/${reserva.cancel_token}`}
+                className="text-sm text-muted-foreground underline hover:text-foreground"
+              >
+                {t("modify_link")}
+              </Link>
+            </p>
+          </div>
+        )}
+
+        {emailError && (
+          <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3 mb-6">
+            <p className="text-sm text-red-400 font-medium">{t("email_not_sent")}</p>
+            <p className="text-xs text-red-300 mt-1 font-mono break-all">{emailError}</p>
+          </div>
         )}
 
         {emailError && (

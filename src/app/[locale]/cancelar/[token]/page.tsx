@@ -40,8 +40,8 @@ export default function CancelarPage({
 
   if (state === "success") {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border p-8 text-center">
+      <main className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-card rounded-xl border border-border p-8 text-center">
           <CheckCircle className="h-14 w-14 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">{t("success_title")}</h1>
           <p className="text-muted-foreground">{t("success_info")}</p>
@@ -52,10 +52,10 @@ export default function CancelarPage({
 
   if (state === "error") {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-sm border p-8 text-center">
+      <main className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-card rounded-xl border border-border p-8 text-center">
           <XCircle className="h-14 w-14 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Error</h1>
+          <h1 className="text-2xl font-bold mb-2">{t("error_title")}</h1>
           <p className="text-muted-foreground">{getErrorMessage(errorKey)}</p>
         </div>
       </main>
@@ -63,8 +63,8 @@ export default function CancelarPage({
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-sm border p-8 text-center">
+    <main className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-card rounded-xl border border-border p-8 text-center">
         <AlertCircle className="h-14 w-14 text-amber-500 mx-auto mb-4" />
         <h1 className="text-2xl font-bold mb-2">{t("title")}</h1>
         <p className="text-muted-foreground mb-8">{t("info")}</p>

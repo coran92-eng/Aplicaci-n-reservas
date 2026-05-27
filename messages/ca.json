@@ -21,9 +21,16 @@
     "select_date_first": "Selecciona primer una data",
     "no_slots": "No hi ha franges disponibles per a aquesta data",
     "continuar": "Continuar",
-    "volver": "Tornar a les meves dades",
+    "volver": "Tornar a disponibilitat",
     "paso_datos": "Les teves dades",
-    "paso_fecha": "Data i hora",
+    "paso_fecha": "Disponibilitat",
+    "alergias": "Al·lèrgies / intoleràncies (opcional)",
+    "alergias_vegano": "Vegà / vegetarià",
+    "alergias_celiaco": "Celíac (sense gluten)",
+    "alergias_lactosa": "Sense lactosa",
+    "alergias_frutos_secos": "Sense fruits secs",
+    "alternativas": "Provem amb una altra hora?",
+    "cancel_policy": "Cancel·lació gratuïta fins a 24 hores abans de la reserva. Per a canvis el mateix dia, truca'ns directament.",
     "franja_horaria": "Franja",
     "franja_todo": "Tot el dia",
     "franja_almuerzo": "Dinar",
@@ -61,10 +68,42 @@
     "time": "Hora",
     "people": "Persones",
     "name": "Nom",
+    "comments": "Comentaris",
+    "email_not_sent": "Correu no enviat",
     "cancel_info": "Necessites cancel·lar? Fes servir l'enllaç que t'hem enviat per correu.",
     "pending_info": "Els grups de més de 7 persones requereixen confirmació manual. Rebràs un correu amb la confirmació en les properes hores.",
     "address": "Com arribar",
+    "back_home": "Tornar a l'inici",
+    "modify_link": "Canviar data o hora"
+  },
+  "modification": {
+    "title": "Modificar reserva",
+    "subtitle": "Selecciona la nova data i hora",
+    "current": "Reserva actual",
+    "submit": "Desar canvis",
+    "submitting": "Desant...",
+    "success": "Reserva modificada. T'hem enviat un nou correu de confirmació.",
+    "error_not_found": "No hem trobat la teva reserva.",
+    "error_cannot_modify": "Aquesta reserva no es pot modificar. Truca'ns si necessites ajuda.",
+    "error_token_expired": "L'enllaç ha caducat. Truca'ns per modificar la teva reserva.",
+    "error_fecha_past": "La nova data no pot ser en el passat.",
+    "error_dia_cerrado": "El restaurant està tancat aquest dia.",
+    "error_franja_bloqueada": "Aquella franja horària no està disponible.",
+    "error_generic": "S'ha produït un error. Si us plau, truca'ns.",
     "back_home": "Tornar a l'inici"
+  },
+  "errors_page": {
+    "title": "Alguna cosa ha anat malament",
+    "message": "Ha ocorregut un error inesperat. Si us plau, torna-ho a intentar.",
+    "phone_help": "Si el problema persisteix, truca'ns al",
+    "retry": "Tornar a intentar",
+    "home": "Anar a l'inici"
+  },
+  "not_found": {
+    "title": "Pàgina no trobada",
+    "message": "L'enllaç pot haver caducat o no ser correcte.",
+    "phone_help": "Necessites ajuda? Truca'ns al",
+    "home": "Tornar a l'inici"
   },
   "cancellation": {
     "title": "Cancel·lar reserva",
@@ -76,11 +115,17 @@
     "error_not_found": "No hem trobat la teva reserva. És possible que l'enllaç hagi caducat.",
     "error_already_cancelled": "Aquesta reserva ja estava cancel·lada.",
     "error_cannot_cancel": "No és possible cancel·lar aquesta reserva. Truca'ns si necessites ajuda.",
+    "error_title": "Error",
     "error_generic": "S'ha produït un error. Si us plau, truca'ns."
   },
   "privacy": {
     "title": "Política de privacitat",
     "back": "Tornar"
+  },
+  "reconfirmado": {
+    "title": "Gràcies!",
+    "subtitle": "La teva assistència ha quedat confirmada. T'esperem!",
+    "back_home": "Tornar a l'inici"
   },
   "nav": {
     "lang": "Idioma"

@@ -21,9 +21,16 @@
     "select_date_first": "Please select a date first",
     "no_slots": "No available time slots for this date",
     "continuar": "Continue",
-    "volver": "Back to my details",
+    "volver": "Back to availability",
     "paso_datos": "Your details",
-    "paso_fecha": "Date & time",
+    "paso_fecha": "Availability",
+    "alergias": "Allergies / dietary requirements (optional)",
+    "alergias_vegano": "Vegan / vegetarian",
+    "alergias_celiaco": "Coeliac (gluten-free)",
+    "alergias_lactosa": "Lactose-free",
+    "alergias_frutos_secos": "Nut-free",
+    "alternativas": "Would you like to try another time?",
+    "cancel_policy": "Free cancellation up to 24 hours before your reservation. For same-day changes, please call us directly.",
     "franja_horaria": "Shift",
     "franja_todo": "All day",
     "franja_almuerzo": "Lunch",
@@ -61,10 +68,42 @@
     "time": "Time",
     "people": "Guests",
     "name": "Name",
+    "comments": "Comments",
+    "email_not_sent": "Email not sent",
     "cancel_info": "Need to cancel? Use the link we sent to your email.",
     "pending_info": "Groups of more than 7 guests require manual confirmation. You'll receive a confirmation email within the next few hours.",
     "address": "How to get here",
+    "back_home": "Back to home",
+    "modify_link": "Change date or time"
+  },
+  "modification": {
+    "title": "Modify booking",
+    "subtitle": "Select a new date and time",
+    "current": "Current booking",
+    "submit": "Save changes",
+    "submitting": "Saving...",
+    "success": "Booking updated. We've sent you a new confirmation email.",
+    "error_not_found": "We couldn't find your booking.",
+    "error_cannot_modify": "This booking cannot be modified. Please call us.",
+    "error_token_expired": "This link has expired. Please call us to change your reservation.",
+    "error_fecha_past": "The new date cannot be in the past.",
+    "error_dia_cerrado": "The restaurant is closed on that day.",
+    "error_franja_bloqueada": "That time slot is not available.",
+    "error_generic": "An error occurred. Please call us.",
     "back_home": "Back to home"
+  },
+  "errors_page": {
+    "title": "Something went wrong",
+    "message": "An unexpected error occurred. Please try again.",
+    "phone_help": "If the problem persists, call us at",
+    "retry": "Try again",
+    "home": "Go home"
+  },
+  "not_found": {
+    "title": "Page not found",
+    "message": "The link may have expired or be incorrect.",
+    "phone_help": "Need help? Call us at",
+    "home": "Back home"
   },
   "cancellation": {
     "title": "Cancel booking",
@@ -76,11 +115,17 @@
     "error_not_found": "We couldn't find your booking. The link may have expired.",
     "error_already_cancelled": "This booking was already cancelled.",
     "error_cannot_cancel": "This booking cannot be cancelled. Please call us for help.",
+    "error_title": "Error",
     "error_generic": "An error occurred. Please call us."
   },
   "privacy": {
     "title": "Privacy policy",
     "back": "Back"
+  },
+  "reconfirmado": {
+    "title": "Thanks!",
+    "subtitle": "Your attendance has been confirmed. See you soon!",
+    "back_home": "Back to home"
   },
   "nav": {
     "lang": "Language"

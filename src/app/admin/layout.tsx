@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Search, Clock, Map } from "lucide-react";
 import { logoutAdmin } from "@/actions/admin";
+import { PendingBadge } from "@/components/admin/PendingBadge";
+import { PushNotificationToggle } from "@/components/admin/PushNotificationToggle";
+import { ServiceWorkerRegistrar } from "@/components/admin/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
   title: "Admin · Corte de Manga",
@@ -15,9 +18,32 @@ export default function AdminLayout({
 }) {
   return (
     <div className="admin-theme min-h-screen bg-white text-gray-900">
+      <ServiceWorkerRegistrar />
       <div className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white text-xs">
         <span className="font-semibold">Corte de Manga · Admin</span>
         <div className="flex items-center gap-3">
+          <Link
+            href="/admin/pendientes"
+            className="flex items-center gap-1 opacity-70 hover:opacity-100"
+          >
+            <Clock className="h-3.5 w-3.5" />
+            Pendientes
+            <PendingBadge />
+          </Link>
+          <Link
+            href="/admin/mapa"
+            className="flex items-center gap-1 opacity-70 hover:opacity-100"
+          >
+            <Map className="h-3.5 w-3.5" />
+            Mapa de sala
+          </Link>
+          <Link
+            href="/admin/buscar"
+            className="flex items-center gap-1 opacity-70 hover:opacity-100"
+          >
+            <Search className="h-3.5 w-3.5" />
+            Buscar
+          </Link>
           <Link
             href="/admin/ajustes"
             className="flex items-center gap-1 opacity-70 hover:opacity-100"
@@ -25,6 +51,7 @@ export default function AdminLayout({
             <Settings className="h-3.5 w-3.5" />
             Ajustes
           </Link>
+          <PushNotificationToggle />
           <form action={logoutAdmin}>
             <button
               type="submit"

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { X, Phone, MessageCircle, Check, UserX, Ban, Save, Pencil, ThumbsUp, ThumbsDown, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { cn, formatTime } from "@/lib/utils";
+import { cn, formatTime, todayBarcelona } from "@/lib/utils";
 import { updateEstadoReserva, updateNotasInternas, updateReserva, approveReserva, rejectReserva } from "@/actions/reservas";
 import type { Reserva } from "@/lib/supabase/types";
+import { WhatsAppLog } from "@/components/admin/WhatsAppLog";
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   confirmada:           { label: "Confirmada",  className: "bg-gray-100 text-gray-700" },
@@ -90,7 +91,13 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
       });
       setIsEditing(false);
     } else {
-      setEditError("Error al guardar. Inténtalo de nuevo.");
+      const errorMessages: Record<string, string> = {
+        not_found: "Reserva no encontrada.",
+        fecha_past: "La fecha no puede ser en el pasado.",
+        dia_cerrado: "El restaurante está cerrado ese día.",
+        franja_bloqueada: "Esa franja horaria no está disponible.",
+      };
+      setEditError(errorMessages[result.error ?? ""] ?? "Error al guardar. Inténtalo de nuevo.");
     }
     setEditSaving(false);
   }
@@ -114,7 +121,8 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
   const status = STATUS_CONFIG[reserva.estado] ?? STATUS_CONFIG.confirmada;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white text-gray-900 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center lg:bg-black/40 bg-white text-gray-900">
+    <div className="w-full lg:max-w-2xl lg:rounded-2xl lg:shadow-2xl lg:max-h-[90vh] bg-white text-gray-900 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <Button variant="ghost" size="icon" onClick={onClose} className="admin-btn text-gray-700 hover:bg-gray-100 shrink-0">
@@ -193,6 +201,7 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Fecha</label>
                 <input
                   type="date"
+                  min={todayBarcelona()}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900"
                   value={editData.fecha}
                   onChange={e => setEditData(d => ({ ...d, fecha: e.target.value }))}
@@ -267,9 +276,19 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
                   </Button>
                 </a>
               </div>
-              <a href={`mailto:${reserva.email}`} className="block text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                {reserva.email}
-              </a>
+              <div className="flex items-center justify-between">
+                <a href={`mailto:${reserva.email}`} className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                  {reserva.email}
+                </a>
+                {reserva.cliente_id && (
+                  <a
+                    href={`/admin/clientes/${reserva.cliente_id}`}
+                    className="text-xs text-gray-400 hover:text-gray-900 transition-colors shrink-0 ml-3"
+                  >
+                    Ver perfil →
+                  </a>
+                )}
+              </div>
             </div>
 
             {/* Details */}
@@ -316,6 +335,13 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
                 {saving ? "Guardando..." : "Guardar notas"}
               </Button>
             </div>
+
+            {/* WhatsApp */}
+            {reserva.telefono && (
+              <div className="rounded-lg border border-gray-200 p-4">
+                <WhatsAppLog reservaId={reserva.id} telefono={reserva.telefono} />
+              </div>
+            )}
           </>
         )}
       </div>
@@ -444,6 +470,7 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
           )
         )}
       </div>
+    </div>
     </div>
   );
 }

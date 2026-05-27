@@ -10,32 +10,12 @@ const locales = [
   { code: "en", label: "EN" },
 ];
 
-const FORM_STORAGE_KEY = "corte_form_draft";
-
 export function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
 
   function switchLocale(newLocale: string) {
-    // Guardar datos del formulario si existe
-    if (typeof window !== "undefined") {
-      const form = document.querySelector("form");
-      if (form) {
-        const formData: Record<string, string> = {};
-        const inputs = form.querySelectorAll("input:not([type=hidden]):not([type=checkbox]), textarea, select");
-        inputs.forEach((el) => {
-          const input = el as HTMLInputElement;
-          if (input.name && input.value) {
-            formData[input.name] = input.value;
-          }
-        });
-        if (Object.keys(formData).length > 0) {
-          sessionStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
-        }
-      }
-    }
-
     const segments = pathname.split("/");
     segments[1] = newLocale;
     router.push(segments.join("/"));
@@ -65,5 +45,3 @@ export function LanguageSwitcher() {
     </div>
   );
 }
-
-export { FORM_STORAGE_KEY };

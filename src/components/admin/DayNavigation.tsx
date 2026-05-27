@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Home, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, Home, CalendarDays, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { addDaysToDate, todayBarcelona } from "@/lib/utils";
+import { WalkinModal } from "./WalkinModal";
 
 interface Props {
   currentDate: string;
@@ -38,6 +39,7 @@ export function DayNavigation({ currentDate, totalReservas, totalPersonas }: Pro
   const nextDate = addDaysToDate(currentDate, 1);
 
   const [showCal, setShowCal] = useState(false);
+  const [showWalkin, setShowWalkin] = useState(false);
   const [calYear, setCalYear] = useState(Number(currentDate.split("-")[0]));
   const [calMonth, setCalMonth] = useState(Number(currentDate.split("-")[1]));
   const calRef = useRef<HTMLDivElement>(null);
@@ -181,11 +183,33 @@ export function DayNavigation({ currentDate, totalReservas, totalPersonas }: Pro
       </div>
 
       {/* Stats row */}
-      <div className="flex items-center justify-center gap-4 px-4 pb-3 text-sm text-gray-500">
-        <span><strong className="text-gray-900 font-semibold">{totalReservas}</strong> reservas</span>
-        <span className="text-gray-300">·</span>
-        <span><strong className="text-gray-900 font-semibold">{totalPersonas}</strong> personas</span>
+      <div className="flex items-center justify-between px-4 pb-3">
+        <div className="flex items-center gap-4 text-sm text-gray-500">
+          <span><strong className="text-gray-900 font-semibold">{totalReservas}</strong> reservas</span>
+          <span className="text-gray-300">·</span>
+          <span><strong className="text-gray-900 font-semibold">{totalPersonas}</strong> personas</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="admin-btn gap-1.5 text-gray-700 border-gray-300 text-xs"
+          onClick={() => setShowWalkin(true)}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Walk-in
+        </Button>
       </div>
+
+      {showWalkin && (
+        <WalkinModal
+          defaultDate={currentDate}
+          onClose={() => setShowWalkin(false)}
+          onCreated={() => {
+            setShowWalkin(false);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -20,8 +20,27 @@ export interface Reserva {
   estado: EstadoReserva;
   notas_cliente: string | null;
   notas_internas: string | null;
+  alergias: string[];
   idioma: Idioma;
   cancel_token: string;
+  cancel_token_expires_at: string | null;
+  reconfirmado: boolean;
+  reconfirmacion_token: string | null;
+  recordatorio_enviado: boolean;
+  cliente_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Cliente {
+  id: string;
+  email: string;
+  nombre: string | null;
+  apellido: string | null;
+  telefono: string | null;
+  tags: string[];
+  notas: string | null;
+  visitas: number;
   created_at: string;
   updated_at: string;
 }
@@ -60,14 +79,26 @@ export interface CancelarReservaResult {
   idioma?: string;
 }
 
+export interface WhatsAppLog {
+  id: string;
+  reserva_id: string;
+  template: string;
+  phone: string;
+  status: "sent" | "failed" | "delivered" | "read";
+  message_id: string | null;
+  error: string | null;
+  sent_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
       reservas: {
         Row: Reserva;
-        Insert: Omit<Reserva, "id" | "created_at" | "updated_at" | "cancel_token"> & {
+        Insert: Omit<Reserva, "id" | "created_at" | "updated_at" | "cancel_token" | "cancel_token_expires_at"> & {
           id?: string;
           cancel_token?: string;
+          cancel_token_expires_at?: string;
         };
         Update: Partial<Omit<Reserva, "id" | "created_at">>;
         Relationships: [];

@@ -25,6 +25,32 @@ interface ReservaEmailData {
   idioma: string;
 }
 
+// ── ICS calendar attachment ────────────────────────────────────
+
+function generateICS(data: ReservaEmailData): string {
+  const [year, month, day] = data.fecha.split("-").map(Number);
+  const [hour, minute] = data.hora.slice(0, 5).split(":").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const dtstart = `${year}${pad(month)}${pad(day)}T${pad(hour)}${pad(minute)}00`;
+  const dtend   = `${year}${pad(month)}${pad(day)}T${pad(hour + 2)}${pad(minute)}00`;
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    `PRODID:-//${RESTAURANT_NAME}//Reservas//ES`,
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `DTSTART:${dtstart}`,
+    `DTEND:${dtend}`,
+    `SUMMARY:Reserva en ${RESTAURANT_NAME}`,
+    `DESCRIPTION:Reserva para ${data.personas} personas.`,
+    `LOCATION:${RESTAURANT_ADDRESS}`,
+    `UID:${data.cancel_token}@reservas`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
 // ── Helpers ────────────────────────────────────────────────────
 
 function langAttr(idioma: string): string {
@@ -379,33 +405,136 @@ function cancellationHtml(data: ReservaEmailData): string {
   return layout(body, `${displayDate} · ${displayHora}`, data.idioma);
 }
 
+// ── Email 4: Rechazo ──────────────────────────────────────────
+
+function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const bookUrl     = `${APP_URL}/${data.idioma}`;
+
+  const t: Record<string, Record<string, string>> = {
+    es: {
+      eyebrow:  "Solicitud no disponible",
+      heading:  "Lo sentimos.",
+      sub:      `Hola ${data.nombre}, lamentablemente no podemos confirmar tu solicitud para ${data.personas} personas el ${displayDate} a las ${displayHora}.`,
+      notice:   "En estas fechas no tenemos disponibilidad para grupos de este tamaño. Te invitamos a intentarlo con otra fecha o a llamarnos directamente.",
+      call:     "¿Hablamos?",
+      rebook:   "Intentar otra fecha",
+    },
+    ca: {
+      eyebrow:  "Sol·licitud no disponible",
+      heading:  "Ho sentim.",
+      sub:      `Hola ${data.nombre}, lamentablement no podem confirmar la teva sol·licitud per a ${data.personas} persones el ${displayDate} a les ${displayHora}.`,
+      notice:   "En aquestes dates no tenim disponibilitat per a grups d'aquesta mida. T'invitem a intentar-ho amb una altra data o a trucar-nos directament.",
+      call:     "Parlem?",
+      rebook:   "Intentar una altra data",
+    },
+    en: {
+      eyebrow:  "Request unavailable",
+      heading:  "We're sorry.",
+      sub:      `Hi ${data.nombre}, unfortunately we cannot confirm your request for ${data.personas} guests on ${displayDate} at ${displayHora}.`,
+      notice:   "We don't have availability for groups of this size on those dates. We invite you to try another date or give us a call.",
+      call:     "Shall we talk?",
+      rebook:   "Try another date",
+    },
+  };
+  const tx = t[data.idioma] ?? t.es;
+
+  const body = `
+    <!--eyebrow-->
+    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#b12a2a">${tx.eyebrow}</p>
+
+    <!--heading-->
+    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+
+    <!--subtext-->
+    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+
+    <!--notice — left red border-->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
+      <tr>
+        <td width="3" style="background-color:#b12a2a;border-radius:2px">&nbsp;</td>
+        <td style="padding:14px 0 14px 20px">
+          <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:14px;font-weight:300;color:#888888;line-height:1.7">${tx.notice}</p>
+        </td>
+      </tr>
+    </table>
+
+    <!--call-->
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#444444">
+      ${tx.call} &nbsp;
+      <a href="tel:${RESTAURANT_PHONE.replace(/\s/g, "")}" style="color:#ebebeb;text-decoration:none;font-weight:600">${RESTAURANT_PHONE}</a>
+    </p>
+
+    <!--rebook CTA — outlined-->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td style="border:1px solid #333333;border-radius:2px">
+          <a href="${bookUrl}" class="syne"
+             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:16px 32px">
+            ${tx.rebook}
+          </a>
+        </td>
+      </tr>
+    </table>`;
+
+  return layout(body, `${displayDate} · ${displayHora}`, data.idioma);
+}
+
 // ── Exports ────────────────────────────────────────────────────
 
 export async function sendConfirmationEmail(data: ReservaEmailData) {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
   const subjects: Record<string, string> = {
-    es: `Reserva confirmada · ${data.hora.slice(0, 5)} · ${formatFechaEmail(data.fecha, "es")}`,
-    ca: `Reserva confirmada · ${data.hora.slice(0, 5)} · ${formatFechaEmail(data.fecha, "ca")}`,
-    en: `Booking confirmed · ${formatFechaEmail(data.fecha, "en")} at ${data.hora.slice(0, 5)}`,
+    es: `Reserva confirmada · ${displayHora} · ${formatFechaEmail(data.fecha, "es")}`,
+    ca: `Reserva confirmada · ${displayHora} · ${formatFechaEmail(data.fecha, "ca")}`,
+    en: `Booking confirmed · ${formatFechaEmail(data.fecha, "en")} at ${displayHora}`,
   };
+  const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const text = `${RESTAURANT_NAME}\n\n${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
+  const icsContent = generateICS(data);
   await getResend().emails.send({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: confirmationHtml(data),
+    text,
+    attachments: [{ filename: "reserva.ics", content: Buffer.from(icsContent).toString("base64") }],
   });
 }
 
 export async function sendPendingEmail(data: ReservaEmailData) {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
   const subjects: Record<string, string> = {
     es: `Solicitud recibida · ${RESTAURANT_NAME}`,
     ca: `Sol·licitud rebuda · ${RESTAURANT_NAME}`,
     en: `Request received · ${RESTAURANT_NAME}`,
   };
+  const text = `${RESTAURANT_NAME}\n\nSolicitud recibida: ${data.personas} pers. · ${displayDate} · ${displayHora}\n\nTe avisaremos en las próximas horas.\n\n${RESTAURANT_PHONE}`;
   await getResend().emails.send({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: pendingHtml(data),
+    text,
+  });
+}
+
+export async function sendRejectionEmail(data: Omit<ReservaEmailData, "cancel_token">) {
+  const subjects: Record<string, string> = {
+    es: `Tu solicitud · ${RESTAURANT_NAME}`,
+    ca: `La teva sol·licitud · ${RESTAURANT_NAME}`,
+    en: `Your request · ${RESTAURANT_NAME}`,
+  };
+  const text = `${RESTAURANT_NAME}\n\nLo sentimos, no podemos confirmar tu solicitud.\n\n${RESTAURANT_PHONE}`;
+  await getResend().emails.send({
+    from: FROM,
+    to: data.email,
+    subject: subjects[data.idioma] ?? subjects.es,
+    html: rejectionHtml(data),
+    text,
   });
 }
 
@@ -415,10 +544,286 @@ export async function sendCancellationEmail(data: ReservaEmailData) {
     ca: `Fins aviat · ${RESTAURANT_NAME}`,
     en: `Until next time · ${RESTAURANT_NAME}`,
   };
+  const text = `${RESTAURANT_NAME}\n\nTu reserva ha sido cancelada. ¡Hasta pronto!\n\n${RESTAURANT_PHONE}`;
   await getResend().emails.send({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
     html: cancellationHtml(data),
+    text,
+  });
+}
+
+// ── Email 5: Recordatorio 24h ──────────────────────────────────
+
+function reminderHtml(data: ReservaEmailData): string {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const cancelUrl   = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+
+  const t: Record<string, Record<string, string>> = {
+    es: {
+      eyebrow:  "Recordatorio · mañana",
+      heading:  "Te esperamos.",
+      sub:      `Hola ${data.nombre}, este es un recordatorio de tu reserva de mañana. ¡Te esperamos!`,
+      date:     "Fecha",
+      time:     "Hora",
+      guests:   "Personas",
+      address:  "Dónde",
+      cancel:   "Cancelar reserva",
+    },
+    ca: {
+      eyebrow:  "Recordatori · demà",
+      heading:  "T'esperem.",
+      sub:      `Hola ${data.nombre}, aquest és un recordatori de la teva reserva de demà. T'esperem!`,
+      date:     "Data",
+      time:     "Hora",
+      guests:   "Persones",
+      address:  "On",
+      cancel:   "Cancel·lar reserva",
+    },
+    en: {
+      eyebrow:  "Reminder · tomorrow",
+      heading:  "See you tomorrow.",
+      sub:      `Hi ${data.nombre}, this is a reminder about your booking tomorrow. We look forward to seeing you!`,
+      date:     "Date",
+      time:     "Time",
+      guests:   "Guests",
+      address:  "Where",
+      cancel:   "Cancel booking",
+    },
+  };
+  const tx = t[data.idioma] ?? t.es;
+
+  const body = `
+    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
+    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:48px">
+      ${detalleRows([
+        [tx.date,    displayDate],
+        [tx.time,    displayHora],
+        [tx.guests,  `${data.personas}`],
+        [tx.address, RESTAURANT_ADDRESS],
+      ])}
+    </table>
+    <p style="margin:0">
+      <a href="${cancelUrl}" class="inter"
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#333333;text-decoration:underline;letter-spacing:1px">
+        ${tx.cancel}
+      </a>
+    </p>`;
+
+  return layout(body, `${tx.eyebrow} · ${displayHora}`, data.idioma);
+}
+
+export async function sendReminderEmail(data: ReservaEmailData) {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const subjects: Record<string, string> = {
+    es: `Recordatorio: mañana a las ${displayHora} · ${RESTAURANT_NAME}`,
+    ca: `Recordatori: demà a les ${displayHora} · ${RESTAURANT_NAME}`,
+    en: `Reminder: tomorrow at ${displayHora} · ${RESTAURANT_NAME}`,
+  };
+  const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
+  const icsContent = generateICS(data);
+  await getResend().emails.send({
+    from: FROM,
+    to: data.email,
+    subject: subjects[data.idioma] ?? subjects.es,
+    html: reminderHtml(data),
+    text,
+    attachments: [{ filename: "reserva.ics", content: Buffer.from(icsContent).toString("base64") }],
+  });
+}
+
+// ── Email 6: Recordatorio + reconfirmación 1-click ────────────
+
+interface ReminderReconfirmData {
+  nombre: string;
+  apellido: string;
+  email: string;
+  fecha: string;
+  hora: string;
+  personas: number;
+  cancel_token: string;
+  reconfirmacion_token: string;
+  idioma: string;
+}
+
+function reminderReconfirmHtml(data: ReminderReconfirmData): string {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const cancelUrl       = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const reconfirmUrl    = `${APP_URL}/api/reconfirmar?t=${data.reconfirmacion_token}`;
+
+  const t: Record<string, Record<string, string>> = {
+    es: {
+      eyebrow:   "Recordatorio · mañana",
+      heading:   "Te esperamos.",
+      sub:       `Hola ${data.nombre}, mañana tienes una reserva con nosotros. ¿Confirmas tu asistencia?`,
+      date:      "Fecha",
+      time:      "Hora",
+      guests:    "Personas",
+      address:   "Dónde",
+      cta:       "Confirmo mi asistencia ✓",
+      cancel:    "Cancelar reserva",
+    },
+    ca: {
+      eyebrow:   "Recordatori · demà",
+      heading:   "T'esperem.",
+      sub:       `Hola ${data.nombre}, demà tens una reserva amb nosaltres. Confirmes la teva assistència?`,
+      date:      "Data",
+      time:      "Hora",
+      guests:    "Persones",
+      address:   "On",
+      cta:       "Confirmo la meva assistència ✓",
+      cancel:    "Cancel·lar reserva",
+    },
+    en: {
+      eyebrow:   "Reminder · tomorrow",
+      heading:   "See you tomorrow.",
+      sub:       `Hi ${data.nombre}, you have a reservation with us tomorrow. Can you confirm your attendance?`,
+      date:      "Date",
+      time:      "Time",
+      guests:    "Guests",
+      address:   "Where",
+      cta:       "Confirm my attendance ✓",
+      cancel:    "Cancel booking",
+    },
+  };
+  const tx = t[data.idioma] ?? t.es;
+
+  const body = `
+    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
+    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
+      ${detalleRows([
+        [tx.date,    displayDate],
+        [tx.time,    displayHora],
+        [tx.guests,  `${data.personas}`],
+        [tx.address, RESTAURANT_ADDRESS],
+      ])}
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
+      <tr>
+        <td style="border-radius:2px;background-color:#b12a2a">
+          <a href="${reconfirmUrl}" class="syne"
+             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:18px 36px">
+            ${tx.cta}
+          </a>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0">
+      <a href="${cancelUrl}" class="inter"
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#333333;text-decoration:underline;letter-spacing:1px">
+        ${tx.cancel}
+      </a>
+    </p>`;
+
+  return layout(body, `${tx.eyebrow} · ${displayHora}`, data.idioma);
+}
+
+export async function sendReminderWithReconfirmacion(data: ReminderReconfirmData): Promise<void> {
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
+  const displayHora = data.hora.slice(0, 5);
+  const subjects: Record<string, string> = {
+    es: `Recordatorio: tu reserva es mañana — ¿confirmas? · ${RESTAURANT_NAME}`,
+    ca: `Recordatori: la teva reserva és demà — confirmes? · ${RESTAURANT_NAME}`,
+    en: `Reminder: your booking is tomorrow — can you confirm? · ${RESTAURANT_NAME}`,
+  };
+  const cancelUrl      = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const reconfirmUrl   = `${APP_URL}/api/reconfirmar?t=${data.reconfirmacion_token}`;
+  const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nConfirmar asistencia: ${reconfirmUrl}\nCancelar: ${cancelUrl}`;
+  await getResend().emails.send({
+    from: FROM,
+    to: data.email,
+    subject: subjects[data.idioma] ?? subjects.es,
+    html: reminderReconfirmHtml(data),
+    text,
+  });
+}
+
+// ── Email 7: Notificación admin ────────────────────────────────
+
+export async function sendAdminNotification(data: {
+  tipo: "nueva_pendiente" | "cancelacion";
+  nombre: string;
+  apellido: string;
+  fecha: string;
+  hora: string;
+  personas: number;
+  telefono?: string;
+  email?: string;
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) return;
+
+  const displayDate = formatFechaEmail(data.fecha, "es");
+  const displayHora = data.hora.slice(0, 5);
+
+  const subject =
+    data.tipo === "nueva_pendiente"
+      ? `Nueva solicitud pendiente — ${data.nombre} ${data.apellido} · ${displayHora}`
+      : `Cancelación — ${data.nombre} ${data.apellido} · ${displayHora}`;
+
+  const tipoBadge =
+    data.tipo === "nueva_pendiente"
+      ? `<span style="background:#f59e0b;color:#000;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">PENDIENTE</span>`
+      : `<span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">CANCELACIÓN</span>`;
+
+  const rows = [
+    ["Fecha", displayDate],
+    ["Hora", displayHora],
+    ["Personas", `${data.personas}`],
+    ...(data.telefono ? [["Teléfono", `<a href="tel:${data.telefono}">${data.telefono}</a>`]] : []),
+    ...(data.email ? [["Email", `<a href="mailto:${data.email}">${data.email}</a>`]] : []),
+  ]
+    .map(
+      ([label, value]) =>
+        `<tr><td style="padding:6px 0;color:#6b7280;font-size:14px;width:90px">${label}</td><td style="padding:6px 0;font-weight:600;font-size:14px">${value}</td></tr>`
+    )
+    .join("");
+
+  const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f3f4f6;padding:24px;margin:0">
+<div style="max-width:480px;background:#fff;border-radius:8px;padding:24px;border:1px solid #e5e7eb">
+  <p style="margin:0 0 16px">${tipoBadge}</p>
+  <h2 style="margin:0 0 16px;font-size:20px;color:#111">${data.nombre} ${data.apellido}</h2>
+  <table style="width:100%;border-collapse:collapse">${rows}</table>
+  <div style="margin-top:24px">
+    <a href="${APP_URL}/admin" style="background:#111827;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600">Ir al panel →</a>
+  </div>
+</div>
+</body></html>`;
+
+  try {
+    await getResend().emails.send({ from: FROM, to: adminEmail, subject, html });
+  } catch (err) {
+    console.error("[ADMIN_NOTIFY] Failed:", err);
+  }
+}
+
+// ── Email 8: Admin magic link ──────────────────────────────────
+
+export async function sendAdminMagicLinkEmail(to: string, magicUrl: string): Promise<void> {
+  const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#111;padding:24px;margin:0">
+<div style="max-width:400px;background:#1a1a1a;border-radius:8px;padding:28px;border:1px solid #333;margin:0 auto">
+  <p style="color:#b12a2a;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 12px;font-weight:700">${RESTAURANT_NAME.toUpperCase()}</p>
+  <h2 style="margin:0 0 12px;font-size:20px;color:#ebebeb">Enlace de acceso al panel</h2>
+  <p style="margin:0 0 24px;font-size:14px;color:#9ca3af">Válido durante 15 minutos. Si no lo solicitaste, ignora este email.</p>
+  <a href="${magicUrl}" style="display:inline-block;background:#b12a2a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:700">Acceder al panel →</a>
+  <p style="margin:20px 0 0;font-size:12px;color:#6b7280">O copia este enlace en tu navegador:<br><span style="color:#9ca3af;word-break:break-all">${magicUrl}</span></p>
+</div>
+</body></html>`;
+
+  await getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `Acceso al panel — ${RESTAURANT_NAME}`,
+    html,
+    text: `Enlace de acceso al panel de ${RESTAURANT_NAME}:\n\n${magicUrl}\n\nVálido 15 minutos.`,
   });
 }
