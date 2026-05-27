@@ -67,25 +67,8 @@ export default async function HomePage({
               <h1 className="font-heading text-5xl font-bold tracking-tight text-foreground leading-none">
                 Corte<br />de Manga
               </h1>
-              <p className="text-muted-foreground text-sm mt-3 leading-relaxed max-w-xs">
-                Cocina mediterránea de autor · Ambiente íntimo y singular
-              </p>
             </div>
             <LanguageSwitcher />
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-4 text-sm">
-            <a
-              href={`tel:${RESTAURANT_PHONE.replace(/\s/g, "")}`}
-              className="flex items-center gap-2 text-foreground hover:text-[#b12a2a] transition-colors font-medium"
-            >
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#b12a2a]/10 text-[#b12a2a] text-base">
-                ↗
-              </span>
-              {RESTAURANT_PHONE}
-            </a>
-            <span className="text-muted-foreground hidden sm:inline">·</span>
-            <span className="text-muted-foreground text-xs">{RESTAURANT_ADDRESS}</span>
           </div>
         </div>
       </div>
@@ -104,6 +87,23 @@ export default async function HomePage({
           />
         </div>
       </div>
+
+      {/* ── Footer ── */}
+      <footer className="mx-auto max-w-lg px-4 pb-10">
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <a
+            href={`tel:${RESTAURANT_PHONE.replace(/\s/g, "")}`}
+            className="flex items-center gap-2 text-foreground hover:text-[#b12a2a] transition-colors font-medium"
+          >
+            <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#b12a2a]/10 text-[#b12a2a] text-base">
+              ↗
+            </span>
+            {RESTAURANT_PHONE}
+          </a>
+          <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground text-xs">{RESTAURANT_ADDRESS}</span>
+        </div>
+      </footer>
     </main>
   );
 }
