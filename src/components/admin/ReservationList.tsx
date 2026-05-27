@@ -1,54 +1,62 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronRight, Users, AlertCircle, Volume2, VolumeX, CheckCheck } from "lucide-react";
+import {
+  ChevronRight,
+  Users,
+  AlertCircle,
+  Volume2,
+  VolumeX,
+  CheckCheck,
+} from "lucide-react";
 import { cn, formatTime, todayBarcelona, nowBarcelona } from "@/lib/utils";
 import { ReservationModal } from "./ReservationModal";
 import type { Reserva } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { updateEstadoReserva } from "@/actions/reservas";
 
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; dot: string; row: string; text: string }
-> = {
+// ─── Status configuration ────────────────────────────────────────────────────
+
+interface StatusConfig {
+  label: string;
+  border: string;
+  badge: string;
+}
+
+const STATUS_CONFIG: Record<string, StatusConfig> = {
   confirmada: {
     label: "Confirmada",
-    dot: "bg-gray-400",
-    row: "bg-white hover:bg-gray-50",
-    text: "text-gray-900",
+    border: "border-l-4 border-l-green-500",
+    badge: "bg-green-50 text-green-700 border border-green-200",
   },
   llegado: {
     label: "Ha llegado",
-    dot: "bg-green-500",
-    row: "bg-green-50 hover:bg-green-100",
-    text: "text-green-900",
-  },
-  no_show: {
-    label: "No show",
-    dot: "bg-red-500",
-    row: "bg-red-50",
-    text: "text-red-900",
-  },
-  cancelada: {
-    label: "Cancelada",
-    dot: "bg-gray-300",
-    row: "bg-gray-50 opacity-60",
-    text: "text-gray-400",
+    border: "border-l-4 border-l-blue-500",
+    badge: "bg-blue-50 text-blue-700 border border-blue-200",
   },
   pendiente_aprobacion: {
     label: "Pendiente",
-    dot: "bg-amber-400",
-    row: "bg-amber-50 hover:bg-amber-100",
-    text: "text-amber-900",
+    border: "border-l-4 border-l-amber-400",
+    badge: "bg-amber-50 text-amber-700 border border-amber-200",
+  },
+  cancelada: {
+    label: "Cancelada",
+    border: "border-l-4 border-l-gray-200",
+    badge: "bg-gray-100 text-gray-400",
+  },
+  no_show: {
+    label: "No show",
+    border: "border-l-4 border-l-red-500",
+    badge: "bg-red-50 text-red-600 border border-red-200",
   },
   rechazada: {
     label: "Rechazada",
-    dot: "bg-red-300",
-    row: "bg-gray-50 opacity-60",
-    text: "text-gray-400",
+    border: "border-l-4 border-l-gray-200",
+    badge: "bg-gray-100 text-gray-400",
   },
 };
+
+// ─── Audio ────────────────────────────────────────────────────────────────────
 
 function playNotificationBeep() {
   try {
@@ -64,15 +72,46 @@ function playNotificationBeep() {
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.6);
     osc.onended = () => ctx.close();
-  } catch { /* Web Audio unavailable */ }
+  } catch {
+    /* Web Audio unavailable */
+  }
 }
+
+// ─── Section header ───────────────────────────────────────────────────────────
+
+function SectionHeader({
+  label,
+  count,
+  personas,
+}: {
+  label: string;
+  count: number;
+  personas: number;
+}) {
+  return (
+    <div className="px-4 pt-5 pb-2 flex items-center gap-3">
+      <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-400 whitespace-nowrap">
+        {label} · {count} {count === 1 ? "reserva" : "reservas"} · {personas}{" "}
+        {personas === 1 ? "persona" : "personas"}
+      </span>
+      <div className="flex-1 h-px bg-gray-100" />
+    </div>
+  );
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface Props {
   reservas: Reserva[];
   currentDate: string;
 }
 
-export function ReservationList({ reservas: initialReservas, currentDate }: Props) {
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function ReservationList({
+  reservas: initialReservas,
+  currentDate,
+}: Props) {
   const [reservas, setReservas] = useState(initialReservas);
   const [selected, setSelected] = useState<Reserva | null>(null);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
@@ -164,21 +203,28 @@ export function ReservationList({ reservas: initialReservas, currentDate }: Prop
     }
   }
 
-  const markArrived = useCallback(async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setMarkingArrived(id);
-    // Capture current state before optimistic update for rollback
-    let prevEstado: Reserva["estado"] = "confirmada";
-    setReservas((prev) => {
-      const found = prev.find((r) => r.id === id);
-      if (found) prevEstado = found.estado;
-      return prev.map((r) => (r.id === id ? { ...r, estado: "llegado" } : r));
-    });
-    await updateEstadoReserva(id, "llegado").catch(() => {
-      setReservas((prev) => prev.map((r) => (r.id === id ? { ...r, estado: prevEstado } : r)));
-    });
-    setMarkingArrived(null);
-  }, []);
+  const markArrived = useCallback(
+    async (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setMarkingArrived(id);
+      // Capture current state before optimistic update for rollback
+      let prevEstado: Reserva["estado"] = "confirmada";
+      setReservas((prev) => {
+        const found = prev.find((r) => r.id === id);
+        if (found) prevEstado = found.estado;
+        return prev.map((r) =>
+          r.id === id ? { ...r, estado: "llegado" } : r
+        );
+      });
+      await updateEstadoReserva(id, "llegado").catch(() => {
+        setReservas((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, estado: prevEstado } : r))
+        );
+      });
+      setMarkingArrived(null);
+    },
+    []
+  );
 
   const isToday = currentDate === todayBarcelona();
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -189,6 +235,7 @@ export function ReservationList({ reservas: initialReservas, currentDate }: Prop
     return hh * 60 + mm + 15 < nowMinutes;
   }
 
+  // Sort: midnight slots last, then alphabetical by time
   const sorted = [...reservas].sort((a, b) => {
     const aH = a.hora.slice(0, 5);
     const bH = b.hora.slice(0, 5);
@@ -199,122 +246,220 @@ export function ReservationList({ reservas: initialReservas, currentDate }: Prop
     return aH.localeCompare(bH);
   });
 
+  // ── Derived totals (exclude cancelled/rejected) ──────────────────────────
+  const activeReservas = reservas.filter(
+    (r) => r.estado !== "cancelada" && r.estado !== "rechazada"
+  );
+  const totalReservas = activeReservas.length;
+  const totalPersonas = activeReservas.reduce((sum, r) => sum + r.personas, 0);
+
+  // ── Split into sections ──────────────────────────────────────────────────
+  const almuerzo = sorted.filter((r) => {
+    const h = r.hora.slice(0, 5);
+    return !h.startsWith("00:") && h < "17:00";
+  });
+  const cena = sorted.filter((r) => {
+    const h = r.hora.slice(0, 5);
+    return !h.startsWith("00:") && h >= "17:00";
+  });
+  const madrugada = sorted.filter((r) => r.hora.slice(0, 5).startsWith("00:"));
+
+  const almuerzoPersonas = almuerzo.reduce((s, r) => s + r.personas, 0);
+  const cenaPersonas = cena.reduce((s, r) => s + r.personas, 0);
+  const madrugadaPersonas = madrugada.reduce((s, r) => s + r.personas, 0);
+
+  // ── Empty state ──────────────────────────────────────────────────────────
   if (reservas.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-        <Users className="h-12 w-12 mb-4 opacity-30" />
-        <p className="text-lg text-gray-500">No hay reservas para este día</p>
+      <div className="flex flex-col items-center justify-center py-32 px-8 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+          <Users className="h-8 w-8 text-gray-300" />
+        </div>
+        <p className="text-gray-900 font-semibold text-lg">Sin reservas</p>
+        <p className="text-gray-400 text-sm mt-1">
+          No hay reservas para este día
+        </p>
+      </div>
+    );
+  }
+
+  // ── Render a single reservation card ────────────────────────────────────
+  function ReservationCard({ reserva }: { reserva: Reserva }) {
+    const status = STATUS_CONFIG[reserva.estado] ?? STATUS_CONFIG.confirmada;
+    const isCancelled =
+      reserva.estado === "cancelada" || reserva.estado === "rechazada";
+    const isNew = newIds.has(reserva.id);
+    const late = isLate(reserva);
+    const isConfirmada = reserva.estado === "confirmada";
+
+    return (
+      <div className="mx-3 mb-2">
+        <div
+          className={cn(
+            "bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden",
+            status.border,
+            isNew && "ring-2 ring-amber-400 ring-offset-1",
+            late && !isNew && "ring-2 ring-red-500"
+          )}
+        >
+          {/* Main button — opens modal */}
+          <button
+            type="button"
+            onClick={() => setSelected(reserva)}
+            className="w-full flex items-center gap-4 px-4 py-4 text-left"
+          >
+            {/* Time */}
+            <span
+              className={cn(
+                "text-[22px] font-bold tabular-nums w-16 shrink-0",
+                isCancelled ? "line-through text-gray-400" : "text-gray-900"
+              )}
+            >
+              {formatTime(reserva.hora)}
+            </span>
+
+            {/* Name + phone */}
+            <div className="flex-1 min-w-0">
+              <p
+                className={cn(
+                  "text-[15px] font-semibold truncate",
+                  isCancelled ? "line-through text-gray-400" : "text-gray-900"
+                )}
+              >
+                {reserva.nombre} {reserva.apellido}
+              </p>
+              {!isCancelled && reserva.telefono && (
+                <p className="text-sm text-gray-400 mt-0.5 truncate">
+                  {reserva.telefono}
+                </p>
+              )}
+            </div>
+
+            {/* Right column: guests + badge + reconfirmed */}
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              {/* Guests */}
+              <span className="flex items-center gap-1 text-sm text-gray-500">
+                <Users className="h-4 w-4" />
+                {reserva.personas}p
+              </span>
+
+              {/* Late badge or status badge */}
+              {late ? (
+                <span className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">
+                  <AlertCircle className="h-3 w-3" />
+                  Retraso
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    "text-xs font-medium px-2 py-0.5 rounded-full",
+                    status.badge
+                  )}
+                >
+                  {status.label}
+                </span>
+              )}
+
+              {/* Reconfirmed badge — only for confirmada */}
+              {reserva.reconfirmado && reserva.estado === "confirmada" && (
+                <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 leading-none">
+                  ✓ Conf.
+                </span>
+              )}
+            </div>
+
+            <ChevronRight className="h-5 w-5 text-gray-300 shrink-0" />
+          </button>
+
+          {/* "Ha llegado" button — only for confirmada */}
+          {isConfirmada && (
+            <div className="border-t border-gray-50 px-4 py-2.5">
+              <button
+                type="button"
+                onClick={(e) => markArrived(reserva.id, e)}
+                disabled={markingArrived === reserva.id}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 active:bg-gray-700 transition-colors disabled:opacity-50"
+              >
+                <CheckCheck className="h-4 w-4" />
+                Ha llegado
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      {/* Sound toggle */}
-      <div className="flex justify-end px-4 py-2 border-b">
+      {/* ── Top bar: totals + sound toggle ─────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <span className="text-xs text-gray-400">
+          {totalReservas} {totalReservas === 1 ? "reserva" : "reservas"} ·{" "}
+          {totalPersonas} {totalPersonas === 1 ? "persona" : "personas"}
+        </span>
         <button
           type="button"
           onClick={toggleSound}
-          title={soundEnabled ? "Desactivar sonido de alertas" : "Activar sonido de alertas"}
           className={cn(
-            "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors",
+            "flex items-center gap-2 h-9 px-3 rounded-xl text-sm font-medium transition-colors",
             soundEnabled
               ? "bg-green-50 text-green-700 border border-green-200"
-              : "text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200"
           )}
         >
-          {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+          {soundEnabled ? (
+            <Volume2 className="h-4 w-4" />
+          ) : (
+            <VolumeX className="h-4 w-4" />
+          )}
           {soundEnabled ? "Sonido activo" : "Sin sonido"}
         </button>
       </div>
 
-      <div className="divide-y">
-        {sorted.map((reserva) => {
-          const status = STATUS_CONFIG[reserva.estado] ?? STATUS_CONFIG.confirmada;
-          const isCancelled =
-            reserva.estado === "cancelada" || reserva.estado === "rechazada";
-          const isNew = newIds.has(reserva.id);
-          const late = isLate(reserva);
-          const isConfirmada = reserva.estado === "confirmada";
+      {/* ── Almuerzo section ─────────────────────────────────────────────── */}
+      {almuerzo.length > 0 && (
+        <section>
+          <SectionHeader
+            label="Almuerzo"
+            count={almuerzo.length}
+            personas={almuerzoPersonas}
+          />
+          {almuerzo.map((reserva) => (
+            <ReservationCard key={reserva.id} reserva={reserva} />
+          ))}
+        </section>
+      )}
 
-          return (
-            <div
-              key={reserva.id}
-              className={cn(
-                "flex items-center gap-4 px-4 py-3 transition-colors",
-                status.row,
-                isNew && "!bg-yellow-50 border-l-4 border-l-yellow-400",
-                late && "!bg-red-50 border-l-4 border-l-red-500"
-              )}
-            >
-              {/* Row clickable area */}
-              <button
-                onClick={() => setSelected(reserva)}
-                className="flex items-center gap-4 flex-1 min-w-0 text-left"
-              >
-                {/* Hora */}
-                <span className={cn("text-2xl font-bold tabular-nums w-14 shrink-0", isCancelled ? "line-through text-gray-400" : "text-gray-900")}>
-                  {formatTime(reserva.hora)}
-                </span>
+      {/* ── Cena section ─────────────────────────────────────────────────── */}
+      {cena.length > 0 && (
+        <section>
+          <SectionHeader
+            label="Cena"
+            count={cena.length}
+            personas={cenaPersonas}
+          />
+          {cena.map((reserva) => (
+            <ReservationCard key={reserva.id} reserva={reserva} />
+          ))}
+        </section>
+      )}
 
-                {/* Nombre + teléfono */}
-                <span className="flex-1 min-w-0">
-                  <span className={cn("block text-base font-medium truncate", isCancelled ? "text-gray-400" : "text-gray-700")}>
-                    {reserva.nombre} {reserva.apellido}
-                  </span>
-                  {!isCancelled && reserva.telefono && (
-                    <span className="block text-xs text-gray-400 truncate mt-0.5">
-                      {reserva.telefono}
-                    </span>
-                  )}
-                </span>
+      {/* ── Madrugada section ────────────────────────────────────────────── */}
+      {madrugada.length > 0 && (
+        <section>
+          <SectionHeader
+            label="Madrugada"
+            count={madrugada.length}
+            personas={madrugadaPersonas}
+          />
+          {madrugada.map((reserva) => (
+            <ReservationCard key={reserva.id} reserva={reserva} />
+          ))}
+        </section>
+      )}
 
-                {/* Personas */}
-                <span className="flex items-center gap-1 text-sm text-gray-500 shrink-0">
-                  <Users className="h-4 w-4" />
-                  {reserva.personas}
-                </span>
-
-                {/* Late alert or Estado */}
-                {late ? (
-                  <span className="flex items-center gap-1 text-sm text-red-600 font-medium shrink-0">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span className="hidden sm:inline">Retraso</span>
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1.5 text-sm">
-                    <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", status.dot)} />
-                    <span className={cn("hidden sm:inline text-gray-600", isCancelled && "line-through text-gray-400")}>
-                      {status.label}
-                    </span>
-                    {reserva.reconfirmado && reserva.estado === "confirmada" && (
-                      <span className="hidden sm:inline text-xs font-semibold text-green-600 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 leading-none">
-                        ✓ Conf.
-                      </span>
-                    )}
-                  </span>
-                )}
-
-                <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" />
-              </button>
-
-              {/* Quick "ha llegado" action — only for confirmada */}
-              {isConfirmada && (
-                <button
-                  type="button"
-                  onClick={(e) => markArrived(reserva.id, e)}
-                  disabled={markingArrived === reserva.id}
-                  title="Marcar como llegado"
-                  className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-green-100 hover:bg-green-200 text-green-700 disabled:opacity-50 transition-colors"
-                >
-                  <CheckCheck className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
+      {/* ── Modal ────────────────────────────────────────────────────────── */}
       {selected && (
         <ReservationModal
           reserva={selected}

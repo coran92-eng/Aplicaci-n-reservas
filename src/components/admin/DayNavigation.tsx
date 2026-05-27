@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Home, CalendarDays, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { addDaysToDate, todayBarcelona } from "@/lib/utils";
 import { WalkinModal } from "./WalkinModal";
 
@@ -91,33 +90,37 @@ export function DayNavigation({ currentDate, totalReservas, totalPersonas }: Pro
   while (cells.length % 7 !== 0) cells.push(null);
 
   return (
-    <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+    <div className="sticky top-14 z-10 bg-white border-b border-gray-100">
       {/* Date row */}
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between py-4 px-5">
         <Link href={prevHref}>
-          <Button variant="ghost" size="icon" className="admin-btn text-gray-700 hover:bg-gray-100">
+          <button
+            type="button"
+            aria-label="Día anterior"
+            className="w-11 h-11 rounded-2xl hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center transition-colors text-gray-700"
+          >
             <ChevronLeft className="h-5 w-5" />
-          </Button>
+          </button>
         </Link>
 
         <div className="relative text-center">
           {isToday && (
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-0.5">Hoy</p>
+            <p className="text-[11px] tracking-widest uppercase text-red-500 font-semibold mb-0.5">Hoy</p>
           )}
           <button
             type="button"
             onClick={openCal}
-            className="flex items-center gap-1.5 font-semibold capitalize text-sm text-gray-900 hover:text-gray-600 transition-colors"
+            className="flex items-center gap-1.5 capitalize text-base font-semibold text-gray-900 hover:text-gray-600 transition-colors"
           >
             {formatDisplayDate(currentDate)}
-            <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
+            <CalendarDays className="h-4 w-4 text-gray-400" />
           </button>
 
           {/* Month calendar dropdown */}
           {showCal && (
             <div
               ref={calRef}
-              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl p-4 z-50 w-72"
+              className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white shadow-2xl rounded-2xl border-0 ring-1 ring-black/5 p-5 z-50 w-80"
             >
               <div className="flex items-center justify-between mb-3">
                 <button type="button" onClick={prevCalMonth} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-700">
@@ -149,7 +152,7 @@ export function DayNavigation({ currentDate, totalReservas, totalPersonas }: Pro
                       type="button"
                       onClick={() => selectDate(dateStr)}
                       className={[
-                        "mx-auto w-9 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
+                        "mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
                         isCurrent
                           ? "bg-gray-900 text-white"
                           : isTodayCell
@@ -169,35 +172,42 @@ export function DayNavigation({ currentDate, totalReservas, totalPersonas }: Pro
         <div className="flex items-center gap-1">
           {!isToday && (
             <Link href="/admin">
-              <Button variant="ghost" size="icon" className="admin-btn text-gray-700 hover:bg-gray-100" aria-label="Ir a hoy">
+              <button
+                type="button"
+                aria-label="Ir a hoy"
+                className="w-11 h-11 rounded-2xl hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center transition-colors text-gray-700"
+              >
                 <Home className="h-4 w-4" />
-              </Button>
+              </button>
             </Link>
           )}
           <Link href={nextHref}>
-            <Button variant="ghost" size="icon" className="admin-btn text-gray-700 hover:bg-gray-100" aria-label="Día siguiente">
+            <button
+              type="button"
+              aria-label="Día siguiente"
+              className="w-11 h-11 rounded-2xl hover:bg-gray-100 active:bg-gray-200 flex items-center justify-center transition-colors text-gray-700"
+            >
               <ChevronRight className="h-5 w-5" />
-            </Button>
+            </button>
           </Link>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="flex items-center justify-between px-4 pb-3">
-        <div className="flex items-center gap-4 text-sm text-gray-500">
-          <span><strong className="text-gray-900 font-semibold">{totalReservas}</strong> reservas</span>
-          <span className="text-gray-300">·</span>
-          <span><strong className="text-gray-900 font-semibold">{totalPersonas}</strong> personas</span>
+      <div className="px-5 pb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3 text-sm text-gray-500">
+          <span><span className="text-gray-900 font-semibold">{totalReservas}</span> reservas</span>
+          <span className="w-1 h-1 rounded-full bg-gray-300 inline-block" />
+          <span><span className="text-gray-900 font-semibold">{totalPersonas}</span> personas</span>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="admin-btn gap-1.5 text-gray-700 border-gray-300 text-xs"
+        <button
+          type="button"
           onClick={() => setShowWalkin(true)}
+          className="h-10 px-4 rounded-xl bg-gray-900 text-white text-sm font-medium flex items-center gap-2 hover:bg-gray-800 active:bg-gray-700 transition-colors"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className="h-4 w-4" />
           Walk-in
-        </Button>
+        </button>
       </div>
 
       {showWalkin && (
