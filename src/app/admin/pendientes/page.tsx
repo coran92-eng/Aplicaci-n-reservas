@@ -13,16 +13,42 @@ function formatDate(fecha: string): string {
 }
 
 export default async function PendientesPage() {
-  const supabase = createServiceClient();
+  let reservas: Reserva[] = [];
+  let dbError: string | null = null;
 
-  const { data } = await supabase
-    .from("reservas")
-    .select("*")
-    .eq("estado", "pendiente_aprobacion")
-    .order("fecha", { ascending: true })
-    .order("hora", { ascending: true });
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("reservas")
+      .select("*")
+      .eq("estado", "pendiente_aprobacion")
+      .order("fecha", { ascending: true })
+      .order("hora", { ascending: true });
+    if (error) {
+      dbError = error.message;
+    } else {
+      reservas = (data ?? []) as Reserva[];
+    }
+  } catch (err) {
+    dbError = err instanceof Error ? err.message : String(err);
+  }
 
-  const reservas = (data ?? []) as Reserva[];
+  if (dbError) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <h1 className="text-xl font-bold text-gray-900 mb-4">Pendientes de aprobación</h1>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-5 space-y-2">
+          <p className="text-sm font-semibold text-red-700">Error al cargar los datos</p>
+          <p className="text-xs font-mono text-red-600 break-all">{dbError}</p>
+          <p className="text-xs text-red-500 mt-2">
+            Comprueba que las variables <code>NEXT_PUBLIC_SUPABASE_URL</code>,{" "}
+            <code>SUPABASE_SERVICE_ROLE_KEY</code> y <code>ADMIN_MAGIC_LINK_SECRET</code>{" "}
+            están configuradas en Vercel.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">

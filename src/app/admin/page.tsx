@@ -4,19 +4,24 @@ import { DayNavigation } from "@/components/admin/DayNavigation";
 import { todayBarcelona } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const today = todayBarcelona();
-  const supabase = createServiceClient();
+  let reservas: Reserva[] = [];
 
-  const { data } = await supabase
-    .from("reservas")
-    .select("*")
-    .eq("fecha", today)
-    .order("hora", { ascending: true });
+  try {
+    const supabase = createServiceClient();
+    const { data } = await supabase
+      .from("reservas")
+      .select("*")
+      .eq("fecha", today)
+      .order("hora", { ascending: true });
+    reservas = (data ?? []) as Reserva[];
+  } catch {
+    // DB unavailable — render empty state so the page doesn't crash
+  }
 
-  const reservas = (data ?? []) as Reserva[];
   const active = reservas.filter(
     (r) => r.estado !== "cancelada" && r.estado !== "rechazada"
   );
