@@ -749,8 +749,17 @@ export async function sendReminderWithReconfirmacion(data: ReminderReconfirmData
 
 // ── Email 7: Notificación admin ────────────────────────────────
 
+interface ReservaDiaSummary {
+  id: string;
+  nombre: string;
+  apellido: string;
+  hora: string;
+  personas: number;
+  estado: string;
+}
+
 export async function sendAdminNotification(data: {
-  tipo: "nueva_pendiente" | "cancelacion";
+  tipo: "nueva_pendiente" | "nueva_confirmada" | "cancelacion";
   nombre: string;
   apellido: string;
   fecha: string;
@@ -758,6 +767,8 @@ export async function sendAdminNotification(data: {
   personas: number;
   telefono?: string;
   email?: string;
+  reservasDia?: ReservaDiaSummary[];
+  newReservaId?: string;
 }) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) return;
@@ -767,40 +778,92 @@ export async function sendAdminNotification(data: {
 
   const subject =
     data.tipo === "nueva_pendiente"
-      ? `Nueva solicitud pendiente — ${data.nombre} ${data.apellido} · ${displayHora}`
-      : `Cancelación — ${data.nombre} ${data.apellido} · ${displayHora}`;
+      ? `🟡 Solicitud pendiente — ${data.nombre} ${data.apellido} · ${displayHora}`
+      : data.tipo === "nueva_confirmada"
+      ? `🟢 Nueva reserva — ${data.nombre} ${data.apellido} · ${displayHora}`
+      : `🔴 Cancelación — ${data.nombre} ${data.apellido} · ${displayHora}`;
 
   const tipoBadge =
     data.tipo === "nueva_pendiente"
-      ? `<span style="background:#f59e0b;color:#000;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">PENDIENTE</span>`
-      : `<span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">CANCELACIÓN</span>`;
+      ? `<span style="background:#f59e0b;color:#000;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700">PENDIENTE</span>`
+      : data.tipo === "nueva_confirmada"
+      ? `<span style="background:#10b981;color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700">CONFIRMADA</span>`
+      : `<span style="background:#ef4444;color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700">CANCELACIÓN</span>`;
 
-  const rows = [
+  const detailRows = [
     ["Fecha", displayDate],
     ["Hora", displayHora],
     ["Personas", `${data.personas}`],
-    ...(data.telefono ? [["Teléfono", `<a href="tel:${data.telefono}">${data.telefono}</a>`]] : []),
-    ...(data.email ? [["Email", `<a href="mailto:${data.email}">${data.email}</a>`]] : []),
+    ...(data.telefono ? [["Teléfono", `<a href="tel:${data.telefono}" style="color:#2563eb;text-decoration:none">${data.telefono}</a>`]] : []),
+    ...(data.email ? [["Email", `<a href="mailto:${data.email}" style="color:#2563eb;text-decoration:none">${data.email}</a>`]] : []),
   ]
-    .map(
-      ([label, value]) =>
-        `<tr><td style="padding:6px 0;color:#6b7280;font-size:14px;width:90px">${label}</td><td style="padding:6px 0;font-weight:600;font-size:14px">${value}</td></tr>`
+    .map(([label, value]) =>
+      `<tr><td style="padding:7px 12px 7px 0;color:#6b7280;font-size:13px;width:80px;vertical-align:top">${label}</td><td style="padding:7px 0;font-size:13px;color:#111;font-weight:600">${value}</td></tr>`
     )
     .join("");
 
-  const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f3f4f6;padding:24px;margin:0">
-<div style="max-width:480px;background:#fff;border-radius:8px;padding:24px;border:1px solid #e5e7eb">
+  const panelHref = data.tipo === "nueva_pendiente"
+    ? `${APP_URL}/admin/pendientes`
+    : `${APP_URL}/admin`;
+
+  const panelLabel = data.tipo === "nueva_pendiente" ? "Ver pendientes →" : "Ir al panel →";
+
+  // Daily schedule table
+  let scheduleHtml = "";
+  if (data.reservasDia && data.reservasDia.length > 0) {
+    const STATUS: Record<string, string> = {
+      confirmada: "✓",
+      llegado: "✓✓",
+      pendiente_aprobacion: "⏳",
+      no_show: "✗",
+    };
+    const totalPersonas = data.reservasDia.reduce((s, r) => s + r.personas, 0);
+
+    const scheduleRows = data.reservasDia
+      .map((r) => {
+        const isNew = r.id === data.newReservaId;
+        const rowStyle = isNew ? "background:#fefce8" : "";
+        const nameStyle = isNew ? "font-weight:700;color:#92400e" : "color:#374151";
+        const newTag = isNew ? `&nbsp;<span style="font-size:11px;font-weight:700;color:#d97706">NUEVA</span>` : "";
+        return `<tr style="${rowStyle}">
+          <td style="padding:6px 8px 6px 0;font-size:13px;color:#9ca3af;white-space:nowrap">${r.hora.slice(0, 5)}</td>
+          <td style="padding:6px 0;font-size:13px;${nameStyle}">${r.nombre} ${r.apellido}${newTag}</td>
+          <td style="padding:6px 0 6px 12px;font-size:13px;color:#6b7280;text-align:right;white-space:nowrap">${r.personas}p</td>
+          <td style="padding:6px 0 6px 8px;font-size:12px;color:#9ca3af;text-align:right;white-space:nowrap">${STATUS[r.estado] ?? r.estado}</td>
+        </tr>`;
+      })
+      .join("");
+
+    scheduleHtml = `
+      <tr><td colspan="4" style="padding:20px 0 0"><hr style="border:none;border-top:1px solid #f3f4f6;margin:0"></td></tr>
+      <tr><td colspan="4" style="padding:16px 0 10px;font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:1px;text-transform:uppercase">
+        Reservas del día &middot; ${displayDate}
+      </td></tr>
+      ${scheduleRows}
+      <tr><td colspan="4" style="padding:10px 0 0;font-size:12px;color:#9ca3af">
+        ${data.reservasDia.length} reserva${data.reservasDia.length !== 1 ? "s" : ""} &middot; ${totalPersonas} persona${totalPersonas !== 1 ? "s" : ""}
+      </td></tr>`;
+  }
+
+  const html = `<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f9fafb;padding:24px;margin:0">
+<div style="max-width:520px;background:#fff;border-radius:10px;padding:28px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)">
+  <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:2px;text-transform:uppercase">${RESTAURANT_NAME}</p>
   <p style="margin:0 0 16px">${tipoBadge}</p>
-  <h2 style="margin:0 0 16px;font-size:20px;color:#111">${data.nombre} ${data.apellido}</h2>
-  <table style="width:100%;border-collapse:collapse">${rows}</table>
-  <div style="margin-top:24px">
-    <a href="${APP_URL}/admin" style="background:#111827;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600">Ir al panel →</a>
-  </div>
+  <h2 style="margin:0 0 16px;font-size:22px;color:#111;font-weight:700">${data.nombre} ${data.apellido}</h2>
+  <table style="width:100%;border-collapse:collapse">
+    ${detailRows}
+    <tr><td colspan="2" style="padding:16px 0 0">
+      <a href="${panelHref}" style="display:inline-block;background:#111827;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600">${panelLabel}</a>
+    </td></tr>
+    ${scheduleHtml}
+  </table>
 </div>
 </body></html>`;
 
+  const text = `${RESTAURANT_NAME} — ${subject}\n\n${data.nombre} ${data.apellido}\nFecha: ${displayDate}\nHora: ${displayHora}\nPersonas: ${data.personas}${data.telefono ? `\nTeléfono: ${data.telefono}` : ""}${data.email ? `\nEmail: ${data.email}` : ""}\n\nPanel: ${panelHref}`;
+
   try {
-    await getResend().emails.send({ from: FROM, to: adminEmail, subject, html });
+    await getResend().emails.send({ from: FROM, to: adminEmail, subject, html, text });
   } catch (err) {
     console.error("[ADMIN_NOTIFY] Failed:", err);
   }

@@ -203,6 +203,34 @@ export async function createReserva(
     url: "/admin",
   }).catch(() => {});
 
+  // Fire-and-forget admin email with full daily schedule
+  (async () => {
+    try {
+      const sc = createServiceClient();
+      const { data: diaData } = await sc
+        .from("reservas")
+        .select("id, nombre, apellido, hora, personas, estado")
+        .eq("fecha", data.fecha)
+        .neq("estado", "cancelada")
+        .neq("estado", "rechazada")
+        .order("hora", { ascending: true });
+      await sendAdminNotification({
+        tipo: esPendiente ? "nueva_pendiente" : "nueva_confirmada",
+        nombre: data.nombre.trim(),
+        apellido: data.apellido.trim(),
+        fecha: data.fecha,
+        hora: data.hora + ":00",
+        personas: data.personas,
+        telefono: data.telefono,
+        email: data.email.toLowerCase(),
+        reservasDia: (diaData ?? []) as { id: string; nombre: string; apellido: string; hora: string; personas: number; estado: string }[],
+        newReservaId: id,
+      });
+    } catch (err) {
+      console.error("[ADMIN_NOTIFY] Failed:", err);
+    }
+  })();
+
   // Fire-and-forget WhatsApp notification to client
   if (data.telefono) {
     (async () => {
@@ -273,19 +301,6 @@ export async function createReserva(
     cancel_token: cancelToken,
     idioma: data.idioma,
   };
-
-  if (esPendiente) {
-    sendAdminNotification({
-      tipo: "nueva_pendiente",
-      nombre: emailData.nombre,
-      apellido: emailData.apellido,
-      fecha: emailData.fecha,
-      hora: emailData.hora,
-      personas: emailData.personas,
-      telefono: data.telefono,
-      email: emailData.email,
-    }).catch(console.error);
-  }
 
   // Enviar email con manejo de error mejorado
   let emailSent = false;
