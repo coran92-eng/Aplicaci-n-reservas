@@ -66,6 +66,14 @@ function formatFechaEmail(fecha: string, idioma: string): string {
   });
 }
 
+function formatShortDate(fecha: string, idioma: string): string {
+  const [y, m, d] = fecha.split("-").map(Number);
+  const localeMap: Record<string, string> = { es: "es-ES", ca: "ca-ES", en: "en-GB" };
+  return new Date(y, m - 1, d).toLocaleDateString(localeMap[idioma] ?? "es-ES", {
+    day: "numeric", month: "short",
+  });
+}
+
 function generateGoogleCalendarLink(data: ReservaEmailData): string {
   const [year, month, day] = data.fecha.split("-").map(Number);
   const [hour, minute] = data.hora.slice(0, 5).split(":").map(Number);
@@ -82,7 +90,6 @@ function generateGoogleCalendarLink(data: ReservaEmailData): string {
 }
 
 // ── Layout ─────────────────────────────────────────────────────
-// Fondo negro total · Syne + Inter · Sin tarjetas blancas
 
 function layout(body: string, preview: string, idioma: string): string {
   const logoHtml = RESTAURANT_LOGO
@@ -97,10 +104,10 @@ function layout(body: string, preview: string, idioma: string): string {
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>${RESTAURANT_NAME}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;600&display=swap');
     body { margin:0; padding:0; background-color:#050505; }
-    .syne { font-family:'Syne','Impact','Arial Black',sans-serif; }
-    .inter { font-family:'Inter',-apple-system,'Helvetica Neue',Arial,sans-serif; }
+    .syne { font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif; }
+    .inter { font-family:'Inter',-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif; }
   </style>
 </head>
 <body style="margin:0;padding:0;background-color:#050505">
@@ -109,33 +116,33 @@ function layout(body: string, preview: string, idioma: string): string {
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all">${preview}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#050505">
-    <tr><td align="center" style="padding:40px 16px 48px;background-color:#050505">
+    <tr><td align="center" style="padding:28px 16px 40px;background-color:#050505">
 
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">
 
         <!--header-->
         <tr>
-          <td style="padding:0 0 36px;border-bottom:1px solid #1f1f1f">
+          <td style="padding:0 0 24px;border-bottom:1px solid #1f1f1f">
             ${logoHtml}
-            <p class="inter" style="margin:0 0 6px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#b12a2a;font-weight:600">${RESTAURANT_NAME.toUpperCase()}</p>
+            <p class="inter" style="margin:0 0 6px;font-family:'Inter',-apple-system,sans-serif;font-size:9px;letter-spacing:5px;text-transform:uppercase;color:#b12a2a;font-weight:600">${RESTAURANT_NAME.toUpperCase()}</p>
           </td>
         </tr>
 
         <!--body-->
         <tr>
-          <td style="padding:40px 0 0">
+          <td style="padding:32px 0 0">
             ${body}
           </td>
         </tr>
 
         <!--footer-->
         <tr>
-          <td style="padding:40px 0 0;border-top:1px solid #1f1f1f">
-            <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#444444;line-height:1.8">
+          <td style="padding:28px 0 0;border-top:1px solid #1f1f1f">
+            <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#555555;line-height:1.8">
               ${RESTAURANT_ADDRESS}
             </p>
             <p style="margin:4px 0 0">
-              <a href="tel:${RESTAURANT_PHONE.replace(/\s/g, "")}" class="inter" style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:1px;color:#444444;text-decoration:none">${RESTAURANT_PHONE}</a>
+              <a href="tel:${RESTAURANT_PHONE.replace(/\s/g, "")}" class="inter" style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:1px;color:#666666;text-decoration:none">${RESTAURANT_PHONE}</a>
             </p>
           </td>
         </tr>
@@ -147,14 +154,25 @@ function layout(body: string, preview: string, idioma: string): string {
 </html>`;
 }
 
-// ── Filas de detalle estilo carta ──────────────────────────────
+// ── Filas de detalle ───────────────────────────────────────────
 
 function detalleRows(rows: [string, string][]): string {
-  return rows.map(([label, value]) => `
+  return rows.map(([label, value], i) => `
     <tr>
-      <td class="inter" style="font-family:'Inter',-apple-system,sans-serif;padding:16px 0;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#555555;border-top:1px solid #1a1a1a;vertical-align:middle">${label}</td>
-      <td class="inter" style="font-family:'Inter',-apple-system,sans-serif;padding:16px 0;font-size:14px;font-weight:600;color:#ebebeb;text-align:right;border-top:1px solid #1a1a1a;vertical-align:middle">${value}</td>
+      <td class="inter" style="font-family:'Inter',-apple-system,sans-serif;padding:14px 0;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:#5a5a5a;${i > 0 ? "border-top:1px solid #1a1a1a;" : ""}vertical-align:middle">${label}</td>
+      <td class="inter" style="font-family:'Inter',-apple-system,sans-serif;padding:14px 0;font-size:14px;font-weight:600;color:#ebebeb;text-align:right;${i > 0 ? "border-top:1px solid #1a1a1a;" : ""}vertical-align:middle">${value}</td>
     </tr>`).join("");
+}
+
+function detalleCard(rows: [string, string][], marginBottom = "36px"): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:${marginBottom}">
+      <tr><td style="background-color:#0d0d0d;padding:0 20px;border-radius:4px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          ${detalleRows(rows)}
+        </table>
+      </td></tr>
+    </table>`;
 }
 
 // ── Email 1: Confirmación ──────────────────────────────────────
@@ -177,6 +195,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       cal_btn:  "Añadir al calendario",
       maps_btn: "Cómo llegar →",
       cancel:   "Cancelar reserva",
+      preview:  `Te esperamos — ${displayDate} a las ${displayHora}`,
     },
     ca: {
       eyebrow:  "Taula confirmada",
@@ -189,6 +208,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       cal_btn:  "Afegir al calendari",
       maps_btn: "Com arribar →",
       cancel:   "Cancel·lar reserva",
+      preview:  `T'esperem — ${displayDate} a les ${displayHora}`,
     },
     en: {
       eyebrow:  "Table confirmed",
@@ -201,36 +221,35 @@ function confirmationHtml(data: ReservaEmailData): string {
       cal_btn:  "Add to calendar",
       maps_btn: "Get directions →",
       cancel:   "Cancel booking",
+      preview:  `See you soon — ${displayDate} at ${displayHora}`,
     },
   };
   const tx = t[data.idioma] ?? t.es;
 
   const body = `
     <!--eyebrow-->
-    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#555555">${tx.eyebrow}</p>
+    <p class="inter" style="margin:0 0 10px;font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#6a6a6a">${tx.eyebrow}</p>
 
     <!--heading-->
-    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <h1 class="syne" style="margin:0 0 16px;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:32px;font-weight:700;color:#ebebeb;line-height:1.1;letter-spacing:-0.5px">${tx.heading}</h1>
 
     <!--subtext-->
-    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.sub}</p>
 
-    <!--detail rows-->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
-      ${detalleRows([
-        [tx.date,    displayDate],
-        [tx.time,    displayHora],
-        [tx.guests,  `${data.personas}`],
-        [tx.address, RESTAURANT_ADDRESS],
-      ])}
-    </table>
+    <!--detail card-->
+    ${detalleCard([
+      [tx.date,    displayDate],
+      [tx.time,    displayHora],
+      [tx.guests,  `${data.personas}`],
+      [tx.address, RESTAURANT_ADDRESS],
+    ])}
 
     <!--CTA calendar-->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
       <tr>
-        <td style="border-radius:2px;background-color:#b12a2a">
+        <td style="width:1px;white-space:nowrap;border-radius:3px;background-color:#b12a2a">
           <a href="${calendarUrl}" class="syne"
-             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:16px 32px">
+             style="display:inline-block;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#ffffff;text-decoration:none;padding:14px 36px">
             ${tx.cal_btn}
           </a>
         </td>
@@ -238,9 +257,9 @@ function confirmationHtml(data: ReservaEmailData): string {
     </table>
 
     <!--Maps-->
-    <p style="margin:0 0 48px">
+    <p style="margin:0 0 36px">
       <a href="${RESTAURANT_MAPS}" class="inter"
-         style="font-family:'Inter',-apple-system,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#555555;text-decoration:none">
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#6a6a6a;text-decoration:none">
         ${tx.maps_btn}
       </a>
     </p>
@@ -248,12 +267,12 @@ function confirmationHtml(data: ReservaEmailData): string {
     <!--cancel-->
     <p style="margin:0">
       <a href="${cancelUrl}" class="inter"
-         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#333333;text-decoration:underline;letter-spacing:1px">
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.5px">
         ${tx.cancel}
       </a>
     </p>`;
 
-  return layout(body, `${displayDate} · ${displayHora} · ${data.personas} pers.`, data.idioma);
+  return layout(body, tx.preview, data.idioma);
 }
 
 // ── Email 2: Solicitud pendiente ───────────────────────────────
@@ -272,6 +291,7 @@ function pendingHtml(data: ReservaEmailData): string {
       time:     "Hora",
       guests:   "Personas",
       call:     "¿Urgente? Llámanos",
+      preview:  `Hemos recibido tu solicitud para el ${displayDate}. Te confirmamos pronto.`,
     },
     ca: {
       eyebrow:  "Sol·licitud rebuda",
@@ -282,6 +302,7 @@ function pendingHtml(data: ReservaEmailData): string {
       time:     "Hora",
       guests:   "Persones",
       call:     "Urgent? Truca'ns",
+      preview:  `Hem rebut la teva sol·licitud per al ${displayDate}. Et confirmem aviat.`,
     },
     en: {
       eyebrow:  "Request received",
@@ -292,46 +313,45 @@ function pendingHtml(data: ReservaEmailData): string {
       time:     "Time",
       guests:   "Guests",
       call:     "Urgent? Call us",
+      preview:  `We've received your request for ${displayDate}. Confirmation coming soon.`,
     },
   };
   const tx = t[data.idioma] ?? t.es;
 
   const body = `
     <!--eyebrow-->
-    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
+    <p class="inter" style="margin:0 0 10px;font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
 
     <!--heading-->
-    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <h1 class="syne" style="margin:0 0 16px;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:32px;font-weight:700;color:#ebebeb;line-height:1.1;letter-spacing:-0.5px">${tx.heading}</h1>
 
     <!--subtext-->
-    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.sub}</p>
 
-    <!--detail rows-->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:36px">
-      ${detalleRows([
-        [tx.date,   displayDate],
-        [tx.time,   displayHora],
-        [tx.guests, `${data.personas}`],
-      ])}
-    </table>
+    <!--detail card-->
+    ${detalleCard([
+      [tx.date,   displayDate],
+      [tx.time,   displayHora],
+      [tx.guests, `${data.personas}`],
+    ])}
 
     <!--notice — left gold border-->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px">
       <tr>
-        <td width="3" style="background-color:#c9a84c;border-radius:2px">&nbsp;</td>
-        <td style="padding:14px 0 14px 20px">
-          <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:14px;font-weight:300;color:#888888;line-height:1.7">${tx.notice}</p>
+        <td width="2" style="background-color:#c9a84c;border-radius:2px">&nbsp;</td>
+        <td style="padding:14px 8px 14px 20px">
+          <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:14px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.notice}</p>
         </td>
       </tr>
     </table>
 
     <!--call-->
-    <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#444444">
+    <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6a6a6a">
       ${tx.call} &nbsp;
       <a href="tel:${RESTAURANT_PHONE.replace(/\s/g, "")}" style="color:#ebebeb;text-decoration:none;font-weight:600">${RESTAURANT_PHONE}</a>
     </p>`;
 
-  return layout(body, `${data.personas} pers. · ${displayDate} · ${displayHora}`, data.idioma);
+  return layout(body, tx.preview, data.idioma);
 }
 
 // ── Email 3: Cancelación ───────────────────────────────────────
@@ -350,6 +370,7 @@ function cancellationHtml(data: ReservaEmailData): string {
       time:     "Hora",
       guests:   "Personas",
       rebook:   "Nueva reserva",
+      preview:  `Tu reserva del ${displayDate} ha sido cancelada. Hasta pronto.`,
     },
     ca: {
       eyebrow:  "Reserva cancel·lada",
@@ -359,6 +380,7 @@ function cancellationHtml(data: ReservaEmailData): string {
       time:     "Hora",
       guests:   "Persones",
       rebook:   "Nova reserva",
+      preview:  `La teva reserva del ${displayDate} ha estat cancel·lada. Fins aviat.`,
     },
     en: {
       eyebrow:  "Booking cancelled",
@@ -368,42 +390,41 @@ function cancellationHtml(data: ReservaEmailData): string {
       time:     "Time",
       guests:   "Guests",
       rebook:   "New booking",
+      preview:  `Your booking on ${displayDate} has been cancelled. Until next time.`,
     },
   };
   const tx = t[data.idioma] ?? t.es;
 
   const body = `
     <!--eyebrow-->
-    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#555555">${tx.eyebrow}</p>
+    <p class="inter" style="margin:0 0 10px;font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#6a6a6a">${tx.eyebrow}</p>
 
     <!--heading-->
-    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <h1 class="syne" style="margin:0 0 16px;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:32px;font-weight:700;color:#ebebeb;line-height:1.1;letter-spacing:-0.5px">${tx.heading}</h1>
 
     <!--subtext-->
-    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.sub}</p>
 
-    <!--detail rows-->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:48px">
-      ${detalleRows([
-        [tx.date,   displayDate],
-        [tx.time,   displayHora],
-        [tx.guests, `${data.personas}`],
-      ])}
-    </table>
+    <!--detail card-->
+    ${detalleCard([
+      [tx.date,   displayDate],
+      [tx.time,   displayHora],
+      [tx.guests, `${data.personas}`],
+    ], "40px")}
 
     <!--rebook CTA — outlined-->
     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="border:1px solid #333333;border-radius:2px">
+        <td style="width:1px;white-space:nowrap;border:1px solid #3a3a3a;border-radius:3px">
           <a href="${bookUrl}" class="syne"
-             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:16px 32px">
+             style="display:inline-block;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:14px 36px">
             ${tx.rebook}
           </a>
         </td>
       </tr>
     </table>`;
 
-  return layout(body, `${displayDate} · ${displayHora}`, data.idioma);
+  return layout(body, tx.preview, data.idioma);
 }
 
 // ── Email 4: Rechazo ──────────────────────────────────────────
@@ -411,6 +432,7 @@ function cancellationHtml(data: ReservaEmailData): string {
 function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
+  const shortDate   = formatShortDate(data.fecha, data.idioma);
   const bookUrl     = `${APP_URL}/${data.idioma}`;
 
   const t: Record<string, Record<string, string>> = {
@@ -421,6 +443,7 @@ function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
       notice:   "En estas fechas no tenemos disponibilidad para grupos de este tamaño. Te invitamos a intentarlo con otra fecha o a llamarnos directamente.",
       call:     "¿Hablamos?",
       rebook:   "Intentar otra fecha",
+      preview:  `Sobre tu solicitud del ${shortDate} — hay alternativas disponibles.`,
     },
     ca: {
       eyebrow:  "Sol·licitud no disponible",
@@ -429,6 +452,7 @@ function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
       notice:   "En aquestes dates no tenim disponibilitat per a grups d'aquesta mida. T'invitem a intentar-ho amb una altra data o a trucar-nos directament.",
       call:     "Parlem?",
       rebook:   "Intentar una altra data",
+      preview:  `Sobre la teva sol·licitud del ${shortDate} — hi ha alternatives disponibles.`,
     },
     en: {
       eyebrow:  "Request unavailable",
@@ -437,32 +461,33 @@ function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
       notice:   "We don't have availability for groups of this size on those dates. We invite you to try another date or give us a call.",
       call:     "Shall we talk?",
       rebook:   "Try another date",
+      preview:  `About your request for ${shortDate} — other dates are available.`,
     },
   };
   const tx = t[data.idioma] ?? t.es;
 
   const body = `
     <!--eyebrow-->
-    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#b12a2a">${tx.eyebrow}</p>
+    <p class="inter" style="margin:0 0 10px;font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#b12a2a">${tx.eyebrow}</p>
 
     <!--heading-->
-    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
+    <h1 class="syne" style="margin:0 0 16px;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:32px;font-weight:700;color:#ebebeb;line-height:1.1;letter-spacing:-0.5px">${tx.heading}</h1>
 
     <!--subtext-->
-    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.sub}</p>
 
     <!--notice — left red border-->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px">
       <tr>
-        <td width="3" style="background-color:#b12a2a;border-radius:2px">&nbsp;</td>
-        <td style="padding:14px 0 14px 20px">
-          <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:14px;font-weight:300;color:#888888;line-height:1.7">${tx.notice}</p>
+        <td width="2" style="background-color:#b12a2a;border-radius:2px">&nbsp;</td>
+        <td style="padding:14px 8px 14px 20px">
+          <p class="inter" style="margin:0;font-family:'Inter',-apple-system,sans-serif;font-size:14px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.notice}</p>
         </td>
       </tr>
     </table>
 
     <!--call-->
-    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#444444">
+    <p class="inter" style="margin:0 0 28px;font-family:'Inter',-apple-system,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6a6a6a">
       ${tx.call} &nbsp;
       <a href="tel:${RESTAURANT_PHONE.replace(/\s/g, "")}" style="color:#ebebeb;text-decoration:none;font-weight:600">${RESTAURANT_PHONE}</a>
     </p>
@@ -470,29 +495,33 @@ function rejectionHtml(data: Omit<ReservaEmailData, "cancel_token">): string {
     <!--rebook CTA — outlined-->
     <table role="presentation" cellpadding="0" cellspacing="0" border="0">
       <tr>
-        <td style="border:1px solid #333333;border-radius:2px">
+        <td style="width:1px;white-space:nowrap;border:1px solid #3a3a3a;border-radius:3px">
           <a href="${bookUrl}" class="syne"
-             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:16px 32px">
+             style="display:inline-block;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:14px 36px">
             ${tx.rebook}
           </a>
         </td>
       </tr>
     </table>`;
 
-  return layout(body, `${displayDate} · ${displayHora}`, data.idioma);
+  return layout(body, tx.preview, data.idioma);
 }
 
 // ── Exports ────────────────────────────────────────────────────
 
 export async function sendConfirmationEmail(data: ReservaEmailData) {
-  const displayDate = formatFechaEmail(data.fecha, data.idioma);
-  const displayHora = data.hora.slice(0, 5);
+  const displayHora  = data.hora.slice(0, 5);
+  const shortDate    = formatShortDate(data.fecha, data.idioma);
+  const shortDate_es = formatShortDate(data.fecha, "es");
+  const shortDate_ca = formatShortDate(data.fecha, "ca");
+  const shortDate_en = formatShortDate(data.fecha, "en");
   const subjects: Record<string, string> = {
-    es: `Reserva confirmada · ${displayHora} · ${formatFechaEmail(data.fecha, "es")}`,
-    ca: `Reserva confirmada · ${displayHora} · ${formatFechaEmail(data.fecha, "ca")}`,
-    en: `Booking confirmed · ${formatFechaEmail(data.fecha, "en")} at ${displayHora}`,
+    es: `Tu mesa está confirmada — ${displayHora} · ${shortDate_es}`,
+    ca: `La teva taula està confirmada — ${displayHora} · ${shortDate_ca}`,
+    en: `Your table is confirmed — ${shortDate_en} at ${displayHora}`,
   };
   const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const text = `${RESTAURANT_NAME}\n\n${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
   const icsContent = generateICS(data);
   await getResend().emails.send({
@@ -503,15 +532,16 @@ export async function sendConfirmationEmail(data: ReservaEmailData) {
     text,
     attachments: [{ filename: "reserva.ics", content: Buffer.from(icsContent).toString("base64") }],
   });
+  void shortDate;
 }
 
 export async function sendPendingEmail(data: ReservaEmailData) {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
   const subjects: Record<string, string> = {
-    es: `Solicitud recibida · ${RESTAURANT_NAME}`,
-    ca: `Sol·licitud rebuda · ${RESTAURANT_NAME}`,
-    en: `Request received · ${RESTAURANT_NAME}`,
+    es: `Revisando tu solicitud — te avisamos pronto`,
+    ca: `Revisant la teva sol·licitud — t'avisem aviat`,
+    en: `We've received your request — confirmation coming soon`,
   };
   const text = `${RESTAURANT_NAME}\n\nSolicitud recibida: ${data.personas} pers. · ${displayDate} · ${displayHora}\n\nTe avisaremos en las próximas horas.\n\n${RESTAURANT_PHONE}`;
   await getResend().emails.send({
@@ -524,10 +554,11 @@ export async function sendPendingEmail(data: ReservaEmailData) {
 }
 
 export async function sendRejectionEmail(data: Omit<ReservaEmailData, "cancel_token">) {
+  const shortDate = formatShortDate(data.fecha, data.idioma);
   const subjects: Record<string, string> = {
-    es: `Tu solicitud · ${RESTAURANT_NAME}`,
-    ca: `La teva sol·licitud · ${RESTAURANT_NAME}`,
-    en: `Your request · ${RESTAURANT_NAME}`,
+    es: `Sobre tu solicitud para el ${shortDate}`,
+    ca: `Sobre la teva sol·licitud per al ${shortDate}`,
+    en: `About your request for ${shortDate}`,
   };
   const text = `${RESTAURANT_NAME}\n\nLo sentimos, no podemos confirmar tu solicitud.\n\n${RESTAURANT_PHONE}`;
   await getResend().emails.send({
@@ -572,6 +603,7 @@ function reminderHtml(data: ReservaEmailData): string {
       guests:   "Personas",
       address:  "Dónde",
       cancel:   "Cancelar reserva",
+      preview:  `Mañana tienes mesa con nosotros a las ${displayHora}. ¡Te esperamos!`,
     },
     ca: {
       eyebrow:  "Recordatori · demà",
@@ -582,6 +614,7 @@ function reminderHtml(data: ReservaEmailData): string {
       guests:   "Persones",
       address:  "On",
       cancel:   "Cancel·lar reserva",
+      preview:  `Demà tens taula amb nosaltres a les ${displayHora}. T'esperem!`,
     },
     en: {
       eyebrow:  "Reminder · tomorrow",
@@ -592,39 +625,38 @@ function reminderHtml(data: ReservaEmailData): string {
       guests:   "Guests",
       address:  "Where",
       cancel:   "Cancel booking",
+      preview:  `Your table is tomorrow at ${displayHora}. We look forward to seeing you!`,
     },
   };
   const tx = t[data.idioma] ?? t.es;
 
   const body = `
-    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
-    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
-    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:48px">
-      ${detalleRows([
-        [tx.date,    displayDate],
-        [tx.time,    displayHora],
-        [tx.guests,  `${data.personas}`],
-        [tx.address, RESTAURANT_ADDRESS],
-      ])}
-    </table>
-    <p style="margin:0">
+    <p class="inter" style="margin:0 0 10px;font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
+    <h1 class="syne" style="margin:0 0 16px;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:32px;font-weight:700;color:#ebebeb;line-height:1.1;letter-spacing:-0.5px">${tx.heading}</h1>
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.sub}</p>
+    ${detalleCard([
+      [tx.date,    displayDate],
+      [tx.time,    displayHora],
+      [tx.guests,  `${data.personas}`],
+      [tx.address, RESTAURANT_ADDRESS],
+    ])}
+    <p style="margin:20px 0 0">
       <a href="${cancelUrl}" class="inter"
-         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#333333;text-decoration:underline;letter-spacing:1px">
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.5px">
         ${tx.cancel}
       </a>
     </p>`;
 
-  return layout(body, `${tx.eyebrow} · ${displayHora}`, data.idioma);
+  return layout(body, tx.preview, data.idioma);
 }
 
 export async function sendReminderEmail(data: ReservaEmailData) {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
   const subjects: Record<string, string> = {
-    es: `Recordatorio: mañana a las ${displayHora} · ${RESTAURANT_NAME}`,
-    ca: `Recordatori: demà a les ${displayHora} · ${RESTAURANT_NAME}`,
-    en: `Reminder: tomorrow at ${displayHora} · ${RESTAURANT_NAME}`,
+    es: `Mañana a las ${displayHora} te esperamos`,
+    ca: `Demà a les ${displayHora} t'esperem`,
+    en: `See you tomorrow at ${displayHora} — ${RESTAURANT_NAME}`,
   };
   const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
   const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
@@ -668,8 +700,9 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
       time:      "Hora",
       guests:    "Personas",
       address:   "Dónde",
-      cta:       "Confirmo mi asistencia ✓",
+      cta:       "Confirmo mi asistencia",
       cancel:    "Cancelar reserva",
+      preview:   `Tu mesa de mañana a las ${displayHora} está reservada — confirma tu asistencia.`,
     },
     ca: {
       eyebrow:   "Recordatori · demà",
@@ -679,8 +712,9 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
       time:      "Hora",
       guests:    "Persones",
       address:   "On",
-      cta:       "Confirmo la meva assistència ✓",
+      cta:       "Confirmo la meva assistència",
       cancel:    "Cancel·lar reserva",
+      preview:   `La teva taula de demà a les ${displayHora} està reservada — confirma la teva assistència.`,
     },
     en: {
       eyebrow:   "Reminder · tomorrow",
@@ -690,29 +724,28 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
       time:      "Time",
       guests:    "Guests",
       address:   "Where",
-      cta:       "Confirm my attendance ✓",
+      cta:       "Confirm attendance",
       cancel:    "Cancel booking",
+      preview:   `Your table tomorrow at ${displayHora} is reserved — please confirm your attendance.`,
     },
   };
   const tx = t[data.idioma] ?? t.es;
 
   const body = `
-    <p class="inter" style="margin:0 0 12px;font-family:'Inter',-apple-system,sans-serif;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
-    <h1 class="syne" style="margin:0 0 20px;font-family:'Syne','Impact','Arial Black',sans-serif;font-size:44px;font-weight:800;color:#ebebeb;line-height:1.05;letter-spacing:-1px">${tx.heading}</h1>
-    <p class="inter" style="margin:0 0 36px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:300;color:#888888;line-height:1.7">${tx.sub}</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px">
-      ${detalleRows([
-        [tx.date,    displayDate],
-        [tx.time,    displayHora],
-        [tx.guests,  `${data.personas}`],
-        [tx.address, RESTAURANT_ADDRESS],
-      ])}
-    </table>
+    <p class="inter" style="margin:0 0 10px;font-family:'Inter',-apple-system,sans-serif;font-size:9px;font-weight:600;letter-spacing:5px;text-transform:uppercase;color:#c9a84c">${tx.eyebrow}</p>
+    <h1 class="syne" style="margin:0 0 16px;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:32px;font-weight:700;color:#ebebeb;line-height:1.1;letter-spacing:-0.5px">${tx.heading}</h1>
+    <p class="inter" style="margin:0 0 32px;font-family:'Inter',-apple-system,sans-serif;font-size:15px;font-weight:400;color:#a0a0a0;line-height:1.7">${tx.sub}</p>
+    ${detalleCard([
+      [tx.date,    displayDate],
+      [tx.time,    displayHora],
+      [tx.guests,  `${data.personas}`],
+      [tx.address, RESTAURANT_ADDRESS],
+    ])}
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
       <tr>
-        <td style="border-radius:2px;background-color:#b12a2a">
+        <td style="width:1px;white-space:nowrap;border-radius:3px;background-color:#b12a2a">
           <a href="${reconfirmUrl}" class="syne"
-             style="display:inline-block;font-family:'Syne','Arial Black',sans-serif;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#ebebeb;text-decoration:none;padding:18px 36px">
+             style="display:inline-block;font-family:'Syne','Didot','Bodoni MT','Palatino Linotype','Georgia',serif;font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#ffffff;text-decoration:none;padding:14px 36px">
             ${tx.cta}
           </a>
         </td>
@@ -720,21 +753,21 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
     </table>
     <p style="margin:0">
       <a href="${cancelUrl}" class="inter"
-         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#333333;text-decoration:underline;letter-spacing:1px">
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.5px">
         ${tx.cancel}
       </a>
     </p>`;
 
-  return layout(body, `${tx.eyebrow} · ${displayHora}`, data.idioma);
+  return layout(body, tx.preview, data.idioma);
 }
 
 export async function sendReminderWithReconfirmacion(data: ReminderReconfirmData): Promise<void> {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
   const subjects: Record<string, string> = {
-    es: `Recordatorio: tu reserva es mañana — ¿confirmas? · ${RESTAURANT_NAME}`,
-    ca: `Recordatori: la teva reserva és demà — confirmes? · ${RESTAURANT_NAME}`,
-    en: `Reminder: your booking is tomorrow — can you confirm? · ${RESTAURANT_NAME}`,
+    es: `Mañana a las ${displayHora} — ¿confirmamos tu mesa?`,
+    ca: `Demà a les ${displayHora} — confirmem la teva taula?`,
+    en: `Tomorrow at ${displayHora} — can we confirm your table?`,
   };
   const cancelUrl      = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
   const reconfirmUrl   = `${APP_URL}/api/reconfirmar?t=${data.reconfirmacion_token}`;
@@ -809,7 +842,6 @@ export async function sendAdminNotification(data: {
 
   const panelLabel = data.tipo === "nueva_pendiente" ? "Ver pendientes →" : "Ir al panel →";
 
-  // Daily schedule table
   let scheduleHtml = "";
   if (data.reservasDia && data.reservasDia.length > 0) {
     const STATUS: Record<string, string> = {
@@ -878,7 +910,7 @@ export async function sendAdminMagicLinkEmail(to: string, magicUrl: string): Pro
   <p style="color:#b12a2a;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 12px;font-weight:700">${RESTAURANT_NAME.toUpperCase()}</p>
   <h2 style="margin:0 0 12px;font-size:20px;color:#ebebeb">Enlace de acceso al panel</h2>
   <p style="margin:0 0 24px;font-size:14px;color:#9ca3af">Válido durante 15 minutos. Si no lo solicitaste, ignora este email.</p>
-  <a href="${magicUrl}" style="display:inline-block;background:#b12a2a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:700">Acceder al panel →</a>
+  <a href="${magicUrl}" style="display:inline-block;background:#b12a2a;color:#fff;padding:12px 24px;border-radius:4px;text-decoration:none;font-size:14px;font-weight:700">Acceder al panel →</a>
   <p style="margin:20px 0 0;font-size:12px;color:#6b7280">O copia este enlace en tu navegador:<br><span style="color:#9ca3af;word-break:break-all">${magicUrl}</span></p>
 </div>
 </body></html>`;
