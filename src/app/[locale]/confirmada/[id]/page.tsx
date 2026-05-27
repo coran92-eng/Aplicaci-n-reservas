@@ -122,6 +122,13 @@ export default async function ConfirmadaPage({
           </div>
         )}
 
+        {emailError && (
+          <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3 mb-6">
+            <p className="text-sm text-red-400 font-medium">Email no enviado</p>
+            <p className="text-xs text-red-300 mt-1 font-mono break-all">{emailError}</p>
+          </div>
+        )}
+
         <div className="space-y-3">
           <div className="flex items-start gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
