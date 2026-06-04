@@ -303,6 +303,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
         ? `/${locale}/solicitud-recibida/${result.id}?${qs}`
         : `/${locale}/confirmada/${result.id}?${qs}`;
       if (embed) {
+        window.parent.postMessage({ type: 'reserva_confirmada' }, '*');
         // Redirect the parent window so the confirmation page loads outside the iframe
         try {
           window.top!.location.href = destPath;
