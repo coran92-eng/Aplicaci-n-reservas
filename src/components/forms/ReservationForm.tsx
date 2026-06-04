@@ -297,23 +297,21 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
         }
         return;
       }
-      if (embed) {
-        setEmbedSuccess({
-          estado: result.estado,
-          fecha: watch("fecha"),
-          hora: watch("hora"),
-          personas: watch("personas"),
-          nombre: watch("nombre"),
-        });
-        return;
-      }
       const qs = new URLSearchParams({ token: result.cancelToken });
       if (result.emailError) qs.set("emailError", result.emailError);
-      if (result.estado === "pendiente_aprobacion") {
-        router.push(`/${locale}/solicitud-recibida/${result.id}?${qs}`);
-      } else {
-        router.push(`/${locale}/confirmada/${result.id}?${qs}`);
+      const destPath = result.estado === "pendiente_aprobacion"
+        ? `/${locale}/solicitud-recibida/${result.id}?${qs}`
+        : `/${locale}/confirmada/${result.id}?${qs}`;
+      if (embed) {
+        // Redirect the parent window so the confirmation page loads outside the iframe
+        try {
+          window.top!.location.href = destPath;
+        } catch {
+          window.location.href = destPath;
+        }
+        return;
       }
+      router.push(destPath);
     } catch {
       setServerError("generic");
     } finally {
