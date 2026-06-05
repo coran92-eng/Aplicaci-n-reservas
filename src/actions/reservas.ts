@@ -37,7 +37,7 @@ async function checkRateLimit(ip: string): Promise<boolean> {
       .gte("created_at", windowStart);
 
     if (error) return true;
-    if ((count ?? 0) >= 3) return false;
+    if ((count ?? 0) >= 10) return false;
 
     await serviceClient.from("rate_limits").insert({
       identifier: ip,
