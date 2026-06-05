@@ -247,9 +247,8 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
       await trigger(["fecha", "hora"]);
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const gtag = typeof window !== "undefined" && (window as any).gtag;
-    if (typeof gtag === "function") {
+    const gtag = typeof window !== "undefined" && (window as { gtag?: (...args: unknown[]) => void }).gtag;
+    if (gtag) {
       gtag("event", "inicio_reserva", { event_category: "reservas", event_label: "paso_1_fecha" });
     }
     setStep(2);
