@@ -102,6 +102,7 @@ export default async function HomePage({
           </a>
           <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground text-xs">{RESTAURANT_ADDRESS}</span>
+          <span className="text-muted-foreground/40 text-[10px] ml-auto">v1</span>
         </div>
       </footer>
     </main>
