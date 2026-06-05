@@ -249,7 +249,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     }
     const gtag = typeof window !== "undefined" && (window as { gtag?: (...args: unknown[]) => void }).gtag;
     if (gtag) {
-      gtag("event", "inicio_reserva", { event_category: "reservas", event_label: "paso_1_fecha" });
+      gtag("event", "conversion", { send_to: "AW-18213186788/quoPCPPF07kcEOTZ3OxD" });
     }
     setStep(2);
   }
