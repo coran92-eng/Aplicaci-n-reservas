@@ -247,12 +247,8 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
       await trigger(["fecha", "hora"]);
       return;
     }
-    console.log("[gtag] handleContinue ejecutado — typeof window.gtag:", typeof window.gtag);
     if (typeof window !== "undefined" && typeof window.gtag === "function") {
       window.gtag("event", "conversion", { send_to: "AW-18213186788/quoPCPPF07kcEOTZ3OxD" });
-      console.log("[gtag] evento conversion enviado — dataLayer:", JSON.stringify(window.dataLayer?.slice(-2)));
-    } else {
-      console.warn("[gtag] window.gtag no disponible");
     }
     setStep(2);
   }
