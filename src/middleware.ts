@@ -8,8 +8,19 @@ const intlMiddleware = createMiddleware({
   localeDetection: true,
 });
 
+const CANONICAL_HOST = "reservas.cortedemanga.es";
+
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Redirect the raw Vercel deployment URL to the custom domain
+  const host = req.headers.get("host") ?? "";
+  if (host.endsWith(".vercel.app")) {
+    const url = req.nextUrl.clone();
+    url.host = CANONICAL_HOST;
+    url.port = "";
+    return NextResponse.redirect(url, 301);
+  }
 
   if (pathname.startsWith("/admin")) {
     if (pathname === "/admin/login") return NextResponse.next();

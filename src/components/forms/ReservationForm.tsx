@@ -307,11 +307,12 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
         : `/${locale}/confirmada/${result.id}?${qs}`;
       if (embed) {
         window.parent.postMessage({ type: 'reserva_confirmada' }, '*');
-        // Redirect the parent window so the confirmation page loads outside the iframe
+        // Use absolute URL so the parent navigates to reservas.cortedemanga.es, not its own origin
+        const absoluteUrl = window.location.origin + destPath;
         try {
-          window.top!.location.href = destPath;
+          window.top!.location.href = absoluteUrl;
         } catch {
-          window.location.href = destPath;
+          window.location.href = absoluteUrl;
         }
         return;
       }
