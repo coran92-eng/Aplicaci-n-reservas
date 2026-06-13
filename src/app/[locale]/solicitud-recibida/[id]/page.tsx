@@ -6,6 +6,7 @@ import { Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
+import { GtagConversion } from "@/components/GtagConversion";
 
 function formatDateForDisplay(fecha: string, locale: string): string {
   const [y, m, d] = fecha.split("-").map(Number);
@@ -38,6 +39,7 @@ export default async function SolicitudRecibidaPage({
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
+      <GtagConversion sendTo="AW-18213186788/8_gbCN7D47gcEOTZ3OxD" value={133.0} currency="EUR" />
       <div className="max-w-md w-full bg-card rounded-xl border border-border p-8">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-900/30 rounded-full mb-4">
