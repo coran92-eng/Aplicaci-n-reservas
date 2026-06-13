@@ -6,6 +6,8 @@ const EMBED_ORIGINS = [
   "https://cartacorte.netlify.app",
   "https://www.cortedemanga.com",
   "https://cortedemanga.com",
+  "https://cortedemanga.es",
+  "https://www.cortedemanga.es",
 ];
 
 const securityHeaders = [
@@ -35,6 +37,7 @@ const securityHeaders = [
 // Headers para la ruta /embed — permite framing desde los orígenes autorizados
 // X-Frame-Options omitido: frame-ancestors en CSP es el mecanismo correcto para multi-origen
 const embedHeaders = [
+  { key: "X-Frame-Options", value: "ALLOWALL" },
   {
     key: "Content-Security-Policy",
     value: [
