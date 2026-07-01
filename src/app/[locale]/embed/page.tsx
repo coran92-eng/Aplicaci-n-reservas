@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ReservationForm } from "@/components/forms/ReservationForm";
 import { EmbedHeightReporter } from "@/components/EmbedHeightReporter";
+import { EmbedLocaleDetector } from "@/components/EmbedLocaleDetector";
 import type { FranjaBloqueada, DiaCerrado, Configuracion } from "@/lib/supabase/types";
 import { todayBarcelona, addDaysToDate } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -51,6 +52,7 @@ export default async function EmbedPage({
   return (
     <>
       <EmbedHeightReporter />
+      <EmbedLocaleDetector currentLocale={locale} />
       <div className="bg-background min-h-0 p-4">
         <div className="bg-card rounded-xl border border-border p-6 max-w-lg mx-auto">
           <ReservationForm
