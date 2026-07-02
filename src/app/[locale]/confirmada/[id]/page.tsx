@@ -56,17 +56,19 @@ export default async function ConfirmadaPage({
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <GtagConversion
-        sendTo="AW-18213186788/MkMuCMeWucEcEOTZ3OxD"
-        value={50.0}
-        currency="EUR"
-        userData={{
-          email: reserva.email,
-          phone_number: reserva.telefono,
-          first_name: reserva.nombre,
-          last_name: reserva.apellido,
-        }}
-      />
+      {!isPending && (
+        <GtagConversion
+          sendTo="AW-18213186788/MkMuCMeWucEcEOTZ3OxD"
+          value={50.0}
+          currency="EUR"
+          userData={{
+            email: reserva.email,
+            phone_number: reserva.telefono,
+            first_name: reserva.nombre,
+            last_name: reserva.apellido,
+          }}
+        />
+      )}
       <div className="max-w-md w-full bg-card rounded-xl border border-border p-8">
         <div className="text-center mb-8">
           <CheckCircle className="h-14 w-14 text-primary mx-auto mb-4" />
