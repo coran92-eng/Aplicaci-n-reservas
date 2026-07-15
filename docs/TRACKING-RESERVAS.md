@@ -145,7 +145,51 @@ padre donde está incrustado.
 
 ---
 
-## 8. Troubleshooting
+## 8. Handshake embed → web padre (conversión en `cortedemanga.es`)
+
+Cuando el formulario corre embebido en `cortedemanga.es`, al confirmar una
+reserva la app emite un `postMessage` a la web padre para que **esta** dispare la
+conversión de Google Ads en su propio dominio:
+
+```js
+// src/components/forms/ReservationForm.tsx (dentro de if (embed))
+if (window.parent !== window) {
+  window.parent.postMessage({ type: 'cmReservaConfirmada' }, 'https://cortedemanga.es');
+}
+```
+
+- **`targetOrigin` = `https://cortedemanga.es`** (sin `www`). El navegador solo
+  entrega el mensaje si el iframe está embebido exactamente en ese origen; si la
+  web padre se sirviera desde `www.` o desde `cartacorte.netlify.app`, el mensaje
+  se descartaría en silencio y no habría conversión.
+- **Lado app de reservas: ✅ desplegado.** Emite `cmReservaConfirmada`.
+- **Lado web padre (`cortedemanga.es`): pendiente/externo.** Debe existir un
+  listener que reciba el mensaje y dispare la conversión. Ejemplo mínimo:
+
+  ```js
+  window.addEventListener('message', (event) => {
+    if (event.origin !== 'https://reservas.cortedemanga.es') return;
+    if (event.data?.type !== 'cmReservaConfirmada') return;
+    gtag('event', 'conversion', { send_to: 'AW-18213186788/XXXXXXXX' });
+  });
+  ```
+
+> Mientras el listener no esté en la web padre, las conversiones de Ads solo
+> recogerán WhatsApp/llamadas, no las reservas completadas en el iframe.
+
+---
+
+## 9. Flecos externos (fuera de este repo)
+
+| Fleco | Estado | Dónde |
+|-------|--------|-------|
+| `postMessage cmReservaConfirmada` al confirmar | ✅ Hecho | App de reservas (este repo) |
+| Listener que dispara la conversión al recibir el mensaje | ⏳ Pendiente | Web padre `cortedemanga.es` |
+| URL final de los anuncios de reserva → `https://cortedemanga.es/#reservas` | ⏳ Pendiente | Consola de Google Ads |
+
+---
+
+## 10. Troubleshooting
 
 | Síntoma | Causa probable |
 |---------|----------------|
