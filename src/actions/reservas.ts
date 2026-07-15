@@ -505,12 +505,16 @@ export async function approveReserva(
 
   if (fetchError || !reserva) return { ok: false, error: "not_found" };
 
-  const { error } = await serviceClient
+  const { data: updated, error } = await serviceClient
     .from("reservas")
     .update({ estado: "confirmada" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("estado", "pendiente_aprobacion")
+    .select("id");
 
   if (error) return { ok: false, error: String(error) };
+  // La reserva cambió de estado entre la lectura y la aprobación (p. ej. el cliente la canceló)
+  if (!updated || updated.length === 0) return { ok: false, error: "estado_cambiado" };
 
   try {
     await sendConfirmationEmail({
@@ -545,12 +549,16 @@ export async function rejectReserva(
 
   if (fetchError || !reserva) return { ok: false, error: "not_found" };
 
-  const { error } = await serviceClient
+  const { data: updated, error } = await serviceClient
     .from("reservas")
     .update({ estado: "rechazada" })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("estado", "pendiente_aprobacion")
+    .select("id");
 
   if (error) return { ok: false, error: String(error) };
+  // La reserva cambió de estado entre la lectura y el rechazo (p. ej. el cliente la canceló)
+  if (!updated || updated.length === 0) return { ok: false, error: "estado_cambiado" };
 
   sendRejectionEmail({
     nombre: reserva.nombre,

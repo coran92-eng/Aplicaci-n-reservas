@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/require-admin";
 import { revalidatePath } from "next/cache";
 import { generateTimeSlots } from "@/lib/utils";
 
@@ -10,6 +11,7 @@ export async function updateConfiguracion(
   clave: string,
   valor: unknown
 ): Promise<{ ok: boolean }> {
+  await requireAdmin();
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("configuracion")
@@ -26,6 +28,7 @@ export async function addDiaCerrado(
   fecha: string,
   motivo?: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("dias_cerrados")
@@ -41,6 +44,7 @@ export async function addDiaCerrado(
 export async function removeDiaCerrado(
   id: string
 ): Promise<{ ok: boolean }> {
+  await requireAdmin();
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("dias_cerrados")
@@ -58,6 +62,7 @@ export async function addFranjaBloqueada(
   hora: string,
   motivo?: string
 ): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
   const horaFull = hora.length === 5 ? hora + ":00" : hora;
   const supabase = createServiceClient();
   const { error } = await supabase
@@ -74,6 +79,7 @@ export async function addFranjaBloqueada(
 export async function removeFranjaBloqueada(
   id: string
 ): Promise<{ ok: boolean }> {
+  await requireAdmin();
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("franjas_bloqueadas")
@@ -89,6 +95,7 @@ export async function removeFranjaBloqueada(
 export async function cierreRapido(
   fecha: string
 ): Promise<{ ok: boolean; count: number; error?: string }> {
+  await requireAdmin();
   const supabase = createServiceClient();
   const allSlots = generateTimeSlots();
 
@@ -120,6 +127,7 @@ export async function cierreRapido(
 export async function reaperturaRapida(
   fecha: string
 ): Promise<{ ok: boolean; count: number }> {
+  await requireAdmin();
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("franjas_bloqueadas")
