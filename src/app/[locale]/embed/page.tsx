@@ -39,7 +39,7 @@ export default async function EmbedPage({
   const config: Record<string, unknown> = {};
   for (const row of configRows) config[row.clave] = row.valor;
 
-  const limiteGrupo = (config.limite_grupo_online as number) ?? 7;
+  const limiteGrupo = (config.limite_grupo_online as number) ?? 11;
   const antelacionMax = (config.antelacion_maxima_dias as number) ?? 90;
   const topePersonas = (config.tope_por_franja_personas as number) ?? 30;
 

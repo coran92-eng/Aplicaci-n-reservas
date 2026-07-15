@@ -32,7 +32,7 @@ export default async function AjustesPage() {
   const dias = (diasRes.data ?? []) as DiaCerrado[];
   const franjas = (franjasRes.data ?? []) as FranjaBloqueada[];
 
-  const limiteGrupo = (config.limite_grupo_online as number) ?? 7;
+  const limiteGrupo = (config.limite_grupo_online as number) ?? 11;
   const antelacionMax = (config.antelacion_maxima_dias as number) ?? 90;
   const topeActivo = Boolean(config.tope_por_franja_activo);
   const topePersonas = (config.tope_por_franja_personas as number) ?? 30;
