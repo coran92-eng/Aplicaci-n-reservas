@@ -31,14 +31,25 @@ window.gtag('config', 'AW-18213186788');
 
 ## 2. Eventos de conversión
 
-Hay **tres** acciones de conversión distintas. Todas cuelgan de la cuenta
-`AW-18213186788` y se distinguen por su *label*.
+Hay **cuatro** acciones de conversión. Todas cuelgan de la cuenta
+`AW-18213186788` y se distinguen por su *label*. Las tres primeras se disparan
+desde esta app; la cuarta la dispara la **web padre** (`cortedemanga.es`) al
+recibir el `postMessage` (ver §8).
 
 | # | Evento | Label | Valor | Dónde se dispara | Condición |
 |---|--------|-------|-------|------------------|-----------|
 | 1 | Inicio de reserva (paso 1) | `quoPCPPF07kcEOTZ3OxD` | — | `ReservationForm.tsx`, botón **Continuar** | Al pasar de paso 1 a 2 (fecha + hora elegidas) |
 | 2 | Reserva confirmada buena | `MkMuCMeWucEcEOTZ3OxD` | 50 € | `confirmada/[id]/page.tsx` | **Solo si `!isPending`** (estado ≠ `pendiente_aprobacion`) |
 | 3 | Solicitud de grupo recibida | `8_gbCN7D47gcEOTZ3OxD` | 133 € | `solicitud-recibida/[id]/page.tsx` | Al cargar la página (siempre) |
+| 4 | Reserva confirmada (embed) | `ZVVDCKDA07kcEOTZ3OxD` | — | `index.html` de `cortedemanga.es` (fuera de este repo) | Al recibir `postMessage` `cmReservaConfirmada` |
+
+> ⚠️ **Doble conteo en el flujo embed.** Una reserva confirmada **dentro del
+> iframe** dispara **dos** conversiones: la #4 (la web padre recibe el
+> `postMessage`) y, acto seguido, la #2 (la app hace `window.top.location.href`
+> a la página de confirmación, que dispara `MkMuCMe...`). Una reserva confirmada
+> **directa** (no embebida) solo dispara la #2. Antes de optimizar campañas hacia
+> reservas, elige **una** como conversión *principal* en Ads y marca la otra como
+> secundaria/no contabilizada, o inflarás el recuento del tráfico embebido.
 
 ### Detalle por evento
 
@@ -163,19 +174,35 @@ if (window.parent !== window) {
   web padre se sirviera desde `www.` o desde `cartacorte.netlify.app`, el mensaje
   se descartaría en silencio y no habría conversión.
 - **Lado app de reservas: ✅ desplegado.** Emite `cmReservaConfirmada`.
-- **Lado web padre (`cortedemanga.es`): pendiente/externo.** Debe existir un
-  listener que reciba el mensaje y dispare la conversión. Ejemplo mínimo:
+- **Lado web padre (`cortedemanga.es`): ✅ desplegado.** En `index.html` (en
+  producción) hay un listener que:
+  - Filtra por `event.data.type === 'cmReservaConfirmada'`.
+  - Valida el origen: acepta `https://reservas.cortedemanga.es` **y**
+    `https://aplicaci-n-reservas.vercel.app` (cubre ambos por si el embed cambia
+    de dominio).
+  - Dispara la conversión #4 `gtag('event','conversion',{send_to:
+    'AW-18213186788/ZVVDCKDA07kcEOTZ3OxD'})` más un evento GA4 `reserva_conversion`.
 
   ```js
   window.addEventListener('message', (event) => {
-    if (event.origin !== 'https://reservas.cortedemanga.es') return;
+    const OK = ['https://reservas.cortedemanga.es', 'https://aplicaci-n-reservas.vercel.app'];
+    if (!OK.includes(event.origin)) return;
     if (event.data?.type !== 'cmReservaConfirmada') return;
-    gtag('event', 'conversion', { send_to: 'AW-18213186788/XXXXXXXX' });
+    gtag('event', 'conversion', { send_to: 'AW-18213186788/ZVVDCKDA07kcEOTZ3OxD' });
+    gtag('event', 'reserva_conversion'); // GA4
   });
   ```
 
-> Mientras el listener no esté en la web padre, las conversiones de Ads solo
-> recogerán WhatsApp/llamadas, no las reservas completadas en el iframe.
+> **Handshake completo por ambos lados.** Recordatorio del doble disparo: esta #4
+> se suma a la #2 en el flujo embed (ver aviso en §2).
+
+### Detalle del `targetOrigin`
+
+La app emite con `targetOrigin = 'https://cortedemanga.es'` (dominio canónico,
+sin `www`). El mensaje **solo se entrega si la web padre está en ese origen
+exacto**. Como Netlify redirige `www.cortedemanga.es` → `cortedemanga.es`, en la
+práctica siempre coincide. Único caso de fallo: que esa redirección www→apex se
+desactivara; entonces un usuario en `www.` no generaría conversión embebida.
 
 ---
 
@@ -184,7 +211,10 @@ if (window.parent !== window) {
 | Fleco | Estado | Dónde |
 |-------|--------|-------|
 | `postMessage cmReservaConfirmada` al confirmar | ✅ Hecho | App de reservas (este repo) |
-| Listener que dispara la conversión al recibir el mensaje | ⏳ Pendiente | Web padre `cortedemanga.es` |
+| Listener que dispara la conversión `ZVVDCKDA...` al recibir el mensaje | ✅ Hecho | Web padre `cortedemanga.es` |
+| Elegir conversión **principal** para evitar doble conteo (#2 vs #4) | ⏳ Pendiente | Consola de Google Ads |
+| Verificar que `ZVVDCKDA...` registra reservas (reserva de prueba + Tag Assistant) | ⏳ Pendiente | Consola de Google Ads |
+| Optimizar campañas hacia esa conversión | ⏳ Pendiente | Consola de Google Ads |
 | URL final de los anuncios de reserva → `https://cortedemanga.es/#reservas` | ⏳ Pendiente | Consola de Google Ads |
 
 ---
