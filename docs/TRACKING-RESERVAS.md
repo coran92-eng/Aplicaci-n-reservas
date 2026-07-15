@@ -43,13 +43,23 @@ recibir el `postMessage` (ver §8).
 | 3 | Solicitud de grupo recibida | `8_gbCN7D47gcEOTZ3OxD` | 133 € | `solicitud-recibida/[id]/page.tsx` | Al cargar la página (siempre) |
 | 4 | Reserva confirmada (embed) | `ZVVDCKDA07kcEOTZ3OxD` | — | `index.html` de `cortedemanga.es` (fuera de este repo) | Al recibir `postMessage` `cmReservaConfirmada` |
 
-> ⚠️ **Doble conteo en el flujo embed.** Una reserva confirmada **dentro del
-> iframe** dispara **dos** conversiones: la #4 (la web padre recibe el
-> `postMessage`) y, acto seguido, la #2 (la app hace `window.top.location.href`
-> a la página de confirmación, que dispara `MkMuCMe...`). Una reserva confirmada
-> **directa** (no embebida) solo dispara la #2. Antes de optimizar campañas hacia
-> reservas, elige **una** como conversión *principal* en Ads y marca la otra como
-> secundaria/no contabilizada, o inflarás el recuento del tráfico embebido.
+> **Doble disparo en el flujo embed (por diseño, benigno).** Una reserva
+> confirmada **dentro del iframe** dispara **dos** conversiones: la #4 (la web
+> padre recibe el `postMessage`) y, acto seguido, la #2 (la app hace
+> `window.top.location.href` a la página de confirmación, que dispara
+> `MkMuCMe...`). Una reserva confirmada **directa** (no embebida) solo dispara la
+> #2.
+>
+> Esto **no** infla nada que importe **siempre que la configuración en Ads sea**:
+> **#2 `MkMuCMe...` = Primaria** (cuenta para pujas/optimización) y **#4
+> `ZVVDCKDA...` = Secundaria** (solo observación). Así, el bidding lo dirige la
+> reserva real (#2), que además cubre tráfico embebido *y* directo, lleva valor
+> (50 €) y Enhanced Conversions; la #4 queda como métrica complementaria del
+> tráfico embebido. **No promover la #4 a Primaria** — sería medir el mismo hecho
+> por un camino peor (solo embed, sin valor, sin user_data).
+>
+> ⚠️ **Ojo:** ambas rutas (#4 y #2) se disparan sobre una reserva **completada**,
+> no sobre un clic — ver §8. Reconciliar con cómo esté etiquetada la #4 en Ads.
 
 ### Detalle por evento
 
@@ -193,8 +203,16 @@ if (window.parent !== window) {
   });
   ```
 
-> **Handshake completo por ambos lados.** Recordatorio del doble disparo: esta #4
-> se suma a la #2 en el flujo embed (ver aviso en §2).
+> **Handshake completo por ambos lados.**
+>
+> **Cuándo dispara exactamente la #4:** el `postMessage cmReservaConfirmada` se
+> emite en `ReservationForm.tsx` **solo tras crear la reserva con éxito** (dentro
+> de `if (embed)`, después de que `createReserva` devuelva OK). Es decir, la #4
+> se dispara sobre una **reserva completada**, no sobre un clic en "Reservar". Si
+> en la consola de Ads esa acción está conceptualizada como "clic en reservar",
+> hay un desajuste de etiqueta: mediante este handshake mide *completaciones*
+> embebidas (el mismo hecho que la #2), no intención. No cambia la conclusión
+> (dejar #4 Secundaria), pero conviene que el nombre en Ads refleje lo que mide.
 
 ### Detalle del `targetOrigin`
 
@@ -212,10 +230,10 @@ desactivara; entonces un usuario en `www.` no generaría conversión embebida.
 |-------|--------|-------|
 | `postMessage cmReservaConfirmada` al confirmar | ✅ Hecho | App de reservas (este repo) |
 | Listener que dispara la conversión `ZVVDCKDA...` al recibir el mensaje | ✅ Hecho | Web padre `cortedemanga.es` |
-| Elegir conversión **principal** para evitar doble conteo (#2 vs #4) | ⏳ Pendiente | Consola de Google Ads |
-| Verificar que `ZVVDCKDA...` registra reservas (reserva de prueba + Tag Assistant) | ⏳ Pendiente | Consola de Google Ads |
-| Optimizar campañas hacia esa conversión | ⏳ Pendiente | Consola de Google Ads |
-| URL final de los anuncios de reserva → `https://cortedemanga.es/#reservas` | ⏳ Pendiente | Consola de Google Ads |
+| Conversión principal ya elegida: **#2 `MkMuCMe...` Primary, #4 `ZVVDCKDA...` Secondary** — solo **verificar** que sigue así tras estos cambios de código | 🔎 Verificar | Consola de Google Ads |
+| Verificar que `ZVVDCKDA...` registra (reserva de prueba **anulándola después**; contamina la #2 Primary y ocupa cupo real) | ⏳ Pendiente | Consola de Google Ads |
+| Optimizar campañas hacia la #2 (no cambiar la primaria) | ⏳ Pendiente | Consola de Google Ads |
+| Destino de anuncios → `#reservas`: **en revisión**, depende de si el ancla baja a una sección o abre el formulario directo (fricción prematura para tráfico de descubrimiento EN) | ⏳ En decisión | Consola de Google Ads |
 
 ---
 
