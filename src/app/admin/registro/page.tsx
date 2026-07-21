@@ -4,6 +4,7 @@ import type { Reserva } from "@/lib/supabase/types";
 import { countryFromPhone } from "@/lib/phone-country";
 import { formatTime } from "@/lib/utils";
 import Link from "next/link";
+import { Download } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -65,9 +66,20 @@ export default async function RegistroPage({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
-      <div className="flex items-baseline justify-between mb-4">
-        <h1 className="text-xl font-bold text-gray-900">Registro de reservas</h1>
-        <span className="text-sm text-gray-500">{total} en total</span>
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <div className="flex items-baseline gap-3 min-w-0">
+          <h1 className="text-xl font-bold text-gray-900">Registro de reservas</h1>
+          <span className="text-sm text-gray-500 shrink-0">{total} en total</span>
+        </div>
+        {total > 0 && (
+          <a
+            href="/admin/registro/export"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors shrink-0"
+          >
+            <Download className="h-4 w-4" />
+            Exportar CSV
+          </a>
+        )}
       </div>
 
       {reservas.length === 0 ? (
