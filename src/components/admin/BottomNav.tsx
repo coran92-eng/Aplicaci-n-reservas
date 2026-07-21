@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Clock, Map, Search, Settings } from "lucide-react";
+import { CalendarDays, Clock, Map, Search, Settings, ClipboardList } from "lucide-react";
 import { PendingBadge } from "./PendingBadge";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +27,11 @@ const tabs = [
     label: "Buscar",
     href: "/admin/buscar",
     icon: Search,
+  },
+  {
+    label: "Registro",
+    href: "/admin/registro",
+    icon: ClipboardList,
   },
   {
     label: "Ajustes",
