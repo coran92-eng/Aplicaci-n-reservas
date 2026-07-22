@@ -2,7 +2,9 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/require-admin";
 import type { Reserva } from "@/lib/supabase/types";
 import { countryFromPhone } from "@/lib/phone-country";
-import { formatTime } from "@/lib/utils";
+import { formatTime, todayBarcelona, addDaysToDate } from "@/lib/utils";
+import { computeStats } from "@/lib/registro-stats";
+import { RegistroStats } from "@/components/admin/RegistroStats";
 import Link from "next/link";
 import { Download } from "lucide-react";
 
@@ -54,13 +56,27 @@ export default async function RegistroPage({
   const to = from + PAGE_SIZE - 1;
 
   const supabase = createServiceClient();
-  const { data, count } = await supabase
-    .from("reservas")
-    .select("*", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+
+  // Ventana para estadísticas: semana pasada + esta semana + próximos 7 días (por día de servicio)
+  const today = todayBarcelona();
+  const statsFrom = addDaysToDate(today, -14);
+  const statsTo = addDaysToDate(today, 7);
+
+  const [{ data, count }, { data: statsData }] = await Promise.all([
+    supabase
+      .from("reservas")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to),
+    supabase
+      .from("reservas")
+      .select("*")
+      .gte("fecha", statsFrom)
+      .lte("fecha", statsTo),
+  ]);
 
   const reservas = (data ?? []) as Reserva[];
+  const stats = computeStats((statsData ?? []) as Reserva[], today);
   const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -81,6 +97,8 @@ export default async function RegistroPage({
           </a>
         )}
       </div>
+
+      <RegistroStats stats={stats} />
 
       {reservas.length === 0 ? (
         <p className="text-sm text-gray-400 mt-8 text-center">
