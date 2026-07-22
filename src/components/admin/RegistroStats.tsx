@@ -1,4 +1,4 @@
-import type { RegistroStats } from "@/lib/registro-stats";
+import type { RegistroStats, CompareBlock } from "@/lib/registro-stats";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 function Delta({ pct }: { pct: number | null }) {
@@ -26,37 +26,23 @@ function Delta({ pct }: { pct: number | null }) {
   );
 }
 
-function CompareCard({
-  title,
-  subtitle,
-  reservas,
-  comensales,
-  deltaReservas,
-  deltaComensales,
-}: {
-  title: string;
-  subtitle: string;
-  reservas: number;
-  comensales: number;
-  deltaReservas: number | null;
-  deltaComensales: number | null;
-}) {
+function CompareCard({ title, subtitle, block }: { title: string; subtitle: string; block: CompareBlock }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-        <Delta pct={deltaReservas} />
+        <Delta pct={block.deltaReservas} />
       </div>
       <p className="text-[11px] text-gray-400 mb-3">{subtitle}</p>
       <div className="flex items-end gap-4">
         <div>
-          <p className="text-2xl font-bold text-gray-900 leading-none">{reservas}</p>
+          <p className="text-2xl font-bold text-gray-900 leading-none">{block.reservas}</p>
           <p className="text-[11px] text-gray-500 mt-1">reservas</p>
         </div>
         <div className="pb-0.5">
           <div className="flex items-center gap-1.5">
-            <p className="text-lg font-semibold text-gray-700 leading-none">{comensales}</p>
-            <Delta pct={deltaComensales} />
+            <p className="text-lg font-semibold text-gray-700 leading-none">{block.comensales}</p>
+            <Delta pct={block.deltaComensales} />
           </div>
           <p className="text-[11px] text-gray-500 mt-1">comensales</p>
         </div>
@@ -70,15 +56,20 @@ function StatCard({
   value,
   unit,
   hint,
+  delta,
 }: {
   title: string;
   value: string;
   unit?: string;
   hint?: string;
+  delta?: number | null;
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        {delta !== undefined && <Delta pct={delta} />}
+      </div>
       <p className="text-2xl font-bold text-gray-900 leading-none mt-2">
         {value}
         {unit && <span className="text-sm font-medium text-gray-400 ml-1">{unit}</span>}
@@ -88,35 +79,33 @@ function StatCard({
   );
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mt-5 mb-2 first:mt-0">
+      {children}
+    </h2>
+  );
+}
+
 export function RegistroStats({ stats }: { stats: RegistroStats }) {
   const topPais = stats.topPaises[0];
+  const cap = stats.franja.fuerte
+    ? stats.franja.fuerte === "cena"
+      ? `Cena ${stats.franja.cenaPct}%`
+      : `Comida ${stats.franja.comidaPct}%`
+    : "—";
 
   return (
     <section className="mb-6">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-        Estadísticas <span className="normal-case font-normal text-gray-400">· por día de servicio</span>
-      </h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <CompareCard
-          title="Hoy"
-          subtitle="vs mismo día de la semana pasada"
-          reservas={stats.hoy.reservas}
-          comensales={stats.hoy.comensales}
-          deltaReservas={stats.hoyDeltaReservas}
-          deltaComensales={stats.hoyDeltaComensales}
-        />
-        <CompareCard
-          title="Esta semana"
-          subtitle="hasta hoy vs la semana anterior"
-          reservas={stats.semana.reservas}
-          comensales={stats.semana.comensales}
-          deltaReservas={stats.semanaDeltaReservas}
-          deltaComensales={stats.semanaDeltaComensales}
-        />
+      <SectionLabel>Comparativas · por día de servicio</SectionLabel>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <CompareCard title="Hoy" subtitle="vs mismo día semana pasada" block={stats.hoy} />
+        <CompareCard title="Esta semana" subtitle="hasta hoy vs semana anterior" block={stats.semana} />
+        <CompareCard title="Este mes" subtitle="hasta hoy vs mes anterior" block={stats.mes} />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+      <SectionLabel>Cartera y ritmo</SectionLabel>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <StatCard
           title="Próximos 7 días"
           value={String(stats.proximos7.reservas)}
@@ -124,27 +113,58 @@ export function RegistroStats({ stats }: { stats: RegistroStats }) {
           hint={`${stats.proximos7.comensales} comensales en cartera`}
         />
         <StatCard
+          title="Captación"
+          value={String(stats.captacion.reservas)}
+          unit="res."
+          delta={stats.captacion.delta}
+          hint="creadas esta semana vs anterior"
+        />
+        <StatCard
+          title="Ocupación hoy"
+          value={stats.ocupacionHoyPct !== null ? `${stats.ocupacionHoyPct}%` : "—"}
+          hint="aprox. sobre aforo estimado del día"
+        />
+      </div>
+
+      <SectionLabel>Patrones y calidad</SectionLabel>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <StatCard
           title="Grupo medio"
           value={stats.grupoMedio !== null ? String(stats.grupoMedio) : "—"}
           unit="pers."
           hint="esta semana"
         />
         <StatCard
+          title="Cancel./No-show"
+          value={stats.cancelacionPct !== null ? `${stats.cancelacionPct}%` : "—"}
+          hint="últimos 30 días"
+        />
+        <StatCard
+          title="Franja fuerte"
+          value={cap}
+          hint="reparto comida / cena"
+        />
+        <StatCard
+          title="Día fuerte"
+          value={stats.diaFuerte ? stats.diaFuerte.nombre : "—"}
+          hint={stats.diaFuerte ? `${stats.diaFuerte.reservas} reservas` : "sin datos"}
+        />
+        <StatCard
           title="Internacional"
           value={stats.internacionalPct !== null ? `${stats.internacionalPct}%` : "—"}
-          hint="reservas de fuera de España (semana)"
+          hint="de fuera de España (semana)"
         />
         <StatCard
           title="País top"
-          value={topPais ? topPais.flag : "—"}
-          hint={topPais ? `${topPais.name} · ${topPais.reservas} res.` : "sin datos"}
+          value={topPais ? `${topPais.flag} ${topPais.name}` : "—"}
+          hint={topPais ? `${topPais.reservas} reservas` : "sin datos"}
         />
       </div>
 
       {stats.excluidasPrueba > 0 && (
-        <p className="text-[11px] text-gray-400 mt-2">
+        <p className="text-[11px] text-gray-400 mt-3">
           Se han excluido {stats.excluidasPrueba} reserva
-          {stats.excluidasPrueba !== 1 ? "s" : ""} de prueba (Coran/prueba).
+          {stats.excluidasPrueba !== 1 ? "s" : ""} de prueba (Coran/prueba) y las canceladas/rechazadas del cómputo de volumen.
         </p>
       )}
     </section>

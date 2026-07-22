@@ -57,26 +57,38 @@ export default async function RegistroPage({
 
   const supabase = createServiceClient();
 
-  // Ventana para estadísticas: semana pasada + esta semana + próximos 7 días (por día de servicio)
   const today = todayBarcelona();
-  const statsFrom = addDaysToDate(today, -14);
-  const statsTo = addDaysToDate(today, 7);
+  // Ventana por día de servicio: desde el día 1 del mes anterior hasta +7 días
+  const [ty, tm] = today.split("-").map(Number);
+  const pmY = tm === 1 ? ty - 1 : ty;
+  const pmM = tm === 1 ? 12 : tm - 1;
+  const fechaFrom = `${pmY}-${String(pmM).padStart(2, "0")}-01`;
+  const fechaTo = addDaysToDate(today, 7);
+  // Ventana por fecha de creación (para el ritmo de captación): desde el lunes de la semana pasada
+  const dow = (new Date(ty, tm - 1, Number(today.split("-")[2])).getDay() + 6) % 7;
+  const createdFrom = addDaysToDate(addDaysToDate(today, -dow), -7);
 
-  const [{ data, count }, { data: statsData }] = await Promise.all([
-    supabase
-      .from("reservas")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(from, to),
-    supabase
-      .from("reservas")
-      .select("*")
-      .gte("fecha", statsFrom)
-      .lte("fecha", statsTo),
-  ]);
+  const [{ data, count }, { data: fechaData }, { data: createdData }, { data: cfgData }] =
+    await Promise.all([
+      supabase
+        .from("reservas")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to),
+      supabase.from("reservas").select("*").gte("fecha", fechaFrom).lte("fecha", fechaTo).limit(2000),
+      supabase.from("reservas").select("*").gte("created_at", createdFrom).limit(2000),
+      supabase.from("configuracion").select("clave, valor").eq("clave", "tope_por_franja_personas"),
+    ]);
 
   const reservas = (data ?? []) as Reserva[];
-  const stats = computeStats((statsData ?? []) as Reserva[], today);
+  const cfgRows = (cfgData ?? []) as { clave: string; valor: unknown }[];
+  const topePorFranja = (cfgRows[0]?.valor as number) ?? 30;
+  const stats = computeStats({
+    fechaRows: (fechaData ?? []) as Reserva[],
+    createdRows: (createdData ?? []) as Reserva[],
+    today,
+    topePorFranja,
+  });
   const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
