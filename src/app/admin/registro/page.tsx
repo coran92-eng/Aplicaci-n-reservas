@@ -5,8 +5,9 @@ import { countryFromPhone } from "@/lib/phone-country";
 import { formatTime, todayBarcelona, addDaysToDate } from "@/lib/utils";
 import { computeStats } from "@/lib/registro-stats";
 import { RegistroStats } from "@/components/admin/RegistroStats";
+import { AutoRefresh } from "@/components/admin/AutoRefresh";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -94,9 +95,16 @@ export default async function RegistroPage({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+      {/* Refresco automático cada 2 minutos (pausa en segundo plano) */}
+      <AutoRefresh intervalMs={120000} />
+
       <div className="flex items-center justify-between mb-4 gap-3">
         <div className="flex items-baseline gap-3 min-w-0">
           <h1 className="text-xl font-bold text-gray-900">Registro de reservas</h1>
+          <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-gray-400 shrink-0">
+            <RefreshCw className="h-3 w-3" />
+            se actualiza sola
+          </span>
           <span className="text-sm text-gray-500 shrink-0">{total} en total</span>
         </div>
         {total > 0 && (
