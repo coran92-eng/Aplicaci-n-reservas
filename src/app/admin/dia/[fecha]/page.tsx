@@ -1,9 +1,10 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { ReservationList } from "@/components/admin/ReservationList";
 import { DayNavigation } from "@/components/admin/DayNavigation";
+import { AutoRefresh } from "@/components/admin/AutoRefresh";
 import type { Reserva } from "@/lib/supabase/types";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function DiaPage({
   params: { fecha },
@@ -26,6 +27,7 @@ export default async function DiaPage({
 
   return (
     <>
+      <AutoRefresh intervalMs={300000} />
       <DayNavigation
         currentDate={fecha}
         totalReservas={active.length}

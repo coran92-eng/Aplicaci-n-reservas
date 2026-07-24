@@ -126,6 +126,12 @@ export function ReservationList({
     setSoundEnabled(saved);
   }, []);
 
+  // Reconciliar con el servidor cuando la página se refresca (router.refresh):
+  // sin esto el estado local quedaría congelado con las reservas del montaje.
+  useEffect(() => {
+    setReservas(initialReservas);
+  }, [initialReservas]);
+
   function toggleSound() {
     setSoundEnabled((prev) => {
       const next = !prev;

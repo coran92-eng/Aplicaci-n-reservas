@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { ReservationList } from "@/components/admin/ReservationList";
 import { DayNavigation } from "@/components/admin/DayNavigation";
+import { AutoRefresh } from "@/components/admin/AutoRefresh";
 import { todayBarcelona } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
 
@@ -29,6 +30,8 @@ export default async function AdminPage() {
 
   return (
     <>
+      {/* Refresco automático cada 5 minutos (pausa en segundo plano) */}
+      <AutoRefresh intervalMs={300000} />
       <DayNavigation
         currentDate={today}
         totalReservas={active.length}

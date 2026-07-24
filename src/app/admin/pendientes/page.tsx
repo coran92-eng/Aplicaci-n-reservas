@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import type { Reserva } from "@/lib/supabase/types";
 import { PendientesList } from "@/components/admin/PendientesList";
+import { AutoRefresh } from "@/components/admin/AutoRefresh";
 import { Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,7 @@ export default async function PendientesPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
+      <AutoRefresh intervalMs={120000} />
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Pendientes de aprobación</h1>
         <p className="text-sm text-gray-500 mt-1">
