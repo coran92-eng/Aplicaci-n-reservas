@@ -11,7 +11,7 @@ import {
   sendRejectionEmail,
   sendAdminNotification,
 } from "@/lib/emails";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireAdmin, isAdmin } from "@/lib/require-admin";
 import { sendPushToAll } from "@/lib/push";
 import { sendConfirmationWhatsApp, sendPendingWhatsApp } from "@/lib/whatsapp";
 import { todayBarcelona, nowBarcelona, generateTimeSlots } from "@/lib/utils";
@@ -676,7 +676,9 @@ export async function createWalkin(data: {
 }
 
 export async function getPendingCount(): Promise<number> {
-  await requireAdmin();
+  // Sin sesión devuelve 0 en vez de redirigir: se llama desde el layout del admin,
+  // que también envuelve /admin/login (redirigir allí causaba un bucle de recargas).
+  if (!(await isAdmin())) return 0;
   const serviceClient = createServiceClient();
   const { count } = await serviceClient
     .from("reservas")
