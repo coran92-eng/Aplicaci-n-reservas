@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createAdminSession, signMagicLink, verifyMagicLink } from "@/lib/admin-auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendAdminMagicLinkEmail } from "@/lib/emails";
+import { APP_URL } from "@/lib/app-url";
 
 function getClientIp(): string {
   const h = headers();
@@ -103,7 +104,7 @@ export async function sendAdminMagicLink(
 
   try {
     const token = await signMagicLink();
-    const magicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/admin/magic?t=${encodeURIComponent(token)}`;
+    const magicUrl = `${APP_URL}/api/admin/magic?t=${encodeURIComponent(token)}`;
     await sendAdminMagicLinkEmail(adminEmail, magicUrl);
   } catch (err) {
     console.error("[MAGIC_LINK] Failed:", err);

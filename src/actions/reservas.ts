@@ -350,22 +350,23 @@ export async function updateReserva(
   await requireAdmin();
   const serviceClient = createServiceClient();
 
-  if (updates.fecha !== undefined || updates.hora !== undefined) {
-    const { data: current } = await serviceClient
-      .from("reservas")
-      .select("fecha, hora")
-      .eq("id", id)
-      .single();
+  const { data: current } = await serviceClient
+    .from("reservas")
+    .select("fecha, hora")
+    .eq("id", id)
+    .single();
+  if (!current) return { ok: false, error: "not_found" };
 
-    if (!current) return { ok: false, error: "not_found" };
+  // Solo se validan fecha/hora si realmente cambian: así se pueden corregir
+  // nombre, teléfono, notas... en reservas de días pasados o franjas ya cerradas.
+  const newFecha = updates.fecha ?? current.fecha;
+  const rawHora = updates.hora ?? current.hora;
+  const newHora = rawHora.length === 5 ? rawHora + ":00" : rawHora;
+  const fechaChanged = newFecha !== current.fecha;
+  const horaChanged = newHora.slice(0, 5) !== current.hora.slice(0, 5);
 
-    const newFecha = updates.fecha ?? current.fecha;
-    const rawHora = updates.hora ?? current.hora;
-    const newHora = rawHora.length === 5 ? rawHora + ":00" : rawHora;
-
-    if (newFecha < todayBarcelona()) {
-      return { ok: false, error: "fecha_past" };
-    }
+  if (fechaChanged || horaChanged) {
+    if (newFecha < todayBarcelona()) return { ok: false, error: "fecha_past" };
 
     const { data: diaCerrado } = await serviceClient
       .from("dias_cerrados")
@@ -403,17 +404,56 @@ export async function updateEstadoReserva(
   await requireAdmin();
   const serviceClient = createServiceClient();
 
-  const { error } = await serviceClient
+  const { data: updated, error } = await serviceClient
     .from("reservas")
     .update({ estado })
     .eq("id", id)
     .neq("estado", "cancelada")
-    .neq("estado", "rechazada");
+    .neq("estado", "rechazada")
+    .select("id");
 
   if (error) {
     console.error("Error updating estado:", error);
     return { ok: false, error: String(error) };
   }
+  // 0 filas = la reserva estaba cancelada/rechazada: antes se devolvía ok y la UI mentía.
+  if (!updated || updated.length === 0) return { ok: false, error: "estado_cerrado" };
+
+  revalidatePath("/admin", "layout");
+  return { ok: true };
+}
+
+export async function reactivarReserva(
+  id: string
+): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+  const serviceClient = createServiceClient();
+
+  const { data: reserva } = await serviceClient
+    .from("reservas")
+    .select("fecha, hora, estado")
+    .eq("id", id)
+    .single();
+  if (!reserva) return { ok: false, error: "not_found" };
+  if (reserva.estado !== "cancelada" && reserva.estado !== "rechazada") {
+    return { ok: false, error: "no_cerrada" };
+  }
+  if (reserva.fecha < todayBarcelona()) return { ok: false, error: "fecha_past" };
+
+  const { data: diaCerrado } = await serviceClient
+    .from("dias_cerrados").select("id").eq("fecha", reserva.fecha).maybeSingle();
+  if (diaCerrado) return { ok: false, error: "dia_cerrado" };
+
+  const { data: franja } = await serviceClient
+    .from("franjas_bloqueadas").select("id")
+    .eq("fecha", reserva.fecha).eq("hora", reserva.hora).maybeSingle();
+  if (franja) return { ok: false, error: "franja_bloqueada" };
+
+  const { error } = await serviceClient
+    .from("reservas")
+    .update({ estado: "confirmada" })
+    .eq("id", id);
+  if (error) return { ok: false, error: String(error) };
 
   revalidatePath("/admin", "layout");
   return { ok: true };

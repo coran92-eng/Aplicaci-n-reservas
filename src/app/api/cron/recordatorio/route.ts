@@ -84,5 +84,9 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ tomorrow, total: reservas.length, sent, failed });
+  // 500 si algún envío falló: así queda visible en los logs/alertas de Vercel
+  return NextResponse.json(
+    { tomorrow, total: reservas.length, sent, failed },
+    { status: failed > 0 ? 500 : 200 }
+  );
 }

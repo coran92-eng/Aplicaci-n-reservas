@@ -1,13 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { X, Phone, MessageCircle, Check, UserX, Ban, Save, Pencil, ThumbsUp, ThumbsDown, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { X, Phone, MessageCircle, Check, UserX, Ban, Save, Pencil, ThumbsUp, ThumbsDown, Users, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn, formatTime, todayBarcelona } from "@/lib/utils";
-import { updateEstadoReserva, updateNotasInternas, updateReserva, approveReserva, rejectReserva } from "@/actions/reservas";
+import { updateEstadoReserva, updateNotasInternas, updateReserva, approveReserva, rejectReserva, reactivarReserva } from "@/actions/reservas";
 import type { Reserva } from "@/lib/supabase/types";
 import { WhatsAppLog } from "@/components/admin/WhatsAppLog";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  not_found: "Reserva no encontrada.",
+  fecha_past: "La fecha no puede ser en el pasado.",
+  dia_cerrado: "El restaurante está cerrado ese día.",
+  franja_bloqueada: "Esa franja horaria no está disponible.",
+  estado_cerrado: "Esta reserva está cancelada o rechazada: reactívala primero.",
+  estado_cambiado: "La reserva ha cambiado de estado (¿la canceló el cliente?). Se ha recargado.",
+  no_cerrada: "Esta reserva no está cancelada ni rechazada.",
+};
+
+const STALE_CODES = new Set(["estado_cambiado", "estado_cerrado"]);
+
+function errorText(code?: string): string {
+  return ERROR_MESSAGES[code ?? ""] ?? "No se ha podido guardar. Revisa la conexión e inténtalo de nuevo.";
+}
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   confirmada:           { label: "Confirmada",  className: "bg-gray-100 text-gray-700" },
@@ -25,6 +42,7 @@ interface Props {
 }
 
 export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
+  const router = useRouter();
   const [notas, setNotas] = useState(reserva.notas_internas ?? "");
   const [saving, setSaving] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -45,23 +63,33 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
   });
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const whatsappNumber = reserva.telefono.replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
   const isClosed = reserva.estado === "cancelada" || reserva.estado === "rechazada";
 
+  function fail(code?: string) {
+    setActionError(errorText(code));
+    if (code && STALE_CODES.has(code)) router.refresh();
+  }
+
   async function handleEstado(estado: Reserva["estado"]) {
     setLoading(estado);
+    setActionError(null);
     const result = await updateEstadoReserva(reserva.id, estado);
     if (result.ok) onUpdate(reserva.id, { estado });
+    else fail(result.error);
     setLoading(null);
     setConfirmCancel(false);
   }
 
   async function handleSaveNotas() {
     setSaving(true);
+    setActionError(null);
     const result = await updateNotasInternas(reserva.id, notas);
     if (result.ok) onUpdate(reserva.id, { notas_internas: notas || null });
+    else fail(result.error);
     setSaving(false);
   }
 
@@ -91,30 +119,37 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
       });
       setIsEditing(false);
     } else {
-      const errorMessages: Record<string, string> = {
-        not_found: "Reserva no encontrada.",
-        fecha_past: "La fecha no puede ser en el pasado.",
-        dia_cerrado: "El restaurante está cerrado ese día.",
-        franja_bloqueada: "Esa franja horaria no está disponible.",
-      };
-      setEditError(errorMessages[result.error ?? ""] ?? "Error al guardar. Inténtalo de nuevo.");
+      setEditError(errorText(result.error));
     }
     setEditSaving(false);
   }
 
   async function handleApprove() {
     setLoading("approve");
+    setActionError(null);
     const result = await approveReserva(reserva.id);
     if (result.ok) onUpdate(reserva.id, { estado: "confirmada" });
+    else fail(result.error);
     setLoading(null);
   }
 
   async function handleReject() {
     setLoading("reject");
+    setActionError(null);
     const result = await rejectReserva(reserva.id);
     if (result.ok) onUpdate(reserva.id, { estado: "rechazada" });
+    else fail(result.error);
     setLoading(null);
     setConfirmReject(false);
+  }
+
+  async function handleReactivar() {
+    setLoading("reactivar");
+    setActionError(null);
+    const result = await reactivarReserva(reserva.id);
+    if (result.ok) onUpdate(reserva.id, { estado: "confirmada" });
+    else fail(result.error);
+    setLoading(null);
   }
 
   const isPending = reserva.estado === "pendiente_aprobacion";
@@ -139,7 +174,7 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
         <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium shrink-0", status.className)}>
           {status.label}
         </span>
-        {!isClosed && !isEditing && (
+        {!isEditing && (
           <Button
             variant="ghost" size="icon"
             className="admin-btn text-gray-500 hover:bg-gray-100 shrink-0"
@@ -348,6 +383,9 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
 
       {/* Action buttons */}
       <div className="p-4 border-t border-gray-200 space-y-3 bg-white">
+        {actionError && !isEditing && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{actionError}</p>
+        )}
         {isEditing ? (
           <div className="flex gap-2">
             <Button
@@ -414,8 +452,19 @@ export function ReservationModal({ reserva, onClose, onUpdate }: Props) {
               </Button>
             )}
           </>
+        ) : isClosed ? (
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full admin-btn gap-2 text-gray-700 border-gray-300"
+            onClick={handleReactivar}
+            disabled={loading === "reactivar"}
+          >
+            <RotateCcw className="h-4 w-4" />
+            {loading === "reactivar" ? "..." : "Reactivar reserva"}
+          </Button>
         ) : (
-          !isClosed && (
+          (
             <>
               {reserva.estado !== "llegado" && (
                 <Button

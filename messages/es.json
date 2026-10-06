@@ -160,5 +160,14 @@
       "client_notes": "Notas del cliente",
       "no_notes": "Sin notas"
     }
+  },
+  "reconfirmar": {
+    "title": "¿Confirmas tu asistencia?",
+    "subtitle": "Pulsa el botón para confirmar tu reserva de mañana.",
+    "people": "personas",
+    "button": "Confirmo mi asistencia",
+    "invalid_title": "Enlace no válido",
+    "invalid_subtitle": "Esta reserva ya no está activa o el enlace ha caducado. Si necesitas ayuda, llámanos.",
+    "back_home": "Volver al inicio"
   }
 }

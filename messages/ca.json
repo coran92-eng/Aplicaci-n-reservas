@@ -160,5 +160,14 @@
       "client_notes": "Notes del client",
       "no_notes": "Sense notes"
     }
+  },
+  "reconfirmar": {
+    "title": "Confirmes la teva assistència?",
+    "subtitle": "Prem el botó per confirmar la teva reserva de demà.",
+    "people": "persones",
+    "button": "Confirmo la meva assistència",
+    "invalid_title": "Enllaç no vàlid",
+    "invalid_subtitle": "Aquesta reserva ja no està activa o l'enllaç ha caducat. Si necessites ajuda, truca'ns.",
+    "back_home": "Tornar a l'inici"
   }
 }

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { APP_URL } from "./app-url";
 
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY;
@@ -6,7 +7,18 @@ function getResend(): Resend {
   return new Resend(key);
 }
 
-const APP_URL            = process.env.NEXT_PUBLIC_APP_URL        ?? "http://localhost:3000";
+// Resend v4 NO lanza excepción cuando rechaza un envío: devuelve { error }.
+// Sin esta comprobación los fallos pasaban por "enviado".
+async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]): Promise<void> {
+  const { error } = await getResend().emails.send(payload);
+  if (error) {
+    throw Object.assign(new Error(error.message), {
+      name: error.name,
+      statusCode: (error as { statusCode?: number | null }).statusCode ?? undefined,
+    });
+  }
+}
+
 const RESTAURANT_NAME    = process.env.RESTAURANT_NAME            ?? "Corte de Manga";
 const RESTAURANT_PHONE   = process.env.RESTAURANT_PHONE           ?? "+34 623 216 562";
 const RESTAURANT_ADDRESS = process.env.RESTAURANT_ADDRESS         ?? "Comte d'Urgell 108, 08011 Barcelona";
@@ -524,7 +536,7 @@ export async function sendConfirmationEmail(data: ReservaEmailData) {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const text = `${RESTAURANT_NAME}\n\n${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
   const icsContent = generateICS(data);
-  await getResend().emails.send({
+  await sendEmail({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
@@ -544,7 +556,7 @@ export async function sendPendingEmail(data: ReservaEmailData) {
     en: `We've received your request — confirmation coming soon`,
   };
   const text = `${RESTAURANT_NAME}\n\nSolicitud recibida: ${data.personas} pers. · ${displayDate} · ${displayHora}\n\nTe avisaremos en las próximas horas.\n\n${RESTAURANT_PHONE}`;
-  await getResend().emails.send({
+  await sendEmail({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
@@ -561,7 +573,7 @@ export async function sendRejectionEmail(data: Omit<ReservaEmailData, "cancel_to
     en: `About your request for ${shortDate}`,
   };
   const text = `${RESTAURANT_NAME}\n\nLo sentimos, no podemos confirmar tu solicitud.\n\n${RESTAURANT_PHONE}`;
-  await getResend().emails.send({
+  await sendEmail({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
@@ -577,7 +589,7 @@ export async function sendCancellationEmail(data: ReservaEmailData) {
     en: `Until next time · ${RESTAURANT_NAME}`,
   };
   const text = `${RESTAURANT_NAME}\n\nTu reserva ha sido cancelada. ¡Hasta pronto!\n\n${RESTAURANT_PHONE}`;
-  await getResend().emails.send({
+  await sendEmail({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
@@ -661,7 +673,7 @@ export async function sendReminderEmail(data: ReservaEmailData) {
   const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
   const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
   const icsContent = generateICS(data);
-  await getResend().emails.send({
+  await sendEmail({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
@@ -689,7 +701,7 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
   const cancelUrl       = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
-  const reconfirmUrl    = `${APP_URL}/api/reconfirmar?t=${data.reconfirmacion_token}`;
+  const reconfirmUrl    = `${APP_URL}/${data.idioma}/reconfirmar?t=${data.reconfirmacion_token}`;
 
   const t: Record<string, Record<string, string>> = {
     es: {
@@ -770,9 +782,9 @@ export async function sendReminderWithReconfirmacion(data: ReminderReconfirmData
     en: `Tomorrow at ${displayHora} — can we confirm your table?`,
   };
   const cancelUrl      = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
-  const reconfirmUrl   = `${APP_URL}/api/reconfirmar?t=${data.reconfirmacion_token}`;
+  const reconfirmUrl   = `${APP_URL}/${data.idioma}/reconfirmar?t=${data.reconfirmacion_token}`;
   const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nConfirmar asistencia: ${reconfirmUrl}\nCancelar: ${cancelUrl}`;
-  await getResend().emails.send({
+  await sendEmail({
     from: FROM,
     to: data.email,
     subject: subjects[data.idioma] ?? subjects.es,
@@ -896,7 +908,7 @@ export async function sendAdminNotification(data: {
   const text = `${RESTAURANT_NAME} — ${subject}\n\n${data.nombre} ${data.apellido}\nFecha: ${displayDate}\nHora: ${displayHora}\nPersonas: ${data.personas}${data.telefono ? `\nTeléfono: ${data.telefono}` : ""}${data.email ? `\nEmail: ${data.email}` : ""}\n\nPanel: ${panelHref}`;
 
   try {
-    await getResend().emails.send({ from: FROM, to: adminEmail, subject, html, text });
+    await sendEmail({ from: FROM, to: adminEmail, subject, html, text });
   } catch (err) {
     console.error("[ADMIN_NOTIFY] Failed:", err);
   }
@@ -915,7 +927,7 @@ export async function sendAdminMagicLinkEmail(to: string, magicUrl: string): Pro
 </div>
 </body></html>`;
 
-  await getResend().emails.send({
+  await sendEmail({
     from: FROM,
     to,
     subject: `Acceso al panel — ${RESTAURANT_NAME}`,

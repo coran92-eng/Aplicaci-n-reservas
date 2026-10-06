@@ -160,5 +160,14 @@
       "client_notes": "Client notes",
       "no_notes": "No notes"
     }
+  },
+  "reconfirmar": {
+    "title": "Can you confirm you're coming?",
+    "subtitle": "Press the button to confirm your reservation for tomorrow.",
+    "people": "guests",
+    "button": "Confirm attendance",
+    "invalid_title": "Invalid link",
+    "invalid_subtitle": "This reservation is no longer active or the link has expired. Please call us if you need help.",
+    "back_home": "Back to home"
   }
 }
