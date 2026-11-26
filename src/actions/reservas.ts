@@ -195,8 +195,9 @@ export async function createReserva(
 
   const filaConOrigen: Record<string, unknown> = origen ? { ...fila, origen } : fila;
   let { error } = await supabase.from("reservas").insert(filaConOrigen);
-  // Si la columna «origen» aún no existe (012_origen.sql sin aplicar), se reserva igual, sin el origen.
-  if (error && origen && /origen/i.test(`${error.message ?? ""} ${error.details ?? ""}`)) {
+  // Si falla con el origen (p. ej. la columna aún no existe: 012_origen.sql sin aplicar), se reserva igual sin él.
+  // El origen nunca puede impedir una reserva.
+  if (error && origen) {
     console.warn("Reserva sin origen (¿falta 012_origen.sql?):", error.code, error.message);
     ({ error } = await supabase.from("reservas").insert(fila));
   }
