@@ -8,9 +8,11 @@ aquí queda todo en un sitio.
 **Cuenta de Google Ads:** `AW-18213186788`
 
 > **Cambios del 26/11/2026 (rediseño con la imagen de la web y la carta)**
-> - El tag de Google Ads **solo se carga en producción**: en las vistas previas de Vercel
->   (`VERCEL_ENV=preview`) y en local no se carga, para que las pruebas no cuenten conversiones.
->   Si `VERCEL_ENV` faltara, se carga igual (nunca se pierde la medición en producción).
+> - **El tag de Google Ads queda APAGADO** mientras la campaña está parada: solo se carga si la
+>   variable de Vercel `GOOGLE_ADS_TAG` vale `on` (ver `src/lib/ads.ts`), y nunca en vistas previas
+>   ni en local. Así no se instalan cookies publicitarias sin consentimiento (LSSI art. 22.2).
+>   **Antes de encenderlo:** banner de cookies con Consent Mode v2 (Google exige señales de
+>   consentimiento para el tráfico de la UE). La política de privacidad cambia sola según la variable.
 > - El middleware **ya no redirige las vistas previas** de Vercel al dominio: solo la URL
 >   `*.vercel.app` de producción. Así cada PR se puede revisar en su URL de prueba.
 >   Ojo: si las variables de Supabase de *Preview* son las de producción, una reserva hecha

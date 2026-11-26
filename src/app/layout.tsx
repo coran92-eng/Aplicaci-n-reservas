@@ -3,10 +3,9 @@ import { Syne, Inter } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import Script from "next/script";
 import "./globals.css";
+import { GOOGLE_ADS_ON } from "@/lib/ads";
 
 const GTAG_ID = "AW-18213186788";
-// Medir en producción y en cualquier entorno que no sea vista previa ni local (si VERCEL_ENV faltara, se mide igual)
-const MEASURE = process.env.VERCEL_ENV !== "preview" && process.env.NODE_ENV !== "development";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -61,8 +60,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} className={`${syne.variable} ${inter.variable}`}>
       <body className="font-sans antialiased">{children}</body>
-      {/* Google Ads solo en producción: las vistas previas y el entorno local no cuentan conversiones */}
-      {MEASURE && (
+      {/* Google Ads solo si GOOGLE_ADS_TAG=on en producción (ver src/lib/ads.ts) */}
+      {GOOGLE_ADS_ON && (
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`}

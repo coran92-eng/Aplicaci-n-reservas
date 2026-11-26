@@ -4,6 +4,14 @@ import { getTranslations } from "next-intl/server";
 import { Shell } from "@/components/site/Shell";
 import { PRIVACIDAD } from "@/content/privacidad";
 import { SITE } from "@/lib/site";
+import { GOOGLE_ADS_ON } from "@/lib/ads";
+
+/** Filtra los textos que dependen de la etiqueta de Google Ads y quita la marca. */
+function vis(list: string[] | undefined): string[] {
+  return (list ?? [])
+    .filter((x) => !(x.startsWith("§") && !GOOGLE_ADS_ON) && !(x.startsWith("¬") && GOOGLE_ADS_ON))
+    .map((x) => x.replace(/^[§¬]/, ""));
+}
 
 export async function generateMetadata({
   params: { locale },
@@ -58,14 +66,14 @@ export default async function PrivacidadPage({
           {c.blocks.map((b) => (
             <section key={b.h}>
               <h2>{b.h}</h2>
-              {b.p?.map((s) => (
+              {vis(b.p).map((s) => (
                 <p key={s}>
                   <Texto s={s} />
                 </p>
               ))}
-              {b.ul && (
+              {vis(b.ul).length > 0 && (
                 <ul>
-                  {b.ul.map((s) => (
+                  {vis(b.ul).map((s) => (
                     <li key={s}>
                       <Texto s={s} />
                     </li>
@@ -85,11 +93,15 @@ export default async function PrivacidadPage({
                       </tr>
                     </thead>
                     <tbody>
-                      {b.table.rows.map((r) => (
-                        <tr key={r[0]}>
-                          {r.map((cell, i) => (i === 0 ? <th key={i} scope="row">{cell}</th> : <td key={i}>{cell}</td>))}
-                        </tr>
-                      ))}
+                      {b.table.rows
+                        .filter((r) => !(r[0].startsWith("§") && !GOOGLE_ADS_ON))
+                        .map((r) => (
+                          <tr key={r[0].replace(/^§/, "")}>
+                            {r.map((cell, i) =>
+                              i === 0 ? <th key={i} scope="row">{cell.replace(/^§/, "")}</th> : <td key={i}>{cell}</td>
+                            )}
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -99,7 +111,7 @@ export default async function PrivacidadPage({
                   <Texto s={b.nota} />
                 </p>
               )}
-              {b.pd?.map((s) => (
+              {vis(b.pd).map((s) => (
                 <p key={s}>
                   <Texto s={s} />
                 </p>

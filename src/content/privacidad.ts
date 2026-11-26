@@ -1,5 +1,7 @@
 // Política de privacidad de la app de reservas (CA · ES · EN).
 // Titular y contacto: los mismos que el aviso legal de cortedemanga.es.
+// Marcas al principio de un texto: «§» solo se muestra con la etiqueta de Google Ads encendida,
+// «¬» solo con ella apagada (ver src/lib/ads.ts), para que la política diga siempre lo que pasa.
 export type Bloque = {
   h: string;
   p?: string[];
@@ -34,7 +36,7 @@ export const PRIVACIDAD: Record<"ca" | "es" | "en", Privacidad> = {
         ul: [
           "Gestionar la teva reserva: confirmar-la, avisar-te de canvis, recordar-te-la el dia abans i permetre’t modificar-la o cancel·lar-la. Base legal: aplicar les mesures que ens demanes abans de la teva visita (art. 6.1.b RGPD).",
           "Atendre’t al local i en properes reserves, amb l’historial de les teves visites. Base legal: el nostre interès legítim a atendre bé els clients (art. 6.1.f RGPD); t’hi pots oposar quan vulguis.",
-          "Mesurar si els nostres anuncis de Google porten reserves (mira «Galetes»).",
+          "§Mesurar si els nostres anuncis de Google porten reserves (mira «Galetes»).",
         ],
         pd: ["No fem servir les teves dades per enviar-te publicitat ni les venem."],
       },
@@ -56,17 +58,20 @@ export const PRIVACIDAD: Record<"ca" | "es" | "en", Privacidad> = {
             ["Vercel Inc.", "Allotjament d’aquest web", "UE i EUA*"],
             ["Resend Inc.", "Enviament dels correus de la reserva", "EUA*"],
             ["Meta Platforms Ireland Ltd. (WhatsApp)", "Avisos de la reserva per WhatsApp", "UE / EUA*"],
-            ["Google Ireland Ltd.", "Mesura d’anuncis (Google Ads)", "UE / EUA*"],
+            ["§Google Ireland Ltd.", "Mesura d’anuncis (Google Ads)", "UE / EUA*"],
           ],
         },
         nota: "* Quan hi ha transferències als EUA, es fan amb les garanties que exigeix el RGPD (per exemple, clàusules contractuals tipus de la Comissió Europea).",
       },
       {
         h: "Galetes",
-        p: ["Aquest web fa servir:"],
+        p: [
+          "¬Aquest web només fa servir una galeta tècnica (NEXT_LOCALE) que recorda l’idioma que tries. No fa servir galetes de publicitat ni d’analítica.",
+          "§Aquest web fa servir:",
+        ],
         ul: [
-          "Una galeta tècnica (NEXT_LOCALE) que recorda l’idioma que tries.",
-          "L’etiqueta de Google Ads, que instal·la galetes de Google (com _gcl_au) per saber si una visita que arriba des d’un anunci acaba en reserva. Quan confirmes una reserva, l’etiqueta envia a Google el teu correu, telèfon i nom xifrats (amb hash) per atribuir aquesta reserva a l’anunci.",
+          "§Una galeta tècnica (NEXT_LOCALE) que recorda l’idioma que tries.",
+          "§L’etiqueta de Google Ads, que instal·la galetes de Google (com _gcl_au) per saber si una visita que arriba des d’un anunci acaba en reserva. Quan confirmes una reserva, l’etiqueta envia a Google el teu correu, telèfon i nom xifrats (amb hash) per atribuir aquesta reserva a l’anunci.",
         ],
         pd: ["Pots bloquejar o esborrar les galetes des de la configuració del navegador."],
       },
@@ -105,7 +110,7 @@ export const PRIVACIDAD: Record<"ca" | "es" | "en", Privacidad> = {
         ul: [
           "Gestionar tu reserva: confirmarla, avisarte de cambios, recordártela el día antes y permitirte modificarla o cancelarla. Base legal: aplicar las medidas que nos pides antes de tu visita (art. 6.1.b RGPD).",
           "Atenderte en el local y en próximas reservas, con el historial de tus visitas. Base legal: nuestro interés legítimo en atender bien a los clientes (art. 6.1.f RGPD); puedes oponerte cuando quieras.",
-          "Medir si nuestros anuncios de Google traen reservas (mira «Cookies»).",
+          "§Medir si nuestros anuncios de Google traen reservas (mira «Cookies»).",
         ],
         pd: ["No usamos tus datos para enviarte publicidad ni los vendemos."],
       },
@@ -127,17 +132,20 @@ export const PRIVACIDAD: Record<"ca" | "es" | "en", Privacidad> = {
             ["Vercel Inc.", "Alojamiento de esta web", "UE y EE. UU.*"],
             ["Resend Inc.", "Envío de los emails de la reserva", "EE. UU.*"],
             ["Meta Platforms Ireland Ltd. (WhatsApp)", "Avisos de la reserva por WhatsApp", "UE / EE. UU.*"],
-            ["Google Ireland Ltd.", "Medición de anuncios (Google Ads)", "UE / EE. UU.*"],
+            ["§Google Ireland Ltd.", "Medición de anuncios (Google Ads)", "UE / EE. UU.*"],
           ],
         },
         nota: "* Cuando hay transferencias a EE. UU., se hacen con las garantías que exige el RGPD (por ejemplo, cláusulas contractuales tipo de la Comisión Europea).",
       },
       {
         h: "Cookies",
-        p: ["Esta web usa:"],
+        p: [
+          "¬Esta web solo usa una cookie técnica (NEXT_LOCALE) que recuerda el idioma que eliges. No usa cookies de publicidad ni de analítica.",
+          "§Esta web usa:",
+        ],
         ul: [
-          "Una cookie técnica (NEXT_LOCALE) que recuerda el idioma que eliges.",
-          "La etiqueta de Google Ads, que instala cookies de Google (como _gcl_au) para saber si una visita que llega desde un anuncio termina en reserva. Al confirmar una reserva, la etiqueta envía a Google tu email, teléfono y nombre cifrados (con hash) para atribuir esa reserva al anuncio.",
+          "§Una cookie técnica (NEXT_LOCALE) que recuerda el idioma que eliges.",
+          "§La etiqueta de Google Ads, que instala cookies de Google (como _gcl_au) para saber si una visita que llega desde un anuncio termina en reserva. Al confirmar una reserva, la etiqueta envía a Google tu email, teléfono y nombre cifrados (con hash) para atribuir esa reserva al anuncio.",
         ],
         pd: ["Puedes bloquear o borrar las cookies desde la configuración de tu navegador."],
       },
@@ -176,7 +184,7 @@ export const PRIVACIDAD: Record<"ca" | "es" | "en", Privacidad> = {
         ul: [
           "To manage your booking: confirm it, let you know about changes, remind you the day before and let you change or cancel it. Legal basis: steps you ask us to take before your visit (Art. 6(1)(b) GDPR).",
           "To look after you at the bar and in future bookings, using the history of your visits. Legal basis: our legitimate interest in serving our guests well (Art. 6(1)(f) GDPR); you can object at any time.",
-          "To measure whether our Google ads bring in bookings (see “Cookies”).",
+          "§To measure whether our Google ads bring in bookings (see “Cookies”).",
         ],
         pd: ["We don’t use your data to send you advertising, and we don’t sell it."],
       },
@@ -198,17 +206,20 @@ export const PRIVACIDAD: Record<"ca" | "es" | "en", Privacidad> = {
             ["Vercel Inc.", "Hosting this website", "EU and USA*"],
             ["Resend Inc.", "Sending booking emails", "USA*"],
             ["Meta Platforms Ireland Ltd. (WhatsApp)", "Booking notifications on WhatsApp", "EU / USA*"],
-            ["Google Ireland Ltd.", "Ad measurement (Google Ads)", "EU / USA*"],
+            ["§Google Ireland Ltd.", "Ad measurement (Google Ads)", "EU / USA*"],
           ],
         },
         nota: "* Any transfers to the USA are made with the safeguards required by the GDPR (for example, the European Commission’s standard contractual clauses).",
       },
       {
         h: "Cookies",
-        p: ["This website uses:"],
+        p: [
+          "¬This website only uses a technical cookie (NEXT_LOCALE) that remembers the language you choose. It uses no advertising or analytics cookies.",
+          "§This website uses:",
+        ],
         ul: [
-          "A technical cookie (NEXT_LOCALE) that remembers the language you choose.",
-          "The Google Ads tag, which sets Google cookies (such as _gcl_au) to find out whether a visit that comes from an ad ends in a booking. When you confirm a booking, the tag sends Google your email, phone number and name in encrypted form (hashed) to attribute that booking to the ad.",
+          "§A technical cookie (NEXT_LOCALE) that remembers the language you choose.",
+          "§The Google Ads tag, which sets Google cookies (such as _gcl_au) to find out whether a visit that comes from an ad ends in a booking. When you confirm a booking, the tag sends Google your email, phone number and name in encrypted form (hashed) to attribute that booking to the ad.",
         ],
         pd: ["You can block or delete cookies in your browser settings."],
       },
