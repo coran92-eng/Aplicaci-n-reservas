@@ -10,7 +10,9 @@ function getResend(): Resend {
 // Resend v4 NO lanza excepción cuando rechaza un envío: devuelve { error }.
 // Sin esta comprobación los fallos pasaban por "enviado".
 async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]): Promise<void> {
-  const { error } = await getResend().emails.send(payload);
+  // Si el cliente responde al email, la respuesta llega al correo del bar (reservas@ no tiene buzón)
+  const withReply = { ...payload, replyTo: payload.replyTo ?? REPLY_TO } as typeof payload;
+  const { error } = await getResend().emails.send(withReply);
   if (error) {
     throw Object.assign(new Error(error.message), {
       name: error.name,
@@ -26,6 +28,7 @@ const RESTAURANT_MAPS    = process.env.RESTAURANT_GOOGLE_MAPS_URL ?? "https://ma
 const RESTAURANT_LOGO    = process.env.RESTAURANT_LOGO_URL        ?? "";
 const FROM_EMAIL         = process.env.RESEND_FROM_EMAIL          ?? "onboarding@resend.dev";
 const FROM               = `${RESTAURANT_NAME} <${FROM_EMAIL}>`;
+const REPLY_TO           = process.env.RESEND_REPLY_TO           ?? "cortedemangabcn@gmail.com";
 
 interface ReservaEmailData {
   nombre: string;
@@ -193,6 +196,7 @@ function confirmationHtml(data: ReservaEmailData): string {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
   const cancelUrl   = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const modifyUrl   = `${APP_URL}/${data.idioma}/modificar/${data.cancel_token}`;
   const calendarUrl = generateGoogleCalendarLink(data);
 
   const t: Record<string, Record<string, string>> = {
@@ -207,6 +211,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       cal_btn:  "Añadir al calendario",
       maps_btn: "Cómo llegar →",
       cancel:   "Cancelar reserva",
+      modify:   "Cambiar fecha u hora",
       preview:  `Te esperamos — ${displayDate} a las ${displayHora}`,
     },
     ca: {
@@ -220,6 +225,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       cal_btn:  "Afegir al calendari",
       maps_btn: "Com arribar →",
       cancel:   "Cancel·lar reserva",
+      modify:   "Canviar data o hora",
       preview:  `T'esperem — ${displayDate} a les ${displayHora}`,
     },
     en: {
@@ -233,6 +239,7 @@ function confirmationHtml(data: ReservaEmailData): string {
       cal_btn:  "Add to calendar",
       maps_btn: "Get directions →",
       cancel:   "Cancel booking",
+      modify:   "Change date or time",
       preview:  `See you soon — ${displayDate} at ${displayHora}`,
     },
   };
@@ -276,8 +283,13 @@ function confirmationHtml(data: ReservaEmailData): string {
       </a>
     </p>
 
-    <!--cancel-->
+    <!--modificar · cancelar-->
     <p style="margin:0">
+      <a href="${modifyUrl}" class="inter"
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.5px">
+        ${tx.modify}
+      </a>
+      &nbsp;·&nbsp;
       <a href="${cancelUrl}" class="inter"
          style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.5px">
         ${tx.cancel}
@@ -533,8 +545,9 @@ export async function sendConfirmationEmail(data: ReservaEmailData) {
     en: `Your table is confirmed — ${shortDate_en} at ${displayHora}`,
   };
   const cancelUrl = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const modifyUrl = `${APP_URL}/${data.idioma}/modificar/${data.cancel_token}`;
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
-  const text = `${RESTAURANT_NAME}\n\n${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCancelar: ${cancelUrl}`;
+  const text = `${RESTAURANT_NAME}\n\n${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nCambiar: ${modifyUrl}\nCancelar: ${cancelUrl}`;
   const icsContent = generateICS(data);
   await sendEmail({
     from: FROM,
@@ -701,6 +714,7 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
   const displayDate = formatFechaEmail(data.fecha, data.idioma);
   const displayHora = data.hora.slice(0, 5);
   const cancelUrl       = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
+  const modifyUrl       = `${APP_URL}/${data.idioma}/modificar/${data.cancel_token}`;
   const reconfirmUrl    = `${APP_URL}/${data.idioma}/reconfirmar?t=${data.reconfirmacion_token}`;
 
   const t: Record<string, Record<string, string>> = {
@@ -713,6 +727,7 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
       guests:    "Personas",
       address:   "Dónde",
       cta:       "Confirmo mi asistencia",
+      modify:    "Cambiar fecha u hora",
       cancel:    "Cancelar reserva",
       preview:   `Tu mesa de mañana a las ${displayHora} está reservada — confirma tu asistencia.`,
     },
@@ -725,6 +740,7 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
       guests:    "Persones",
       address:   "On",
       cta:       "Confirmo la meva assistència",
+      modify:    "Canviar data o hora",
       cancel:    "Cancel·lar reserva",
       preview:   `La teva taula de demà a les ${displayHora} està reservada — confirma la teva assistència.`,
     },
@@ -737,6 +753,7 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
       guests:    "Guests",
       address:   "Where",
       cta:       "Confirm attendance",
+      modify:    "Change date or time",
       cancel:    "Cancel booking",
       preview:   `Your table tomorrow at ${displayHora} is reserved — please confirm your attendance.`,
     },
@@ -764,6 +781,11 @@ function reminderReconfirmHtml(data: ReminderReconfirmData): string {
       </tr>
     </table>
     <p style="margin:0">
+      <a href="${modifyUrl}" class="inter"
+         style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.5px">
+        ${tx.modify}
+      </a>
+      &nbsp;·&nbsp;
       <a href="${cancelUrl}" class="inter"
          style="font-family:'Inter',-apple-system,sans-serif;font-size:11px;color:#4a4a4a;text-decoration:underline;letter-spacing:0.5px">
         ${tx.cancel}
@@ -783,7 +805,8 @@ export async function sendReminderWithReconfirmacion(data: ReminderReconfirmData
   };
   const cancelUrl      = `${APP_URL}/${data.idioma}/cancelar/${data.cancel_token}`;
   const reconfirmUrl   = `${APP_URL}/${data.idioma}/reconfirmar?t=${data.reconfirmacion_token}`;
-  const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nConfirmar asistencia: ${reconfirmUrl}\nCancelar: ${cancelUrl}`;
+  const modifyUrl      = `${APP_URL}/${data.idioma}/modificar/${data.cancel_token}`;
+  const text = `${RESTAURANT_NAME}\n\nRecordatorio: ${displayDate} · ${displayHora} · ${data.personas} pers.\n\n${RESTAURANT_ADDRESS}\n${RESTAURANT_PHONE}\n\nConfirmar asistencia: ${reconfirmUrl}\nCambiar: ${modifyUrl}\nCancelar: ${cancelUrl}`;
   await sendEmail({
     from: FROM,
     to: data.email,
@@ -805,7 +828,8 @@ interface ReservaDiaSummary {
 }
 
 export async function sendAdminNotification(data: {
-  tipo: "nueva_pendiente" | "nueva_confirmada" | "cancelacion";
+  tipo: "nueva_pendiente" | "nueva_confirmada" | "cancelacion" | "modificacion";
+  antes?: { fecha: string; hora: string };
   nombre: string;
   apellido: string;
   fecha: string;
@@ -827,6 +851,8 @@ export async function sendAdminNotification(data: {
       ? `🟡 Solicitud pendiente — ${data.nombre} ${data.apellido} · ${displayHora}`
       : data.tipo === "nueva_confirmada"
       ? `🟢 Nueva reserva — ${data.nombre} ${data.apellido} · ${displayHora}`
+      : data.tipo === "modificacion"
+      ? `🔵 Cambio de reserva — ${data.nombre} ${data.apellido} · ${displayHora}`
       : `🔴 Cancelación — ${data.nombre} ${data.apellido} · ${displayHora}`;
 
   const tipoBadge =
@@ -834,9 +860,12 @@ export async function sendAdminNotification(data: {
       ? `<span style="background:#f59e0b;color:#000;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700">PENDIENTE</span>`
       : data.tipo === "nueva_confirmada"
       ? `<span style="background:#10b981;color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700">CONFIRMADA</span>`
+      : data.tipo === "modificacion"
+      ? `<span style="background:#2563eb;color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700">CAMBIO</span>`
       : `<span style="background:#ef4444;color:#fff;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700">CANCELACIÓN</span>`;
 
   const detailRows = [
+    ...(data.antes ? [["Antes", `${formatFechaEmail(data.antes.fecha, "es")} · ${data.antes.hora.slice(0, 5)}`]] : []),
     ["Fecha", displayDate],
     ["Hora", displayHora],
     ["Personas", `${data.personas}`],
@@ -908,7 +937,7 @@ export async function sendAdminNotification(data: {
   const text = `${RESTAURANT_NAME} — ${subject}\n\n${data.nombre} ${data.apellido}\nFecha: ${displayDate}\nHora: ${displayHora}\nPersonas: ${data.personas}${data.telefono ? `\nTeléfono: ${data.telefono}` : ""}${data.email ? `\nEmail: ${data.email}` : ""}\n\nPanel: ${panelHref}`;
 
   try {
-    await sendEmail({ from: FROM, to: adminEmail, subject, html, text });
+    await sendEmail({ from: FROM, to: adminEmail, subject, html, text, ...(data.email ? { replyTo: data.email } : {}) });
   } catch (err) {
     console.error("[ADMIN_NOTIFY] Failed:", err);
   }

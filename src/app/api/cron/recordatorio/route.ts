@@ -34,6 +34,7 @@ export async function GET(request: Request) {
   const reservas = (data ?? []) as Reserva[];
   let sent = 0;
   let failed = 0;
+  const whatsapps: Promise<unknown>[] = [];
 
   for (const reserva of reservas) {
     try {
@@ -58,9 +59,9 @@ export async function GET(request: Request) {
       failed++;
     }
 
-    // WhatsApp reminder (fire-and-forget per reserva — non-blocking)
+    // WhatsApp reminder (en paralelo; se espera al final: si no, la función acaba antes de enviarlo)
     if (reserva.telefono) {
-      sendReminderWhatsApp({
+      whatsapps.push(sendReminderWhatsApp({
         phone: reserva.telefono,
         nombre: reserva.nombre,
         fecha: reserva.fecha,
@@ -80,9 +81,10 @@ export async function GET(request: Request) {
         )
         .catch((err) =>
           console.error(`[CRON] WhatsApp reminder failed for ${reserva.id}:`, err)
-        );
+        ));
     }
   }
+  await Promise.allSettled(whatsapps);
 
   // 500 si algún envío falló: así queda visible en los logs/alertas de Vercel
   return NextResponse.json(
