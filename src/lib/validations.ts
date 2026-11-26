@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 
+// Máximo de personas que se pueden pedir por internet (los grupos de más de limite_grupo_online quedan pendientes de aprobar)
+export const MAX_PERSONAS_ONLINE = 40;
+
 const DISPOSABLE_DOMAINS = [
   "mailinator.com",
   "guerrillamail.com",
@@ -56,7 +59,7 @@ export const reservaSchema = z.object({
     }, "email_disposable"),
   fecha: z.string().min(1, "fecha_required"),
   hora: z.string().min(1, "hora_required"),
-  personas: z.number().min(1, "personas_min").max(50, "personas_max"),
+  personas: z.number().int().min(1, "personas_min").max(MAX_PERSONAS_ONLINE, "personas_max"),
   notas_cliente: z.string().max(300, "notas_max").optional().or(z.literal("")),
   alergias: z.array(z.string()).optional().default([]),
   consentimiento: z.boolean().refine((v) => v === true, "consentimiento_required"),

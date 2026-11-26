@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { reservaSchema, type ReservaInput } from "@/lib/validations";
+import { reservaSchema, MAX_PERSONAS_ONLINE, type ReservaInput } from "@/lib/validations";
+import { waLink } from "@/lib/site";
 import { createReserva, getAvailableSlots } from "@/actions/reservas";
 import { generateTimeSlots, todayBarcelona, addDaysToDate, nowBarcelona } from "@/lib/utils";
 import type { FranjaBloqueada, DiaCerrado } from "@/lib/supabase/types";
@@ -190,6 +191,8 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   const [selectedDate, setSelectedDate] = useState<string | null>(initialFecha ?? null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [personas, setPersonas] = useState(initialPersonas ?? 2);
+  // lo que se escribe en el campo de grupo (puede estar a medias mientras se teclea)
+  const [grupoTxt, setGrupoTxt] = useState(String(initialPersonas && initialPersonas > limiteGrupo ? initialPersonas : limiteGrupo + 1));
   const [serverError, setServerError] = useState<string | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -277,6 +280,14 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
   function handlePersonas(p: number) {
     setPersonas(p);
     setValue("personas", p, { shouldValidate: true });
+    if (p > limiteGrupo) setGrupoTxt(String(p));
+  }
+
+  // Grupo: ajusta lo escrito al salir del campo o con − / +. Si ponen 11 o menos, vuelve a la selección normal.
+  function cambiaGrupo(v: number) {
+    if (!Number.isFinite(v)) { setGrupoTxt(String(personas)); return; }
+    if (v <= limiteGrupo) { handlePersonas(Math.max(1, v)); return; }
+    handlePersonas(Math.min(MAX_PERSONAS_ONLINE, v));
   }
 
   function prevMonth() {
@@ -343,7 +354,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     if (!key) return null;
     try {
       if (key === "fecha_max") return t("errors.fecha_max", { dias: antelacionMax });
-      if (key === "personas_max") return t("errors.personas_max", { max: limiteGrupo });
+      if (key === "personas_max") return t("errors.personas_max", { max: MAX_PERSONAS_ONLINE });
       if (key === "Required") return t("errors.required");
       return t(`errors.${key}` as Parameters<typeof t>[0]);
     } catch { return t("errors.generic"); }
@@ -426,21 +437,39 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
             </div>
             {personas > limiteGrupo && (
               <div className="mt-3 space-y-3">
-                <div className="flex items-center gap-3">
-                  <label htmlFor="personas-grupo">{t("personas_grupo")}</label>
+                <label htmlFor="personas-grupo" className="block">{t("personas_grupo")}</label>
+                {/* Se escribe libremente (antes el campo saltaba a 12 con cada tecla); al salir se ajusta entre 12 y 40 */}
+                <div className="cdm-step">
+                  <button type="button" className="cdm-pick" aria-label={t("grupo_menos")} aria-controls="personas-grupo"
+                    onClick={() => cambiaGrupo(personas - 1)} disabled={personas <= limiteGrupo + 1}>−</button>
                   <input
-                    type="number"
-                    min={limiteGrupo + 1}
-                    max={50}
-                    value={personas}
-                    onChange={e => {
-                      const v = Math.max(limiteGrupo + 1, Math.min(50, Number(e.target.value) || limiteGrupo + 1));
-                      handlePersonas(v);
-                    }}
                     id="personas-grupo"
-                    className="cdm-num px-2"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    maxLength={2}
+                    value={grupoTxt}
+                    aria-describedby="grupo-ayuda"
+                    onChange={(e) => {
+                      const s = e.target.value.replace(/\D/g, "").slice(0, 2);
+                      setGrupoTxt(s);
+                      const v = Number.parseInt(s, 10);
+                      if (v > limiteGrupo && v <= MAX_PERSONAS_ONLINE) handlePersonas(v);
+                    }}
+                    onBlur={() => cambiaGrupo(Number.parseInt(grupoTxt, 10))}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); cambiaGrupo(Number.parseInt(grupoTxt, 10)); } }}
+                    className="cdm-num"
                   />
+                  <button type="button" className="cdm-pick" aria-label={t("grupo_mas")} aria-controls="personas-grupo"
+                    onClick={() => cambiaGrupo(personas + 1)} disabled={personas >= MAX_PERSONAS_ONLINE}>+</button>
                 </div>
+                <p id="grupo-ayuda" className="cdm-hint">
+                  {t.rich("grupo_max", {
+                    max: MAX_PERSONAS_ONLINE,
+                    wa: (chunks) => <a href={waLink()} target="_blank" rel="noopener noreferrer" className="underline">{chunks}</a>,
+                  })}
+                </p>
                 <p className="cdm-note">{t("group_warning", { limite: limiteGrupo })}</p>
               </div>
             )}

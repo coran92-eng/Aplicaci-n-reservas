@@ -5,6 +5,7 @@ import { Shell } from "@/components/site/Shell";
 import type { FranjaBloqueada, DiaCerrado, Configuracion } from "@/lib/supabase/types";
 import { todayBarcelona, addDaysToDate } from "@/lib/utils";
 import { normalizaOrigen } from "@/lib/origen";
+import { MAX_PERSONAS_ONLINE } from "@/lib/validations";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -75,7 +76,7 @@ export default async function HomePage({
   // Llegada desde la web con personas y día ya elegidos, y de dónde viene (?src=)
   const sp: SP = searchParams ?? {};
   const pRaw = Number.parseInt(primero(sp.personas) ?? "", 10);
-  const initialPersonas = Number.isInteger(pRaw) && pRaw >= 1 && pRaw <= 50 ? pRaw : undefined;
+  const initialPersonas = Number.isInteger(pRaw) && pRaw >= 1 && pRaw <= MAX_PERSONAS_ONLINE ? pRaw : undefined;
   const initialFecha = fechaInicial(
     sp,
     today,
