@@ -90,6 +90,7 @@
     "error_cannot_modify": "Aquesta reserva no es pot modificar. Truca'ns si necessites ajuda.",
     "error_token_expired": "L'enllaç ha caducat. Truca'ns per modificar la teva reserva.",
     "error_fecha_past": "La nova data no pot ser en el passat.",
+    "error_fecha_max": "Encara no es pot reservar per a aquesta data. Tria'n una de més propera.",
     "error_dia_cerrado": "El restaurant està tancat aquest dia.",
     "error_franja_bloqueada": "Aquella franja horària no està disponible.",
     "error_generic": "S'ha produït un error. Si us plau, truca'ns.",
@@ -115,11 +116,18 @@
     "cancelling": "Cancel·lant...",
     "success_title": "Reserva cancel·lada",
     "success_info": "La teva reserva ha estat cancel·lada. Esperem veure't aviat.",
-    "error_not_found": "No hem trobat la teva reserva. És possible que l'enllaç hagi caducat.",
+    "error_not_found": "Aquest enllaç ja no és vàlid. Si has canviat la reserva, fes servir l'enllaç de l'últim correu que t'hem enviat.",
     "error_already_cancelled": "Aquesta reserva ja estava cancel·lada.",
     "error_cannot_cancel": "No és possible cancel·lar aquesta reserva. Truca'ns si necessites ajuda.",
     "error_title": "Error",
-    "error_generic": "S'ha produït un error. Si us plau, truca'ns."
+    "error_generic": "S'ha produït un error. Si us plau, truca'ns.",
+    "invalid_title": "Enllaç no vàlid",
+    "cancelled_title": "Ja està cancel·lada",
+    "cannot_title": "No es pot cancel·lar",
+    "guests": "{count, plural, one {# persona} other {# persones}}",
+    "or_change": "Prefereixes canviar-la?",
+    "change_link": "Canviar data o hora",
+    "rebook": "Fer una nova reserva"
   },
   "privacy": {
     "title": "Política de privacitat",

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Shell } from "@/components/site/Shell";
-import { RESTAURANT_PHONE, telHref } from "@/lib/site";
+import { PHONE_DISPLAY, RESTAURANT_PHONE, telHref } from "@/lib/site";
 
 export default async function NotFound() {
   const t = await getTranslations("not_found");
@@ -17,7 +17,7 @@ export default async function NotFound() {
           <p className="cdm-t" style={{ marginTop: 14, fontSize: "0.9375rem" }}>
             {t("phone_help")}{" "}
             <a href={telHref(RESTAURANT_PHONE)} className="underline underline-offset-4 cdm-nw" style={{ color: "var(--cdm-fg)" }}>
-              {RESTAURANT_PHONE}
+              {PHONE_DISPLAY}
             </a>
           </p>
           <div className="cdm-btns">

@@ -22,6 +22,15 @@ import type {
   CancelarReservaResult,
 } from "@/lib/supabase/types";
 
+// Hoy solo se aceptan franjas con 15 min de margen. Las 00:xx son la madrugada de esta noche
+// (salen después de las 23:45 en la lista de horas), así que siempre tienen margen.
+function franjaConMargen(hora: string): boolean {
+  const [hh, mm] = hora.slice(0, 5).split(":").map(Number);
+  if (hh === 0) return true;
+  const now = nowBarcelona();
+  return hh * 60 + mm - (now.getHours() * 60 + now.getMinutes()) >= 15;
+}
+
 // Rate limiter basado en Supabase (funciona en entornos serverless como Vercel)
 async function checkRateLimit(ip: string): Promise<boolean> {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return true; // fail open si no está configurada
@@ -137,14 +146,8 @@ export async function createReserva(
     return { ok: false, error: "franja_bloqueada", field: "hora" };
   }
 
-  if (data.fecha === todayStr) {
-    const now = nowBarcelona();
-    const [hh, mm] = data.hora.split(":").map(Number);
-    const slotMinutes = hh * 60 + mm;
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    if (slotMinutes - nowMinutes < 15) {
-      return { ok: false, error: "franja_bloqueada", field: "hora" };
-    }
+  if (data.fecha === todayStr && !franjaConMargen(data.hora)) {
+    return { ok: false, error: "franja_bloqueada", field: "hora" };
   }
 
   const esPendiente = data.personas > limiteGrupo;
@@ -227,6 +230,7 @@ export async function createReserva(
         personas: data.personas,
         telefono: data.telefono,
         email: data.email.toLowerCase(),
+        notas: data.notas_cliente || null,
         reservasDia: (diaData ?? []) as { id: string; nombre: string; apellido: string; hora: string; personas: number; estado: string }[],
         newReservaId: id,
       });
@@ -296,6 +300,7 @@ export async function createReserva(
   }
 
   const emailData = {
+    id,
     nombre: data.nombre.trim(),
     apellido: data.apellido.trim(),
     email: data.email.toLowerCase(),
@@ -567,6 +572,7 @@ export async function approveReserva(
 
   try {
     await sendConfirmationEmail({
+      id: reserva.id,
       nombre: reserva.nombre,
       apellido: reserva.apellido,
       email: reserva.email,
@@ -711,15 +717,34 @@ export async function modificarReserva(
     .single();
 
   if (!reserva) return { ok: false, error: "not_found" };
-  if (reserva.estado === "cancelada" || reserva.estado === "rechazada") {
+  // Solo se cambian reservas confirmadas: una pendiente no puede recibir un «confirmada»,
+  // y una ya servida (llegado / no presentado) no se mueve
+  if (reserva.estado !== "confirmada") {
     return { ok: false, error: "cannot_modify" };
   }
   if (reserva.cancel_token_expires_at && new Date(reserva.cancel_token_expires_at) < new Date()) {
     return { ok: false, error: "token_expired" };
   }
 
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(updates.fecha) || !/^\d{2}:\d{2}(:\d{2})?$/.test(updates.hora)) {
+    return { ok: false, error: "generic" };
+  }
+  const horaHHMM = updates.hora.slice(0, 5);
+  if (!generateTimeSlots().includes(horaHHMM)) return { ok: false, error: "franja_bloqueada" };
+
   const today = todayBarcelona();
   if (updates.fecha < today) return { ok: false, error: "fecha_past" };
+  if (updates.fecha === today && !franjaConMargen(horaHHMM)) return { ok: false, error: "franja_bloqueada" };
+
+  const { data: configRows } = (await serviceClient
+    .from("configuracion")
+    .select("clave, valor")) as { data: Configuracion[] | null };
+  const config: Record<string, unknown> = {};
+  for (const row of configRows ?? []) config[row.clave] = row.valor;
+  const antelacionMax = (config.antelacion_maxima_dias as number) ?? 90;
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + antelacionMax);
+  if (updates.fecha > maxDate.toISOString().slice(0, 10)) return { ok: false, error: "fecha_max" };
 
   const { data: diaCerrado } = await serviceClient
     .from("dias_cerrados")
@@ -737,6 +762,21 @@ export async function modificarReserva(
   if (franja) return { ok: false, error: "franja_bloqueada" };
 
   const hora = updates.hora.length === 5 ? updates.hora + ":00" : updates.hora;
+
+  // Aforo por franja (si está activo), sin contar esta misma reserva
+  if (Boolean(config.tope_por_franja_activo)) {
+    const topePersonas = (config.tope_por_franja_personas as number) ?? 30;
+    const { data: ocupadas } = await serviceClient
+      .from("reservas")
+      .select("id, personas")
+      .eq("fecha", updates.fecha)
+      .eq("hora", hora)
+      .in("estado", ["confirmada", "llegado"]);
+    const total = (ocupadas ?? [])
+      .filter((r: { id: string }) => r.id !== reserva.id)
+      .reduce((sum: number, r: { personas: number }) => sum + r.personas, 0);
+    if (total + reserva.personas > topePersonas) return { ok: false, error: "franja_bloqueada" };
+  }
   const newToken = randomUUID();
   const [fy, fm, fd] = updates.fecha.split("-").map(Number);
   const newExpiry = new Date(Date.UTC(fy, fm - 1, fd + 7)).toISOString();
@@ -752,6 +792,7 @@ export async function modificarReserva(
   // Email al cliente con los datos nuevos y aviso al bar (se esperan: en Vercel lo pendiente puede perderse)
   await Promise.allSettled([
     sendConfirmationEmail({
+      id: reserva.id,
       nombre: reserva.nombre,
       apellido: reserva.apellido,
       email: reserva.email,
@@ -760,7 +801,7 @@ export async function modificarReserva(
       personas: reserva.personas,
       cancel_token: newToken,
       idioma: reserva.idioma,
-    }).catch(console.error),
+    }, { cambio: true }).catch(console.error),
     sendAdminNotification({
       tipo: "modificacion",
       antes: { fecha: reserva.fecha, hora: reserva.hora },
@@ -771,6 +812,7 @@ export async function modificarReserva(
       personas: reserva.personas,
       telefono: reserva.telefono,
       email: reserva.email,
+      notas: reserva.notas_cliente,
     }).catch(console.error),
   ]);
 

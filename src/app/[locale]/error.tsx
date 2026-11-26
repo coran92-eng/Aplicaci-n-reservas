@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Shell } from "@/components/site/Shell";
-import { RESTAURANT_PHONE, telHref } from "@/lib/site";
+import { PHONE_DISPLAY, RESTAURANT_PHONE, telHref } from "@/lib/site";
 
 export default function Error({
   error,
@@ -32,7 +32,7 @@ export default function Error({
           <p className="cdm-t" style={{ marginTop: 14, fontSize: "0.9375rem" }}>
             {t("phone_help")}{" "}
             <a href={telHref(RESTAURANT_PHONE)} className="underline underline-offset-4 cdm-nw" style={{ color: "var(--cdm-fg)" }}>
-              {RESTAURANT_PHONE}
+              {PHONE_DISPLAY}
             </a>
           </p>
           <div className="cdm-btns">
