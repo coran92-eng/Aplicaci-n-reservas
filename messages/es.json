@@ -90,6 +90,7 @@
     "error_cannot_modify": "Esta reserva no se puede modificar. Llámanos si necesitas ayuda.",
     "error_token_expired": "El enlace ha caducado. Por favor, llámanos para modificar tu reserva.",
     "error_fecha_past": "La nueva fecha no puede ser en el pasado.",
+    "error_fecha_max": "Todavía no se puede reservar para esa fecha. Elige una más cercana.",
     "error_dia_cerrado": "El restaurante está cerrado ese día.",
     "error_franja_bloqueada": "Esa franja horaria no está disponible.",
     "error_generic": "Ha ocurrido un error. Por favor, llámanos.",
@@ -115,11 +116,18 @@
     "cancelling": "Cancelando...",
     "success_title": "Reserva cancelada",
     "success_info": "Tu reserva ha sido cancelada. Esperamos verte pronto.",
-    "error_not_found": "No hemos encontrado tu reserva. Es posible que el enlace haya caducado.",
+    "error_not_found": "Este enlace ya no es válido. Si has cambiado la reserva, usa el enlace del último correo que te hemos enviado.",
     "error_already_cancelled": "Esta reserva ya estaba cancelada.",
     "error_cannot_cancel": "No es posible cancelar esta reserva. Llámanos si necesitas ayuda.",
     "error_title": "Error",
-    "error_generic": "Ha ocurrido un error. Por favor, llámanos."
+    "error_generic": "Ha ocurrido un error. Por favor, llámanos.",
+    "invalid_title": "Enlace no válido",
+    "cancelled_title": "Ya está cancelada",
+    "cannot_title": "No se puede cancelar",
+    "guests": "{count, plural, one {# persona} other {# personas}}",
+    "or_change": "¿Prefieres cambiarla?",
+    "change_link": "Cambiar fecha u hora",
+    "rebook": "Hacer una nueva reserva"
   },
   "privacy": {
     "title": "Política de privacidad",

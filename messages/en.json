@@ -90,6 +90,7 @@
     "error_cannot_modify": "This booking cannot be modified. Please call us.",
     "error_token_expired": "This link has expired. Please call us to change your reservation.",
     "error_fecha_past": "The new date cannot be in the past.",
+    "error_fecha_max": "Bookings for that date aren't open yet. Please choose an earlier date.",
     "error_dia_cerrado": "The restaurant is closed on that day.",
     "error_franja_bloqueada": "That time slot is not available.",
     "error_generic": "An error occurred. Please call us.",
@@ -115,11 +116,18 @@
     "cancelling": "Cancelling...",
     "success_title": "Booking cancelled",
     "success_info": "Your booking has been cancelled. Hope to see you soon.",
-    "error_not_found": "We couldn't find your booking. The link may have expired.",
+    "error_not_found": "This link is no longer valid. If you changed your booking, use the link in the latest email we sent you.",
     "error_already_cancelled": "This booking was already cancelled.",
     "error_cannot_cancel": "This booking cannot be cancelled. Please call us for help.",
     "error_title": "Error",
-    "error_generic": "An error occurred. Please call us."
+    "error_generic": "An error occurred. Please call us.",
+    "invalid_title": "Link no longer valid",
+    "cancelled_title": "Already cancelled",
+    "cannot_title": "Can't be cancelled",
+    "guests": "{count, plural, one {# guest} other {# guests}}",
+    "or_change": "Would you rather change it?",
+    "change_link": "Change date or time",
+    "rebook": "Make a new booking"
   },
   "privacy": {
     "title": "Privacy policy",

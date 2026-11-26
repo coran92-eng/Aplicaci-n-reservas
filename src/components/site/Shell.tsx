@@ -1,6 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { RESTAURANT_PHONE, SITE, telHref, waLink } from "@/lib/site";
+import { ADDRESS, PHONE_DISPLAY, RESTAURANT_PHONE, SITE, telHref, waLink } from "@/lib/site";
 import { BrandSprite, Logo, Scissors, Tagline } from "./Brand";
 
 /** Cabecera y pie de cortedemanga.es alrededor de cada página pública de reservas. */
@@ -42,9 +42,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div>
             <h2 className="cdm-fh">{t("foot_visit")}</h2>
             <p>
-              Carrer del Comte d’Urgell, 108
+              {ADDRESS.street}
               <br />
-              08011 Barcelona
+              {ADDRESS.city}
             </p>
             <p>{t("foot_daily")}</p>
             <p>
@@ -55,7 +55,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <h2 className="cdm-fh">{t("foot_contact")}</h2>
             <p>
               <a href={telHref(RESTAURANT_PHONE)}>
-                {t("phone")} · <span className="cdm-nw">{RESTAURANT_PHONE}</span>
+                {t("phone")} · <span className="cdm-nw">{PHONE_DISPLAY}</span>
               </a>
             </p>
             <p>

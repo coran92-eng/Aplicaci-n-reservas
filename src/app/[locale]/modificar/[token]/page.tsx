@@ -36,7 +36,8 @@ export default async function ModificarPage({
   const reserva = data as Reserva | null;
   if (!reserva) notFound();
 
-  const isClosed = reserva.estado === "cancelada" || reserva.estado === "rechazada";
+  // Solo se cambian reservas confirmadas (igual que en el servidor): ni pendientes, ni canceladas, ni ya servidas
+  const isClosed = reserva.estado !== "confirmada";
 
   if (isClosed) {
     return (
