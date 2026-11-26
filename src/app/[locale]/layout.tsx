@@ -1,24 +1,48 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations } from "next-intl/server";
+import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { APP_URL } from "@/lib/app-url";
+import { RESTAURANT_PHONE, SITE } from "@/lib/site";
+import "@/styles/cdm.css";
 
 const locales = ["es", "ca", "en"];
-const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://cortedemanga.es";
 
+// La letra de la carta y de cortedemanga.es (Atkinson Hyperlegible Next, licencia SIL OFL 1.1: src/fonts/OFL.txt)
+const cdm = localFont({
+  src: [
+    { path: "../../fonts/cdm-400.woff2", weight: "400", style: "normal" },
+    { path: "../../fonts/cdm-500.woff2", weight: "500", style: "normal" },
+    { path: "../../fonts/cdm-700.woff2", weight: "700", style: "normal" },
+    { path: "../../fonts/cdm-800.woff2", weight: "800", style: "normal" },
+  ],
+  variable: "--font-cdm",
+  display: "swap",
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+});
+
+// Mismo tono que la web: bar de tapas y vermut (sin hablar de cocina)
 const META: Record<string, { title: string; description: string }> = {
   es: {
-    title: "Corte de Manga — Reserva tu mesa en Barcelona",
-    description: "Reserva tu mesa en Corte de Manga, Comte d'Urgell 108, Barcelona. Cocina creativa en el corazón del Eixample.",
+    title: "Reservar mesa · Corte de Manga, Eixample (Barcelona)",
+    description:
+      "Reserva mesa online en Corte de Manga, bar de tapas y vermut en la calle Comte d’Urgell, 108 (Eixample, Barcelona).",
   },
   ca: {
-    title: "Corte de Manga — Reserva la teva taula a Barcelona",
-    description: "Reserva la teva taula a Corte de Manga, Comte d'Urgell 108, Barcelona. Cuina creativa al cor de l'Eixample.",
+    title: "Reserva taula · Corte de Manga, Eixample (Barcelona)",
+    description:
+      "Reserva taula en línia a Corte de Manga, bar de tapes i vermut al carrer del Comte d’Urgell, 108 (Eixample, Barcelona).",
   },
   en: {
-    title: "Corte de Manga — Book a table in Barcelona",
-    description: "Book a table at Corte de Manga, Comte d'Urgell 108, Barcelona. Creative cuisine in the heart of Eixample.",
+    title: "Book a table · Corte de Manga, Eixample (Barcelona)",
+    description:
+      "Book a table online at Corte de Manga, a tapas and vermouth bar at Carrer del Comte d’Urgell 108, in Barcelona’s Eixample.",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1E3A2B",
 };
 
 export async function generateMetadata({
@@ -27,22 +51,23 @@ export async function generateMetadata({
   params: { locale: string };
 }): Promise<Metadata> {
   const meta = META[locale] ?? META.es;
+  // Las URLs son las de la app de reservas, no las de cortedemanga.es (allí vive la web).
   return {
     title: meta.title,
     description: meta.description,
     alternates: {
-      canonical: `${BASE}/${locale}`,
+      canonical: `${APP_URL}/${locale}`,
       languages: {
-        es: `${BASE}/es`,
-        ca: `${BASE}/ca`,
-        en: `${BASE}/en`,
-        "x-default": `${BASE}/es`,
+        ca: `${APP_URL}/ca`,
+        es: `${APP_URL}/es`,
+        en: `${APP_URL}/en`,
+        "x-default": `${APP_URL}/es`,
       },
     },
     openGraph: {
       title: meta.title,
       description: meta.description,
-      url: `${BASE}/${locale}`,
+      url: `${APP_URL}/${locale}`,
       siteName: "Corte de Manga",
       locale: locale === "ca" ? "ca_ES" : locale === "en" ? "en_GB" : "es_ES",
       type: "website",
@@ -50,28 +75,32 @@ export async function generateMetadata({
   };
 }
 
+// El mismo restaurante que describe cortedemanga.es (mismo @id y mismos datos)
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "Restaurant",
+  "@type": ["Restaurant", "BarOrPub"],
+  "@id": "https://cortedemanga.es/#restaurant",
   name: "Corte de Manga",
-  url: BASE,
-  telephone: process.env.RESTAURANT_PHONE ?? "+34 623 216 562",
+  url: SITE.web,
+  telephone: RESTAURANT_PHONE,
+  email: SITE.email,
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Comte d'Urgell 108",
+    streetAddress: "Carrer del Comte d'Urgell, 108",
     addressLocality: "Barcelona",
     postalCode: "08011",
+    addressRegion: "Catalunya",
     addressCountry: "ES",
   },
   geo: {
     "@type": "GeoCoordinates",
-    latitude: 41.3849,
-    longitude: 2.1535,
+    latitude: 41.3839974,
+    longitude: 2.1565477,
   },
-  servesCuisine: "Spanish, Creative",
+  hasMap: SITE.maps,
+  servesCuisine: ["Catalan", "Mediterranean", "Tapas"],
   priceRange: "€€",
-  hasMap: process.env.RESTAURANT_GOOGLE_MAPS_URL ?? "https://maps.google.com",
-  acceptsReservations: true,
+  acceptsReservations: `${APP_URL}/`,
 };
 
 export default async function LocaleLayout({
@@ -92,7 +121,7 @@ export default async function LocaleLayout({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <NextIntlClientProvider messages={messages}>
-        {children}
+        <div className={`cdm-public ${cdm.className} ${cdm.variable}`}>{children}</div>
       </NextIntlClientProvider>
     </>
   );

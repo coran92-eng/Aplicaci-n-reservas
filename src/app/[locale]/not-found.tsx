@@ -1,24 +1,32 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { Button } from "@/components/ui/button";
+import { getLocale, getTranslations } from "next-intl/server";
+import { Shell } from "@/components/site/Shell";
+import { RESTAURANT_PHONE, telHref } from "@/lib/site";
 
 export default async function NotFound() {
   const t = await getTranslations("not_found");
+  const locale = await getLocale();
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-card rounded-xl border border-border p-8 text-center">
-        <p className="text-6xl font-bold mb-4 text-foreground">404</p>
-        <h1 className="text-xl font-semibold mb-2">{t("title")}</h1>
-        <p className="text-muted-foreground text-sm mb-6">{t("message")}</p>
-        <p className="text-sm text-muted-foreground mb-6">
-          {t("phone_help")}{" "}
-          <a href="tel:+34623216562" className="underline text-foreground">+34 623 216 562</a>
-        </p>
-        <Link href="/es">
-          <Button className="w-full">{t("home")}</Button>
-        </Link>
+    <Shell>
+      <div className="cdm-col">
+        <div className="cdm-sign center">
+          <p className="cdm-lab">404</p>
+          <h1 className="cdm-big" style={{ marginTop: 6 }}>{t("title")}</h1>
+          <p className="cdm-sub">{t("message")}</p>
+          <p className="cdm-t" style={{ marginTop: 14, fontSize: "0.9375rem" }}>
+            {t("phone_help")}{" "}
+            <a href={telHref(RESTAURANT_PHONE)} className="underline underline-offset-4 cdm-nw" style={{ color: "var(--cdm-fg)" }}>
+              {RESTAURANT_PHONE}
+            </a>
+          </p>
+          <div className="cdm-btns">
+            <Link href={`/${locale}`} className="cdm-btn bg-primary text-primary-foreground inline-flex items-center justify-center">
+              {t("home")}
+            </Link>
+          </div>
+        </div>
       </div>
-    </main>
+    </Shell>
   );
 }

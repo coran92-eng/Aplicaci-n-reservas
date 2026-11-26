@@ -2,11 +2,15 @@ import { getTranslations } from "next-intl/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Clock, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { Metadata } from "next";
+import { Clock } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import type { Reserva } from "@/lib/supabase/types";
 import { GtagConversion } from "@/components/GtagConversion";
+import { Shell } from "@/components/site/Shell";
+
+// Página personal de cada solicitud: fuera de los buscadores
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 function formatDateForDisplay(fecha: string, locale: string): string {
   const [y, m, d] = fecha.split("-").map(Number);
@@ -38,63 +42,51 @@ export default async function SolicitudRecibidaPage({
   if (!reserva || reserva.cancel_token !== searchParams.token) notFound();
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
+    <Shell>
       <GtagConversion sendTo="AW-18213186788/8_gbCN7D47gcEOTZ3OxD" value={133.0} currency="EUR" />
-      <div className="max-w-md w-full bg-card rounded-xl border border-border p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-900/30 rounded-full mb-4">
-            <Clock className="h-7 w-7 text-amber-400" />
+      <div className="cdm-col">
+        <div className="cdm-sign">
+          <div className="cdm-center">
+            <div className="cdm-badge pend"><Clock aria-hidden /></div>
+            <h1 className="cdm-big">{t("title_pending")}</h1>
+            <p className="cdm-sub">{t("subtitle_pending")}</p>
           </div>
-          <h1 className="font-heading text-2xl font-bold mb-2">{t("title_pending")}</h1>
-          <p className="text-muted-foreground">{t("subtitle_pending")}</p>
-        </div>
 
-        <div className="rounded-lg border border-border p-4 space-y-3 mb-6">
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-            {t("details")}
-          </p>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">{t("name")}</span>
-            <span className="font-medium">{reserva.nombre} {reserva.apellido}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">{t("date")}</span>
-            <span className="font-medium capitalize">{formatDateForDisplay(reserva.fecha, locale)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">{t("time")}</span>
-            <span className="font-medium">{formatTime(reserva.hora)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">{t("people")}</span>
-            <span className="font-medium">{reserva.personas}</span>
-          </div>
-        </div>
+          <h2 className="cdm-lab" style={{ margin: "22px 0 8px" }}>{t("details")}</h2>
+          <dl className="cdm-dl">
+            <div>
+              <dt>{t("name")}</dt>
+              <dd>{reserva.nombre} {reserva.apellido}</dd>
+            </div>
+            <div>
+              <dt>{t("date")}</dt>
+              <dd>{formatDateForDisplay(reserva.fecha, locale)}</dd>
+            </div>
+            <div>
+              <dt>{t("time")}</dt>
+              <dd>{formatTime(reserva.hora)}</dd>
+            </div>
+            <div>
+              <dt>{t("people")}</dt>
+              <dd>{reserva.personas}</dd>
+            </div>
+          </dl>
 
-        <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 p-4 mb-6">
-          <p className="text-sm text-amber-400">{t("pending_info")}</p>
-        </div>
+          <p className="cdm-note" style={{ marginTop: 18 }}>{t("pending_info")}</p>
 
-        {emailError && (
-          <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3 mb-6">
-            <p className="text-sm text-red-400 font-medium">{t("email_not_sent")}</p>
-            <p className="text-xs text-red-300 mt-1 font-mono break-all">{emailError}</p>
-          </div>
-        )}
+          {emailError && (
+            <div className="cdm-err" role="alert" style={{ marginTop: 14 }}>
+              <p style={{ fontWeight: 700 }}>{t("email_not_sent")}</p>
+              <code>{emailError}</code>
+            </div>
+          )}
 
-        <div className="space-y-3">
-          <div className="flex items-start gap-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>Comte d&apos;Urgell 108, 08011 Barcelona</span>
-          </div>
+          <p className="cdm-t" style={{ marginTop: 14, fontSize: "0.9375rem" }}>Carrer del Comte d’Urgell, 108 · 08011 Barcelona</p>
         </div>
-
-        <div className="mt-6 text-center">
-          <Link href={`/${locale}`} className="text-sm text-muted-foreground hover:text-foreground">
-            {t("back_home")}
-          </Link>
-        </div>
+        <p className="cdm-center" style={{ marginTop: 18 }}>
+          <Link href={`/${locale}`} className="cdm-link">{t("back_home")}</Link>
+        </p>
       </div>
-    </main>
+    </Shell>
   );
 }

@@ -1,0 +1,166 @@
+/* Corte de Manga · el sistema de la carta y de cortedemanga.es, solo en las páginas públicas (.cdm-public).
+   El panel de administración no lleva .cdm-public: conserva su tema. Marcos, octógonos y colores salen del generador de la carta. */
+:root:has(.cdm-public){color-scheme:light dark;--background:39.0 45.5% 91.4%;--foreground:147.9 31.8% 17.3%;--card:39.0 45.5% 91.4%;--card-foreground:147.9 31.8% 17.3%;--popover:39.0 45.5% 91.4%;--popover-foreground:147.9 31.8% 17.3%;--primary:147.9 31.8% 17.3%;--primary-foreground:39.0 45.5% 91.4%;--secondary:40.0 40.5% 85.5%;--secondary-foreground:147.9 31.8% 17.3%;--muted:40.0 40.5% 85.5%;--muted-foreground:140.0 10.6% 33.3%;--accent:40.0 40.5% 85.5%;--accent-foreground:147.9 31.8% 17.3%;--destructive:6.4 59.2% 40.4%;--destructive-foreground:0.0 0.0% 100.0%;--border:32.4 36.8% 73.3%;--input:29.4 51.0% 40.0%;--ring:28.7 52.3% 34.5%;--radius:0px;--cdm-page:#F3ECDF;--cdm-page2:#E9DFCB;--cdm-fg:#1E3A2B;--cdm-soft:#4C5E52;--cdm-acc:#86562A;--cdm-line:#9A6532;--cdm-row:rgba(154,101,50,.3);--cdm-band:#1E3A2B;--cdm-bandfg:#F3ECDF;--cdm-bandsoft:#D6CBB5;--cdm-bandacc:#C8955A;--cdm-field:#FBF7F0;--cdm-note-bg:#E9DFCB;--cdm-note-fg:#1E3A2B;--cdm-note-bd:#9A6532;--cdm-err-bg:#F6E4DE;--cdm-err-fg:#8E2F23;--cdm-err-bd:#B5442F;--cdm-ok-bg:#E2EEE4;--cdm-ok-fg:#1F5A36;--cdm-ok-bd:#2F7D4F;--cdm-lv-ok:#2F7D4F;--cdm-lv-mid:#B07A3E;--cdm-lv-hi:#A4372A;--cdm-pend:#C8955A;--cdm-fr-sign:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22 viewBox=%220 0 36 36%22%3E%3Cpath d=%22M8.351,0.000 L27.649,0.000 L36.000,8.351 L36.000,27.649 L27.649,36.000 L8.351,36.000 L0.000,27.649 L0.000,8.351 Z%22 fill=%22%23F3ECDF%22/%3E%3Cpath d=%22M8.600,0.600 L27.400,0.600 L35.400,8.600 L35.400,27.400 L27.400,35.400 L8.600,35.400 L0.600,27.400 L0.600,8.600 Z%22 fill=%22none%22 stroke=%22%239A6532%22 stroke-width=%220.9%22/%3E%3Cg fill=%22none%22 stroke=%22%239A6532%22 stroke-width=%220.6%22%3E%3Cpath d=%22M9.677,3.200 L11.200,3.200 M12.800,3.200 L15.200,3.200 M16.800,3.200 L19.200,3.200 M20.800,3.200 L23.200,3.200 M24.800,3.200 L26.323,3.200 M3.200,9.677 L3.200,11.200 M3.200,12.800 L3.200,15.200 M3.200,16.800 L3.200,19.200 M3.200,20.800 L3.200,23.200 M3.200,24.800 L3.200,26.323 M9.677,32.800 L11.200,32.800 M12.800,32.800 L15.200,32.800 M16.800,32.800 L19.200,32.800 M20.800,32.800 L23.200,32.800 M24.800,32.800 L26.323,32.800 M32.800,9.677 L32.800,11.200 M32.800,12.800 L32.800,15.200 M32.800,16.800 L32.800,19.200 M32.800,20.800 L32.800,23.200 M32.800,24.800 L32.800,26.323%22/%3E%3Cpath d=%22M9.677,3.200 L3.200,9.677%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3Cpath d=%22M26.323,3.200 L32.800,9.677%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3Cpath d=%22M32.800,26.323 L26.323,32.800%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3Cpath d=%22M3.200,26.323 L9.677,32.800%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3C/g%3E%3C/svg%3E");--cdm-fr-box:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22 viewBox=%220 0 36 36%22%3E%3Cg fill=%22none%22 stroke=%22%239A6532%22 stroke-width=%220.62%22%3E%3Cpath d=%22M8.600,0.600 L11.200,0.600 M12.800,0.600 L15.200,0.600 M16.800,0.600 L19.200,0.600 M20.800,0.600 L23.200,0.600 M24.800,0.600 L27.400,0.600 M0.600,8.600 L0.600,11.200 M0.600,12.800 L0.600,15.200 M0.600,16.800 L0.600,19.200 M0.600,20.800 L0.600,23.200 M0.600,24.800 L0.600,27.400 M8.600,35.400 L11.200,35.400 M12.800,35.400 L15.200,35.400 M16.800,35.400 L19.200,35.400 M20.800,35.400 L23.200,35.400 M24.800,35.400 L27.400,35.400 M35.400,8.600 L35.400,11.200 M35.400,12.800 L35.400,15.200 M35.400,16.800 L35.400,19.200 M35.400,20.800 L35.400,23.200 M35.400,24.800 L35.400,27.400%22/%3E%3Cpath d=%22M8.600,0.600 L0.600,8.600%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3Cpath d=%22M27.400,0.600 L35.400,8.600%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3Cpath d=%22M35.400,27.400 L27.400,35.400%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3Cpath d=%22M0.600,27.400 L8.600,35.400%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3C/g%3E%3C/svg%3E");--cdm-oc-line:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22none%22 stroke=%22%239A6532%22 stroke-width=%221.5%22/%3E%3C/svg%3E");--cdm-oc-fill:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22%231E3A2B%22 stroke=%22%231E3A2B%22 stroke-width=%221.5%22/%3E%3C/svg%3E");--cdm-oc-soft:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22%23E9DFCB%22 stroke=%22%23E9DFCB%22 stroke-width=%221.5%22/%3E%3C/svg%3E");--cdm-oc-pend:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22%23C8955A%22 stroke=%22%23C8955A%22 stroke-width=%221.5%22/%3E%3C/svg%3E");}
+@media (prefers-color-scheme:dark){:root:has(.cdm-public){--background:147.9 31.8% 17.3%;--foreground:39.0 45.5% 91.4%;--card:147.9 31.8% 17.3%;--card-foreground:39.0 45.5% 91.4%;--popover:140.8 37.1% 13.7%;--popover-foreground:39.0 45.5% 91.4%;--primary:32.2 50.0% 56.9%;--primary-foreground:140.8 37.1% 13.7%;--secondary:161.2 30.8% 20.4%;--secondary-foreground:39.0 45.5% 91.4%;--muted:161.2 30.8% 20.4%;--muted-foreground:40.0 28.7% 77.5%;--accent:161.2 30.8% 20.4%;--accent-foreground:39.0 45.5% 91.4%;--destructive:9.8 63.5% 75.3%;--destructive-foreground:140.8 37.1% 13.7%;--border:122.9 11.7% 35.1%;--input:32.2 50.0% 56.9%;--ring:32.2 50.0% 56.9%;--radius:0px;--cdm-page:#1E3A2B;--cdm-page2:#24443A;--cdm-fg:#F3ECDF;--cdm-soft:#D6CBB5;--cdm-acc:#C8955A;--cdm-line:#C8955A;--cdm-row:rgba(200,149,90,.32);--cdm-band:#16301F;--cdm-bandfg:#F3ECDF;--cdm-bandsoft:#D6CBB5;--cdm-bandacc:#C8955A;--cdm-field:#16301F;--cdm-note-bg:#24443A;--cdm-note-fg:#F3ECDF;--cdm-note-bd:#C8955A;--cdm-err-bg:#3B2A24;--cdm-err-fg:#F2B8AC;--cdm-err-bd:#E0806E;--cdm-ok-bg:#1F4231;--cdm-ok-fg:#A8E0BA;--cdm-ok-bd:#7FD39A;--cdm-lv-ok:#7FD39A;--cdm-lv-mid:#C8955A;--cdm-lv-hi:#F09A88;--cdm-pend:#D6CBB5;--cdm-fr-sign:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22 viewBox=%220 0 36 36%22%3E%3Cpath d=%22M8.351,0.000 L27.649,0.000 L36.000,8.351 L36.000,27.649 L27.649,36.000 L8.351,36.000 L0.000,27.649 L0.000,8.351 Z%22 fill=%22%231E3A2B%22/%3E%3Cpath d=%22M8.600,0.600 L27.400,0.600 L35.400,8.600 L35.400,27.400 L27.400,35.400 L8.600,35.400 L0.600,27.400 L0.600,8.600 Z%22 fill=%22none%22 stroke=%22%23C8955A%22 stroke-width=%220.9%22/%3E%3Cg fill=%22none%22 stroke=%22%23C8955A%22 stroke-width=%220.6%22%3E%3Cpath d=%22M9.677,3.200 L11.200,3.200 M12.800,3.200 L15.200,3.200 M16.800,3.200 L19.200,3.200 M20.800,3.200 L23.200,3.200 M24.800,3.200 L26.323,3.200 M3.200,9.677 L3.200,11.200 M3.200,12.800 L3.200,15.200 M3.200,16.800 L3.200,19.200 M3.200,20.800 L3.200,23.200 M3.200,24.800 L3.200,26.323 M9.677,32.800 L11.200,32.800 M12.800,32.800 L15.200,32.800 M16.800,32.800 L19.200,32.800 M20.800,32.800 L23.200,32.800 M24.800,32.800 L26.323,32.800 M32.800,9.677 L32.800,11.200 M32.800,12.800 L32.800,15.200 M32.800,16.800 L32.800,19.200 M32.800,20.800 L32.800,23.200 M32.800,24.800 L32.800,26.323%22/%3E%3Cpath d=%22M9.677,3.200 L3.200,9.677%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3Cpath d=%22M26.323,3.200 L32.800,9.677%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3Cpath d=%22M32.800,26.323 L26.323,32.800%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3Cpath d=%22M3.200,26.323 L9.677,32.800%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-1.380%22/%3E%3C/g%3E%3C/svg%3E");--cdm-fr-box:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22 viewBox=%220 0 36 36%22%3E%3Cg fill=%22none%22 stroke=%22%23C8955A%22 stroke-width=%220.62%22%3E%3Cpath d=%22M8.600,0.600 L11.200,0.600 M12.800,0.600 L15.200,0.600 M16.800,0.600 L19.200,0.600 M20.800,0.600 L23.200,0.600 M24.800,0.600 L27.400,0.600 M0.600,8.600 L0.600,11.200 M0.600,12.800 L0.600,15.200 M0.600,16.800 L0.600,19.200 M0.600,20.800 L0.600,23.200 M0.600,24.800 L0.600,27.400 M8.600,35.400 L11.200,35.400 M12.800,35.400 L15.200,35.400 M16.800,35.400 L19.200,35.400 M20.800,35.400 L23.200,35.400 M24.800,35.400 L27.400,35.400 M35.400,8.600 L35.400,11.200 M35.400,12.800 L35.400,15.200 M35.400,16.800 L35.400,19.200 M35.400,20.800 L35.400,23.200 M35.400,24.800 L35.400,27.400%22/%3E%3Cpath d=%22M8.600,0.600 L0.600,8.600%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3Cpath d=%22M27.400,0.600 L35.400,8.600%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3Cpath d=%22M35.400,27.400 L27.400,35.400%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3Cpath d=%22M0.600,27.400 L8.600,35.400%22 stroke-dasharray=%222.4 1.6%22 stroke-dashoffset=%22-2.457%22/%3E%3C/g%3E%3C/svg%3E");--cdm-oc-line:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22none%22 stroke=%22%23C8955A%22 stroke-width=%221.5%22/%3E%3C/svg%3E");--cdm-oc-fill:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22%23C8955A%22 stroke=%22%23C8955A%22 stroke-width=%221.5%22/%3E%3C/svg%3E");--cdm-oc-soft:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22%2324443A%22 stroke=%22%2324443A%22 stroke-width=%221.5%22/%3E%3C/svg%3E");--cdm-oc-pend:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22%3E%3Cpath d=%22M7.0 0.75H17.0L23.25 7.0V17.0L17.0 23.25H7.0L0.75 17.0V7.0Z%22 fill=%22%23D6CBB5%22 stroke=%22%23D6CBB5%22 stroke-width=%221.5%22/%3E%3C/svg%3E");}}
+.cdm-public{min-height:100vh;display:flex;flex-direction:column;background:var(--cdm-page);color:var(--cdm-fg);
+  font-variant-numeric:lining-nums;-webkit-tap-highlight-color:rgba(154,101,50,.18);overflow-wrap:break-word}
+.cdm-public *{min-width:0}
+.cdm-public :focus-visible{outline:3px solid var(--cdm-acc);outline-offset:3px}
+.cdm-public .font-heading{font-family:inherit}
+:where(.cdm-public) a{color:inherit}
+.cdm-shell{flex:1;display:flex;flex-direction:column}
+.cdm-main{flex:1;padding:30px 0 52px}
+.cdm-wrap{max-width:1160px;margin:0 auto;padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}
+.cdm-col{max-width:620px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+.cdm-col.wide{max-width:780px}
+.cdm-skip{position:absolute;left:12px;top:-80px;z-index:60;background:var(--cdm-fg);color:var(--cdm-page);padding:12px 16px;font-weight:700;text-decoration:none}
+.cdm-skip:focus{top:12px}
+/* cabecera: la fusteria verda, amb el tall del logo que continua (com a la web) */
+.cdm-site{background:var(--cdm-band);color:var(--cdm-bandfg);--cdm-logo-bg:var(--cdm-band);--cdm-acc:var(--cdm-bandacc);position:relative;z-index:30}
+.cdm-hbar{display:flex;flex-wrap:wrap;align-items:center;gap:0 8px;min-height:64px}
+.cdm-brand{flex:none;display:block;color:var(--cdm-bandacc);line-height:0;padding:5px 0}
+.cdm-logo{width:76px;height:54px}
+.cdm-cut{flex:1;align-self:center;display:flex;align-items:center;gap:4px;min-width:24px;transform:translateY(-5.8px);color:var(--cdm-bandacc);--cdm-piv:var(--cdm-band)}
+.cdm-cut::before{content:"";flex:1;height:1.00px;background:repeating-linear-gradient(90deg,currentColor 0 3.62px,transparent 3.62px 6.03px)}
+.cdm-cut svg{flex:none;width:21px;height:11px}
+.cdm-lang{display:flex;flex:none;margin-right:-8px}
+.cdm-lang a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:44px;font-weight:700;font-size:.875rem;letter-spacing:.12em;
+  text-decoration:none;color:var(--cdm-bandsoft)}
+.cdm-lang a[aria-current]{color:var(--cdm-bandfg);box-shadow:inset 0 -3px 0 -1px var(--cdm-bandacc)}
+@media (min-width:900px){
+  .cdm-hbar{min-height:72px;gap:0 14px}
+  .cdm-logo{width:84px;height:60px}
+  .cdm-cut{transform:translateY(-6.45px)}
+  .cdm-cut::before{height:1.00px;background:repeating-linear-gradient(90deg,currentColor 0 4.03px,transparent 4.03px 6.70px)}
+  .cdm-lang{margin-right:0}
+}
+@media (max-width:359px){.cdm-lang a{min-width:40px;font-size:.8125rem;letter-spacing:.08em}.cdm-logo{width:66px;height:47px}}
+/* títulos amb filets, com a la carta */
+.cdm-h{display:flex;align-items:center;gap:16px}
+.cdm-h::before,.cdm-h::after{content:"";flex:1 0 18px;border-top:1px solid var(--cdm-line)}
+.cdm-h h1,.cdm-h h2{margin:0;font-size:1.3125rem;font-weight:800;letter-spacing:.14em;padding-left:.14em;text-transform:uppercase;line-height:1.15;text-align:center;text-wrap:balance}
+.cdm-h.long h1,.cdm-h.long h2{font-size:1.1875rem;letter-spacing:.09em;padding-left:.09em}
+.cdm-sub{text-align:center;color:var(--cdm-acc);font-size:1.0625rem;line-height:1.45;margin:10px auto 0;max-width:36em;text-wrap:balance}
+.cdm-lab{font-weight:700;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--cdm-acc);margin:0}
+.cdm-t{font-size:1.0625rem;line-height:1.5;color:var(--cdm-soft);margin:0}
+.cdm-center{text-align:center}
+@media (min-width:700px){.cdm-h h1,.cdm-h h2{font-size:1.5rem}}
+/* el rètol emmarcat (el mateix marc de la carta) */
+.cdm-sign{position:relative;background:var(--cdm-page) padding-box;border:16px solid transparent;border-image:var(--cdm-fr-sign) 12 fill / 16px round;
+  padding:14px 10px 12px;margin-top:22px}
+.cdm-sign.center{text-align:center}
+@media (min-width:520px){.cdm-sign{padding:20px 22px 18px}}
+@media (max-width:379px){.cdm-sign{border-width:12px;padding:10px 4px 10px}}
+.cdm-stitch{border:16px solid transparent;border-image:var(--cdm-fr-box) 12 / 16px round;padding:6px 6px 4px}
+/* botons (els de la carta i la web): amb els cantons tallats */
+.cdm-public .cdm-btn{min-height:48px;height:auto;padding:12px 18px;border:0;border-radius:0;box-shadow:none;font-weight:700;font-size:.875rem;letter-spacing:.09em;
+  text-transform:uppercase;line-height:1.2;white-space:normal;text-align:center;text-decoration:none;
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.cdm-public .cdm-btn:focus-visible{outline:none;box-shadow:inset 0 0 0 3px var(--cdm-acc),inset 0 0 0 5px hsl(var(--primary))}
+.cdm-public .cdm-btn.cdm-ghost{background:transparent;color:var(--cdm-fg);clip-path:none;box-shadow:inset 0 0 0 2px var(--cdm-fg)}
+.cdm-public .cdm-btn.cdm-ghost:hover{background:var(--cdm-page2)}
+.cdm-public .cdm-btn.cdm-ghost:focus-visible{box-shadow:inset 0 0 0 3px var(--cdm-acc)}
+.cdm-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.cdm-btns > *{flex:1 1 200px}
+.cdm-link{display:inline-flex;align-items:center;min-height:44px;font-weight:700;font-size:.875rem;letter-spacing:.09em;text-transform:uppercase;
+  text-decoration:underline;text-decoration-color:var(--cdm-line);text-underline-offset:5px;color:var(--cdm-fg);background:none;border:0;cursor:pointer;padding:0}
+/* passos */
+.cdm-steps{display:flex;align-items:center;gap:8px;margin:2px 0 20px;user-select:none}
+.cdm-steps i{flex:1;border-top:1px dashed var(--cdm-line)}
+.cdm-step{display:flex;align-items:center;gap:8px;font-size:.875rem;color:var(--cdm-soft)}
+.cdm-step b{flex:none;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:.8125rem;
+  border:7px solid transparent;border-image:var(--cdm-oc-soft) 8 fill / 7px stretch;color:var(--cdm-soft)}
+.cdm-step.is-on{color:var(--cdm-fg);font-weight:700}
+.cdm-step.is-on b{border-image-source:var(--cdm-oc-fill);color:hsl(var(--primary-foreground));background:hsl(var(--primary)) padding-box}
+/* triar: persones, hores, dies (octògons i cantons tallats) */
+.cdm-pick{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:46px;padding:0 4px;border:8px solid transparent;
+  border-image:var(--cdm-oc-line) 8 / 8px stretch;background:none;color:var(--cdm-fg);font:inherit;font-weight:700;font-size:.9375rem;
+  font-variant-numeric:tabular-nums;line-height:1;cursor:pointer}
+.cdm-pick:hover{border-image:var(--cdm-oc-line) 8 fill / 8px stretch;border-image-source:var(--cdm-oc-line)}
+.cdm-pick:not(.is-on):hover{background:none}
+.cdm-pick.is-on{border-image:var(--cdm-oc-fill) 8 fill / 8px stretch;color:hsl(var(--primary-foreground));background:hsl(var(--primary)) padding-box}
+.cdm-picks{display:flex;flex-wrap:wrap;gap:6px}
+.cdm-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.cdm-slots .cdm-pick{width:100%;border-width:6px;border-image-width:6px}
+@media (max-width:339px){.cdm-slots{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.cdm-cal{border-top:1px solid var(--cdm-row);border-bottom:1px solid var(--cdm-row);padding:10px 0 12px}
+.cdm-calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.cdm-calnav span{font-weight:800;font-size:.9375rem;letter-spacing:.12em;text-transform:uppercase}
+.cdm-calnav button{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;color:var(--cdm-fg);cursor:pointer}
+.cdm-calnav button:disabled{opacity:.35;cursor:not-allowed}
+.cdm-dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-bottom:2px}
+.cdm-dow span{text-align:center;font-weight:700;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--cdm-soft);padding:4px 0}
+.cdm-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:2px}
+.cdm-days > div{display:flex;flex-direction:column;align-items:center;gap:1px}
+.cdm-day{width:100%;max-width:44px;aspect-ratio:1;display:inline-flex;align-items:center;justify-content:center;border:8px solid transparent;background:none;
+  color:var(--cdm-fg);font:inherit;font-size:.9375rem;font-variant-numeric:tabular-nums;line-height:1;cursor:pointer;padding:0}
+.cdm-day:not(:disabled):not(.is-on):hover{border-image:var(--cdm-oc-soft) 8 fill / 8px stretch}
+.cdm-day.is-today{border-image:var(--cdm-oc-line) 8 / 8px stretch;font-weight:700}
+.cdm-day.is-on{border-image:var(--cdm-oc-fill) 8 fill / 8px stretch;color:hsl(var(--primary-foreground));font-weight:700;background:hsl(var(--primary)) padding-box}
+.cdm-day:disabled{opacity:.36;cursor:not-allowed}
+@media (max-width:379px){.cdm-day{border-width:6px}}
+.cdm-dot{width:6px;height:6px;clip-path:polygon(29.3% 0,70.7% 0,100% 29.3%,100% 70.7%,70.7% 100%,29.3% 100%,0 70.7%,0 29.3%)}
+.cdm-dot.ok{background:var(--cdm-lv-ok)}.cdm-dot.mid{background:var(--cdm-lv-mid)}.cdm-dot.hi{background:var(--cdm-lv-hi)}
+/* camps */
+.cdm-public input:not([type=checkbox]):not([type=radio]),.cdm-public textarea{background:var(--cdm-field);border:1px solid hsl(var(--input));border-radius:0;
+  font-size:max(1rem,16px);min-height:46px;color:var(--cdm-fg);box-shadow:none}
+.cdm-public textarea{min-height:80px;padding-top:10px}
+.cdm-public input::placeholder,.cdm-public textarea::placeholder{color:var(--cdm-soft);opacity:.8}
+.cdm-public input:not([type=checkbox]):focus-visible,.cdm-public textarea:focus-visible{outline:3px solid var(--cdm-acc);outline-offset:1px;box-shadow:none}
+.cdm-public input[aria-invalid=true],.cdm-public textarea[aria-invalid=true]{border-color:hsl(var(--destructive))}
+.cdm-public input[type=checkbox]{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.cdm-public label{font-size:.9375rem}
+.cdm-num{width:84px;text-align:center;font-weight:700}
+/* avisos */
+.cdm-note,.cdm-err,.cdm-ok{padding:12px 14px;font-size:.9375rem;line-height:1.45;border-left:3px solid}
+.cdm-note{background:var(--cdm-note-bg);color:var(--cdm-note-fg);border-color:var(--cdm-note-bd)}
+.cdm-err{background:var(--cdm-err-bg);color:var(--cdm-err-fg);border-color:var(--cdm-err-bd)}
+.cdm-ok{background:var(--cdm-ok-bg);color:var(--cdm-ok-fg);border-color:var(--cdm-ok-bd)}
+.cdm-err code{display:block;margin-top:4px;font-size:.78rem;word-break:break-all}
+.cdm-public .text-destructive{color:var(--cdm-err-fg)}
+/* dades de la reserva */
+.cdm-dl{margin:0}
+.cdm-dl > div{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:10px 0;border-bottom:1px solid var(--cdm-row)}
+.cdm-dl > div:first-child{border-top:1px solid var(--cdm-row)}
+.cdm-dl dt{color:var(--cdm-soft)}
+.cdm-dl dd{margin:0;font-weight:700;text-align:right}
+.cdm-dl dd::first-letter{text-transform:uppercase}
+.cdm-badge{width:58px;height:58px;margin:4px auto 14px;display:flex;align-items:center;justify-content:center;
+  border:10px solid transparent;border-image:var(--cdm-oc-fill) 8 fill / 10px stretch;color:hsl(var(--primary-foreground));background:hsl(var(--primary)) padding-box}
+.cdm-badge.pend{border-image-source:var(--cdm-oc-pend);color:#16301F;background:var(--cdm-pend) padding-box}
+.cdm-badge svg{width:24px;height:24px}
+.cdm-big{font-size:clamp(1.5rem,6vw,2rem);font-weight:800;letter-spacing:.05em;text-transform:uppercase;line-height:1.1;margin:0;text-wrap:balance}
+.cdm-quote{margin:0;padding:10px 0 0;color:var(--cdm-soft)}
+/* peu (com a la web) */
+.cdm-foot{background:var(--cdm-band);color:var(--cdm-bandfg);--cdm-logo-bg:var(--cdm-band);--cdm-acc:var(--cdm-bandacc);padding-top:40px}
+.cdm-foot-g{display:grid;gap:26px}
+.cdm-foot .cdm-brand{padding:0}
+.cdm-foot .cdm-logo{width:120px;height:85px}
+.cdm-tagline{display:flex;align-items:center;gap:10px;margin:12px 0 0;font-size:1rem;letter-spacing:.01em}
+.cdm-tagline b{font-weight:500;color:var(--cdm-bandacc)}
+.cdm-tl{flex:none;color:var(--cdm-bandacc)}
+.cdm-fh{font-size:.8125rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--cdm-bandacc);margin:0 0 8px}
+.cdm-foot p,.cdm-foot li{font-size:1rem;line-height:1.6;margin:0}
+.cdm-foot ul{list-style:none;margin:0;padding:0}
+.cdm-foot a{text-decoration:underline;text-decoration-color:var(--cdm-bandacc);text-underline-offset:4px;display:inline-block;padding:3px 0;max-width:100%;overflow-wrap:anywhere}
+.cdm-foot-b{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 20px;margin-top:30px;padding-top:16px;padding-bottom:18px;
+  border-top:1px solid rgba(200,149,90,.32);font-size:.875rem;color:var(--cdm-bandsoft)}
+.cdm-tileband{height:22px;background:#16301F url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Cg transform=%22translate(0,0) scale(1.0)%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%2316301F%22/%3E%3Cg fill=%22none%22 stroke=%22%23C8955A%22 stroke-width=%222.6%22%3E%3Ccircle cx=%220%22 cy=%220%22 r=%2228%22/%3E%3Ccircle cx=%220%22 cy=%220%22 r=%2219.5%22/%3E%3Cpath d=%22M-4.142,-10.000 L4.142,-10.000 L10.000,-4.142 L10.000,4.142 L4.142,10.000 L-4.142,10.000 L-10.000,4.142 L-10.000,-4.142 Z%22/%3E%3Ccircle cx=%22100%22 cy=%220%22 r=%2228%22/%3E%3Ccircle cx=%22100%22 cy=%220%22 r=%2219.5%22/%3E%3Cpath d=%22M95.858,-10.000 L104.142,-10.000 L110.000,-4.142 L110.000,4.142 L104.142,10.000 L95.858,10.000 L90.000,4.142 L90.000,-4.142 Z%22/%3E%3Ccircle cx=%220%22 cy=%22100%22 r=%2228%22/%3E%3Ccircle cx=%220%22 cy=%22100%22 r=%2219.5%22/%3E%3Cpath d=%22M-4.142,90.000 L4.142,90.000 L10.000,95.858 L10.000,104.142 L4.142,110.000 L-4.142,110.000 L-10.000,104.142 L-10.000,95.858 Z%22/%3E%3Ccircle cx=%22100%22 cy=%22100%22 r=%2228%22/%3E%3Ccircle cx=%22100%22 cy=%22100%22 r=%2219.5%22/%3E%3Cpath d=%22M95.858,90.000 L104.142,90.000 L110.000,95.858 L110.000,104.142 L104.142,110.000 L95.858,110.000 L90.000,104.142 L90.000,95.858 Z%22/%3E%3Crect x=%2225%22 y=%2225%22 width=%2250%22 height=%2250%22/%3E%3Crect x=%2225%22 y=%2225%22 width=%2250%22 height=%2250%22 transform=%22rotate(45 50 50)%22/%3E%3Cpath d=%22M42.544,32.000 L57.456,32.000 L68.000,42.544 L68.000,57.456 L57.456,68.000 L42.544,68.000 L32.000,57.456 L32.000,42.544 Z%22/%3E%3Cpath d=%22M45.030,38.000 L54.970,38.000 L62.000,45.030 L62.000,54.970 L54.970,62.000 L45.030,62.000 L38.000,54.970 L38.000,45.030 Z%22/%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%225%22/%3E%3Cpath d=%22M50,-7 L57,0 L50,7 L43,0 Z%22/%3E%3Cpath d=%22M50,93 L57,100 L50,107 L43,100 Z%22/%3E%3Cpath d=%22M0,43 L7,50 L0,57 L-7,50 Z%22/%3E%3Cpath d=%22M100,43 L107,50 L100,57 L93,50 Z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat-x 0 0/22px 22px}
+.cdm-nw{white-space:nowrap}
+@media (min-width:700px){.cdm-foot-g{grid-template-columns:1.4fr 1fr 1fr 1fr}}
+/* textos llargs (privacitat) */
+.cdm-legal h1{font-size:1.75rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.15;margin:0}
+.cdm-legal .upd{color:var(--cdm-soft);font-size:.9375rem;margin-top:8px}
+.cdm-legal h2{font-size:1.0625rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cdm-acc);margin:32px 0 0}
+.cdm-legal p,.cdm-legal ul{margin:12px 0 0;font-size:1.0625rem;line-height:1.55}
+.cdm-legal ul{padding-left:1.2em;list-style:square}
+.cdm-legal li{margin-top:6px}
+.cdm-legal li::marker{color:var(--cdm-line)}
+.cdm-legal table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9375rem}
+.cdm-legal th,.cdm-legal td{text-align:left;vertical-align:top;padding:9px 10px 9px 0;border-bottom:1px solid var(--cdm-row)}
+.cdm-legal th{font-weight:700}
+.cdm-tscroll{overflow-x:auto}
+/* animació de càrrega */
+.cdm-skel{background:var(--cdm-page2);height:14px}
+@media (prefers-reduced-motion:no-preference){.cdm-skel{animation:cdm-pulse 1.4s ease-in-out infinite}}
+@keyframes cdm-pulse{50%{opacity:.45}}

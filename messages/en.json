@@ -1,7 +1,7 @@
 {
   "form": {
     "title": "Book your table",
-    "subtitle": "Corte de Manga · Comte d'Urgell 108, Barcelona",
+    "subtitle": "Comte d’Urgell 108 · Eixample, Barcelona",
     "nombre": "First name",
     "apellido": "Last name",
     "telefono": "Phone",
@@ -55,8 +55,11 @@
       "rate_limit": "Too many requests. Please try again in a few minutes.",
       "dia_cerrado": "The restaurant is closed on that day",
       "franja_bloqueada": "That time slot is not available",
-      "generic": "An error occurred. Please try again."
-    }
+      "generic": "An error occurred. Please try again.",
+      "required": "This field is required"
+    },
+    "mes_anterior": "Previous month",
+    "mes_siguiente": "Next month"
   },
   "confirmation": {
     "title": "Booking confirmed!",
@@ -71,7 +74,7 @@
     "comments": "Comments",
     "email_not_sent": "Email not sent",
     "cancel_info": "Need to cancel? Use the link we sent to your email.",
-    "pending_info": "Groups of more than 7 guests require manual confirmation. You'll receive a confirmation email within the next few hours.",
+    "pending_info": "Large groups require manual confirmation. You’ll receive an email with our answer within the next few hours.",
     "address": "How to get here",
     "back_home": "Back to home",
     "modify_link": "Change date or time"
@@ -169,5 +172,21 @@
     "invalid_title": "Invalid link",
     "invalid_subtitle": "This reservation is no longer active or the link has expired. Please call us if you need help.",
     "back_home": "Back to home"
+  },
+  "site": {
+    "skip": "Skip to content",
+    "home_label": "Corte de Manga, home",
+    "lang_label": "Language",
+    "foot_visit": "Visit us",
+    "foot_daily": "Every day from 8 am",
+    "directions": "Directions",
+    "foot_contact": "Contact",
+    "phone": "Phone",
+    "foot_wa": "WhatsApp (messages only)",
+    "wa_text": "Hi, I’m writing about a booking",
+    "foot_more": "More",
+    "web": "Website",
+    "carta": "The menu",
+    "privacy": "Privacy policy"
   }
 }

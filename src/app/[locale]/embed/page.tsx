@@ -53,8 +53,8 @@ export default async function EmbedPage({
     <>
       <EmbedHeightReporter />
       <EmbedLocaleDetector currentLocale={locale} />
-      <div className="bg-background min-h-0 p-4">
-        <div className="bg-card rounded-xl border border-border p-6 max-w-lg mx-auto">
+      <div className="p-2">
+        <div className="cdm-sign" style={{ maxWidth: 560, margin: "0 auto" }}>
           <ReservationForm
             franjasBloqueadas={franjasBloqueadas}
             diasCerrados={diasCerrados}

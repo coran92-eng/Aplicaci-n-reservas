@@ -8,7 +8,14 @@ import { useRouter } from "next/navigation";
 import { modificarReserva } from "@/actions/reservas";
 function getMonthLabel(year: number, month: number, locale: string) {
   const code = locale === "ca" ? "ca-ES" : locale === "en" ? "en-GB" : "es-ES";
-  return new Date(year, month - 1, 1).toLocaleDateString(code, { month: "long", year: "numeric" });
+  const s = new Date(year, month - 1, 1).toLocaleDateString(code, { month: "long", year: "numeric" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function dayLabel(dateStr: string, locale: string) {
+  const code = locale === "ca" ? "ca-ES" : locale === "en" ? "en-GB" : "es-ES";
+  const s = new Date(dateStr + "T00:00:00").toLocaleDateString(code, { weekday: "long", day: "numeric", month: "long" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function getDayHeaders(locale: string): string[] {
@@ -33,6 +40,7 @@ interface Props {
 
 export function ModificarForm({ token, locale, today, maxDate, closedDates, franjasBloqueadas, allSlots }: Props) {
   const t = useTranslations("modification");
+  const tf = useTranslations("form");
   const currentLocale = useLocale(); // fallback if locale prop not forwarded
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -87,35 +95,31 @@ export function ModificarForm({ token, locale, today, maxDate, closedDates, fran
 
   if (success) {
     return (
-      <div className="rounded-lg bg-green-900/20 border border-green-700/40 p-4 text-center">
-        <p className="text-sm text-green-400 font-medium">{t("success")}</p>
-      </div>
+      <p className="cdm-ok" role="status">{t("success")}</p>
     );
   }
 
   return (
     <div className="space-y-5">
-      {/* Calendar */}
-      <div className="rounded-xl border border-border p-4 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <button type="button"
-            onClick={() => { if (calMonth === 1) { setCalYear(y => y - 1); setCalMonth(12); } else setCalMonth(m => m - 1); }}
-            className="p-2 rounded-full hover:bg-accent transition-colors">
-            <ChevronLeft className="h-5 w-5" />
+      {/* Calendario */}
+      <div className="cdm-cal">
+        <div className="cdm-calnav">
+          <button type="button" aria-label={tf("mes_anterior")}
+            onClick={() => { if (calMonth === 1) { setCalYear(y => y - 1); setCalMonth(12); } else setCalMonth(m => m - 1); }}>
+            <ChevronLeft className="h-5 w-5" aria-hidden />
           </button>
-          <span className="font-medium capitalize text-base">{getMonthLabel(calYear, calMonth, locale)}</span>
-          <button type="button"
-            onClick={() => { if (calMonth === 12) { setCalYear(y => y + 1); setCalMonth(1); } else setCalMonth(m => m + 1); }}
-            className="p-2 rounded-full hover:bg-accent transition-colors">
-            <ChevronRight className="h-5 w-5" />
+          <span aria-live="polite">{getMonthLabel(calYear, calMonth, locale)}</span>
+          <button type="button" aria-label={tf("mes_siguiente")}
+            onClick={() => { if (calMonth === 12) { setCalYear(y => y + 1); setCalMonth(1); } else setCalMonth(m => m + 1); }}>
+            <ChevronRight className="h-5 w-5" aria-hidden />
           </button>
         </div>
-        <div className="grid grid-cols-7 mb-2">
+        <div className="cdm-dow" aria-hidden>
           {getDayHeaders(locale).map((h) => (
-            <div key={h} className="text-center text-xs text-muted-foreground font-medium py-1 capitalize">{h}</div>
+            <span key={h}>{h}</span>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-y-1">
+        <div className="cdm-days">
           {cells.map((day, i) => {
             if (day === null) return <div key={`e-${i}`} />;
             const disabled = isDisabled(day);
@@ -123,35 +127,29 @@ export function ModificarForm({ token, locale, today, maxDate, closedDates, fran
             const selected = selectedDate === dateStr;
             const isToday = calYear === ty && calMonth === tm && day === td;
             return (
-              <button
-                key={day}
-                type="button"
-                disabled={disabled}
-                onClick={() => { setSelectedDate(dateStr); setSelectedTime(null); }}
-                className={[
-                  "mx-auto w-10 h-10 flex items-center justify-center rounded-full text-sm transition-colors",
-                  disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
-                  selected ? "bg-primary text-primary-foreground" : "",
-                  !disabled && !selected ? "hover:bg-accent" : "",
-                  isToday && !selected ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "",
-                ].filter(Boolean).join(" ")}
-              >
-                {day}
-              </button>
+              <div key={day}>
+                <button
+                  type="button"
+                  disabled={disabled}
+                  aria-pressed={selected}
+                  aria-label={dayLabel(dateStr, locale)}
+                  onClick={() => { setSelectedDate(dateStr); setSelectedTime(null); }}
+                  className={["cdm-day", selected ? "is-on" : "", isToday && !selected ? "is-today" : ""].filter(Boolean).join(" ")}
+                >
+                  {day}
+                </button>
+              </div>
             );
           })}
         </div>
       </div>
 
-      {/* Time slots */}
+      {/* Horas */}
       {selectedDate && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="cdm-slots" role="group" aria-label={tf("hora_seccion")}>
           {availableSlots.map((slot) => (
-            <button key={slot} type="button" onClick={() => setSelectedTime(slot)}
-              className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-colors
-                ${selectedTime === slot
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-border hover:border-primary text-foreground"}`}>
+            <button key={slot} type="button" onClick={() => setSelectedTime(slot)} aria-pressed={selectedTime === slot}
+              className={`cdm-pick ${selectedTime === slot ? "is-on" : ""}`}>
               {slot}
             </button>
           ))}
@@ -159,14 +157,12 @@ export function ModificarForm({ token, locale, today, maxDate, closedDates, fran
       )}
 
       {error && (
-        <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3">
-          <p className="text-sm text-red-400">{error}</p>
-        </div>
+        <p className="cdm-err" role="alert">{error}</p>
       )}
 
       <Button
         size="lg"
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+        className="cdm-btn w-full"
         disabled={!selectedDate || !selectedTime || saving}
         onClick={handleSubmit}
       >
