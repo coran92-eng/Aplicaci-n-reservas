@@ -111,6 +111,13 @@
 .cdm-public input[type=checkbox]{width:20px;height:20px;accent-color:hsl(var(--primary))}
 .cdm-public label{font-size:.9375rem}
 .cdm-num{width:84px;text-align:center;font-weight:700}
+/* grupo: − [número] + */
+.cdm-step{display:flex;align-items:center;gap:8px}
+.cdm-step .cdm-pick{font-size:1.25rem;line-height:1;min-width:46px}
+.cdm-step .cdm-pick:disabled{opacity:.35;cursor:default;border-image:none}
+.cdm-step .cdm-num{width:76px;font-size:1.125rem}
+.cdm-hint{margin:0;font-size:.875rem;line-height:1.45;color:var(--cdm-soft)}
+.cdm-hint a{color:var(--cdm-fg);text-underline-offset:3px}
 /* avisos */
 .cdm-note,.cdm-err,.cdm-ok{padding:12px 14px;font-size:.9375rem;line-height:1.45;border-left:3px solid}
 .cdm-note{background:var(--cdm-note-bg);color:var(--cdm-note-fg);border-color:var(--cdm-note-bd)}
