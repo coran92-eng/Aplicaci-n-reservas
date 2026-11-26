@@ -161,6 +161,37 @@ export function RegistroStats({ stats }: { stats: RegistroStats }) {
         />
       </div>
 
+      <SectionLabel>De dónde llegan · reservas creadas desde el lunes pasado</SectionLabel>
+      <div className="bg-white border border-gray-200 rounded-xl p-4" data-origenes>
+        {stats.origenes && stats.origenes.length > 0 ? (
+          <ul className="space-y-2">
+            {(() => {
+              const total = stats.origenes.reduce((s, o) => s + o.reservas, 0);
+              return stats.origenes.map((o) => {
+                const pctO = total > 0 ? Math.round((o.reservas / total) * 100) : 0;
+                return (
+                  <li key={o.label}>
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="text-gray-700">{o.label}</span>
+                      <span className="font-semibold text-gray-900 tabular-nums">
+                        {o.reservas} <span className="text-xs font-normal text-gray-500">· {pctO}%</span>
+                      </span>
+                    </div>
+                    <div className="mt-1 h-1.5 rounded-full bg-gray-100" aria-hidden>
+                      <div className="h-1.5 rounded-full bg-emerald-700" style={{ width: `${pctO}%` }} />
+                    </div>
+                  </li>
+                );
+              });
+            })()}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500">
+            Todavía sin datos de origen. Aparecerán con las próximas reservas hechas desde la web o la ficha de Google.
+          </p>
+        )}
+      </div>
+
       {stats.excluidasPrueba > 0 && (
         <p className="text-[11px] text-gray-400 mt-3">
           Se han excluido {stats.excluidasPrueba} reserva
