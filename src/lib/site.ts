@@ -1,7 +1,8 @@
 // Datos públicos del bar, iguales que en cortedemanga.es y en la carta.
 export const SITE = {
   web: "https://cortedemanga.es/",
-  carta: "https://carta.cortedemanga.es/",
+  // la carta vive en la web (cortedemanga.es/carta/); carta.cortedemanga.es redirigirá allí
+  carta: "https://cortedemanga.es/carta/",
   instagram: "https://www.instagram.com/cortedemangabcn",
   email: "cortedemangabcn@gmail.com",
   // WhatsApp del bar: solo mensajes (no llamadas)
