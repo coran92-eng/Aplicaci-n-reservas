@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { Calculator, LogOut } from "lucide-react";
 import { logoutAdmin } from "@/actions/admin";
 import { PushNotificationToggle } from "@/components/admin/PushNotificationToggle";
 import { ServiceWorkerRegistrar } from "@/components/admin/ServiceWorkerRegistrar";
@@ -29,6 +30,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </span>
 
         <div className="flex items-center gap-3">
+          {/* Calculadora de menús de grupo: siempre a mano, en todas las pantallas del panel */}
+          <Link
+            href="/admin/grupos"
+            aria-current={pathname.startsWith("/admin/grupos") ? "page" : undefined}
+            className={
+              pathname.startsWith("/admin/grupos")
+                ? "inline-flex h-11 items-center gap-1.5 rounded-full bg-gray-900 px-3 text-sm font-medium text-white"
+                : "inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-gray-600 hover:text-gray-900"
+            }
+          >
+            <Calculator className="h-5 w-5" />
+            Grupos
+          </Link>
           <PushNotificationToggle />
           <form action={logoutAdmin}>
             <button
