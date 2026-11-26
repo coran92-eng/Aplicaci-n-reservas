@@ -1,6 +1,7 @@
 import type { Reserva } from "./supabase/types";
 import { countryFromPhone } from "./phone-country";
 import { addDaysToDate } from "./utils";
+import { etiquetaOrigen } from "./origen";
 
 // Estados que NO representan una reserva real (nunca ocurrieron)
 const EXCLUDED_ESTADOS = new Set(["cancelada", "rechazada"]);
@@ -41,6 +42,8 @@ export interface RegistroStats {
   diaFuerte: { nombre: string; reservas: number } | null;
   cancelacionPct: number | null;
   excluidasPrueba: number;
+  /** Reservas creadas en la ventana de captación por origen (?src=). null = aún no hay datos de origen. */
+  origenes: { label: string; reservas: number }[] | null;
 }
 
 // % de cambio redondeado. null = no hay base de comparación (antes era 0).
@@ -203,6 +206,21 @@ export function computeStats({ fechaRows, createdRows, today, topePorFranja }: S
   }
   const captacion = { reservas: capCur, prevReservas: capPrev, delta: pct(capCur, capPrev) };
 
+  // ── De dónde llegan (por fecha de creación, misma ventana que la captación) ─
+  // Si la columna «origen» aún no existe (012_origen.sql), las filas no la traen y no se muestra nada.
+  let origenes: { label: string; reservas: number }[] | null = null;
+  if (createdRows.some((r) => "origen" in r)) {
+    const porOrigen = new Map<string, number>();
+    for (const r of createdRows) {
+      if (isTestReserva(r) || r.estado === "rechazada") continue;
+      const k = etiquetaOrigen(r.origen);
+      porOrigen.set(k, (porOrigen.get(k) ?? 0) + 1);
+    }
+    origenes = Array.from(porOrigen.entries())
+      .map(([label, reservas]) => ({ label, reservas }))
+      .sort((a, b) => b.reservas - a.reservas);
+  }
+
   return {
     hoy,
     semana,
@@ -217,5 +235,6 @@ export function computeStats({ fechaRows, createdRows, today, topePorFranja }: S
     diaFuerte,
     cancelacionPct,
     excluidasPrueba,
+    origenes,
   };
 }

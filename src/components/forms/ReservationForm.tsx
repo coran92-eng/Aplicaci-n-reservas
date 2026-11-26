@@ -157,6 +157,12 @@ interface Props {
   topePersonas: number;
   dayOccupancy: Record<string, number>;
   embed?: boolean;
+  /** Personas elegidas en la web (?personas=) */
+  initialPersonas?: number;
+  /** Día elegido en la web (?fecha= o ?dia=), ya validado en el servidor */
+  initialFecha?: string;
+  /** De dónde llega la reserva (?src=) */
+  origen?: string;
 }
 
 type EmbedSuccess = {
@@ -167,7 +173,7 @@ type EmbedSuccess = {
   nombre: string;
 };
 
-export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, antelacionMax, topePersonas, dayOccupancy, embed }: Props) {
+export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, antelacionMax, topePersonas, dayOccupancy, embed, initialPersonas, initialFecha, origen }: Props) {
   const t = useTranslations("form");
   const tConf = useTranslations("confirmation");
   const locale = useLocale();
@@ -179,11 +185,11 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
 
   const now = new Date();
   const [step, setStep] = useState<1 | 2>(1);
-  const [calYear, setCalYear] = useState(now.getFullYear());
-  const [calMonth, setCalMonth] = useState(now.getMonth() + 1);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [calYear, setCalYear] = useState(initialFecha ? Number(initialFecha.slice(0, 4)) : now.getFullYear());
+  const [calMonth, setCalMonth] = useState(initialFecha ? Number(initialFecha.slice(5, 7)) : now.getMonth() + 1);
+  const [selectedDate, setSelectedDate] = useState<string | null>(initialFecha ?? null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [personas, setPersonas] = useState(2);
+  const [personas, setPersonas] = useState(initialPersonas ?? 2);
   const [serverError, setServerError] = useState<string | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -197,7 +203,9 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     shouldUnregister: false,
     defaultValues: {
       idioma: locale as "es" | "ca" | "en",
-      personas: 2,
+      personas: initialPersonas ?? 2,
+      fecha: initialFecha ?? "",
+      origen: origen ?? "",
       consentimiento: false,
       alergias: [],
     },
@@ -383,6 +391,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
       <input type="hidden" {...register("fecha")} />
       <input type="hidden" {...register("hora")} />
       <input type="hidden" {...register("personas", { valueAsNumber: true })} />
+      <input type="hidden" {...register("origen")} />
 
       {/* Step indicator — step 1 = Disponibilidad, step 2 = Tus datos */}
       <ol className="cdm-steps" aria-label={`${t("paso_fecha")} · ${t("paso_datos")}`}>

@@ -28,6 +28,8 @@ export interface Reserva {
   reconfirmacion_token: string | null;
   recordatorio_enviado: boolean;
   cliente_id: string | null;
+  /** ?src= del enlace (012_origen.sql). Puede no existir si la migración aún no se ha aplicado. */
+  origen?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -61,6 +61,8 @@ export const reservaSchema = z.object({
   alergias: z.array(z.string()).optional().default([]),
   consentimiento: z.boolean().refine((v) => v === true, "consentimiento_required"),
   idioma: z.enum(["es", "ca", "en"]).default("es"),
+  // de dónde llega la reserva (?src= del enlace); si no cumple el formato, se ignora en el servidor
+  origen: z.string().max(32).optional().or(z.literal("")),
   website: z.string().max(0).optional(), // honeypot
 });
 

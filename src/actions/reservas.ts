@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { reservaSchema } from "@/lib/validations";
+import { normalizaOrigen } from "@/lib/origen";
 import {
   sendConfirmationEmail,
   sendPendingEmail,
@@ -174,24 +175,31 @@ export async function createReserva(
   const [fy, fm, fd] = data.fecha.split("-").map(Number);
   const tokenExpiry = new Date(Date.UTC(fy, fm - 1, fd + 7)).toISOString();
 
-  const { error } = await supabase
-    .from("reservas")
-    .insert({
-      id,
-      cancel_token: cancelToken,
-      cancel_token_expires_at: tokenExpiry,
-      nombre: data.nombre.trim(),
-      apellido: data.apellido.trim(),
-      telefono: data.telefono,
-      email: data.email.toLowerCase(),
-      fecha: data.fecha,
-      hora: data.hora + ":00",
-      personas: data.personas,
-      estado: esPendiente ? "pendiente_aprobacion" : "confirmada",
-      notas_cliente: data.notas_cliente || null,
-      alergias: data.alergias ?? [],
-      idioma: data.idioma,
-    });
+  const fila = {
+    id,
+    cancel_token: cancelToken,
+    cancel_token_expires_at: tokenExpiry,
+    nombre: data.nombre.trim(),
+    apellido: data.apellido.trim(),
+    telefono: data.telefono,
+    email: data.email.toLowerCase(),
+    fecha: data.fecha,
+    hora: data.hora + ":00",
+    personas: data.personas,
+    estado: esPendiente ? "pendiente_aprobacion" : "confirmada",
+    notas_cliente: data.notas_cliente || null,
+    alergias: data.alergias ?? [],
+    idioma: data.idioma,
+  };
+  const origen = normalizaOrigen(data.origen);
+
+  const filaConOrigen: Record<string, unknown> = origen ? { ...fila, origen } : fila;
+  let { error } = await supabase.from("reservas").insert(filaConOrigen);
+  // Si la columna «origen» aún no existe (012_origen.sql sin aplicar), se reserva igual, sin el origen.
+  if (error && origen && /origen/i.test(`${error.message ?? ""} ${error.details ?? ""}`)) {
+    console.warn("Reserva sin origen (¿falta 012_origen.sql?):", error.code, error.message);
+    ({ error } = await supabase.from("reservas").insert(fila));
+  }
 
   if (error) {
     console.error("Error inserting reserva:", JSON.stringify(error));
