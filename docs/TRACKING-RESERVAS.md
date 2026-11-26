@@ -7,6 +7,19 @@ aquí queda todo en un sitio.
 
 **Cuenta de Google Ads:** `AW-18213186788`
 
+> **Cambios del 26/11/2026 (rediseño con la imagen de la web y la carta)**
+> - El tag de Google Ads **solo se carga en producción**: en las vistas previas de Vercel
+>   (`VERCEL_ENV=preview`) y en local no se carga, para que las pruebas no cuenten conversiones.
+>   Si `VERCEL_ENV` faltara, se carga igual (nunca se pierde la medición en producción).
+> - El middleware **ya no redirige las vistas previas** de Vercel al dominio: solo la URL
+>   `*.vercel.app` de producción. Así cada PR se puede revisar en su URL de prueba.
+>   Ojo: si las variables de Supabase de *Preview* son las de producción, una reserva hecha
+>   en la vista previa es una reserva real.
+> - La web nueva de `cortedemanga.es` **no incrusta el formulario** (enlaza a
+>   `reservas.cortedemanga.es` y le pasa `gclid`/`gbraid`/`wbraid`/`utm_*` en el enlace).
+>   Por tanto la conversión **#4 (`ZVVDCKDA…`) deja de dispararse** al publicarla. Antes de
+>   publicar, comprobar en Google Ads que la **#2 (`MkMuCMe…`) es la Primaria**.
+
 ---
 
 ## 1. Google tag base

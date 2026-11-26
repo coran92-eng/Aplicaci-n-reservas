@@ -5,6 +5,8 @@ import Script from "next/script";
 import "./globals.css";
 
 const GTAG_ID = "AW-18213186788";
+// Medir en producción y en cualquier entorno que no sea vista previa ni local (si VERCEL_ENV faltara, se mide igual)
+const MEASURE = process.env.VERCEL_ENV !== "preview" && process.env.NODE_ENV !== "development";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -59,18 +61,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} className={`${syne.variable} ${inter.variable}`}>
       <body className="font-sans antialiased">{children}</body>
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`}
-        strategy="afterInteractive"
-      />
-      <Script id="gtag-init" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          window.gtag = function(){window.dataLayer.push(arguments);}
-          window.gtag('js', new Date());
-          window.gtag('config', '${GTAG_ID}');
-        `}
-      </Script>
+      {/* Google Ads solo en producción: las vistas previas y el entorno local no cuentan conversiones */}
+      {MEASURE && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="gtag-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              window.gtag = function(){window.dataLayer.push(arguments);}
+              window.gtag('js', new Date());
+              window.gtag('config', '${GTAG_ID}');
+            `}
+          </Script>
+        </>
+      )}
     </html>
   );
 }

@@ -13,9 +13,10 @@ const CANONICAL_HOST = "reservas.cortedemanga.es";
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Redirect the raw Vercel deployment URL to the custom domain
+  // Redirect the raw Vercel deployment URL to the custom domain.
+  // Las vistas previas de Vercel (VERCEL_ENV=preview) no se redirigen: así se pueden revisar antes de publicar.
   const host = req.headers.get("host") ?? "";
-  if (host.endsWith(".vercel.app")) {
+  if (host.endsWith(".vercel.app") && process.env.VERCEL_ENV !== "preview") {
     const url = req.nextUrl.clone();
     url.host = CANONICAL_HOST;
     url.port = "";
