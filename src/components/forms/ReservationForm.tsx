@@ -21,11 +21,15 @@ function localeCode(locale: string) {
   return locale === "ca" ? "ca-ES" : locale === "en" ? "en-GB" : "es-ES";
 }
 
+function upperFirst(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 function getMonthLabel(year: number, month: number, locale: string) {
-  return new Date(year, month - 1, 1).toLocaleDateString(localeCode(locale), {
+  return upperFirst(new Date(year, month - 1, 1).toLocaleDateString(localeCode(locale), {
     month: "long",
     year: "numeric",
-  });
+  }));
 }
 
 function getDayHeaders(locale: string): string[] {
@@ -36,11 +40,11 @@ function getDayHeaders(locale: string): string[] {
 }
 
 function formatDateShort(dateStr: string, locale: string) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString(localeCode(locale), {
+  return upperFirst(new Date(dateStr + "T00:00:00").toLocaleDateString(localeCode(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
-  });
+  }));
 }
 
 interface CalendarProps {
@@ -56,9 +60,11 @@ interface CalendarProps {
   onSelect: (date: string) => void;
   onPrev: () => void;
   onNext: () => void;
+  prevLabel: string;
+  nextLabel: string;
 }
 
-function Calendar({ year, month, selectedDate, today, maxDate, closedDates, locale, dayOccupancy, topePersonas, onSelect, onPrev, onNext }: CalendarProps) {
+function Calendar({ year, month, selectedDate, today, maxDate, closedDates, locale, dayOccupancy, topePersonas, onSelect, onPrev, onNext, prevLabel, nextLabel }: CalendarProps) {
   const dayHeaders = getDayHeaders(locale);
   const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -88,34 +94,32 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
     // Approximate daily capacity (assume ~3 lunch slots + 3 dinner slots)
     const dailyCap = topePersonas * 6;
     const ratio = occupied / dailyCap;
-    if (ratio >= 0.9) return "bg-red-500";
-    if (ratio >= 0.6) return "bg-amber-400";
-    return "bg-green-500";
+    if (ratio >= 0.9) return "hi";
+    if (ratio >= 0.6) return "mid";
+    return "ok";
   }
 
   const canGoPrev = year > new Date().getFullYear() || (year === new Date().getFullYear() && month > new Date().getMonth() + 1);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <button type="button" onClick={onPrev} disabled={!canGoPrev}
-          className="p-2 rounded-full hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-          <ChevronLeft className="h-5 w-5" />
+    <div className="cdm-cal">
+      <div className="cdm-calnav">
+        <button type="button" onClick={onPrev} disabled={!canGoPrev} aria-label={prevLabel}>
+          <ChevronLeft className="h-5 w-5" aria-hidden />
         </button>
-        <span className="font-medium capitalize text-base">{getMonthLabel(year, month, locale)}</span>
-        <button type="button" onClick={onNext}
-          className="p-2 rounded-full hover:bg-accent transition-colors">
-          <ChevronRight className="h-5 w-5" />
+        <span aria-live="polite">{getMonthLabel(year, month, locale)}</span>
+        <button type="button" onClick={onNext} aria-label={nextLabel}>
+          <ChevronRight className="h-5 w-5" aria-hidden />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 mb-2">
+      <div className="cdm-dow" aria-hidden>
         {dayHeaders.map((h) => (
-          <div key={h} className="text-center text-xs text-muted-foreground font-medium py-1 capitalize">{h}</div>
+          <span key={h}>{h}</span>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-y-1">
+      <div className="cdm-days">
         {cells.map((day, i) => {
           if (day === null) return <div key={`e-${i}`} />;
           const disabled = isDisabled(day);
@@ -123,24 +127,18 @@ function Calendar({ year, month, selectedDate, today, maxDate, closedDates, loca
           const isToday = year === ty && month === tm && day === td;
           const dotColor = !disabled ? availabilityDot(day) : null;
           return (
-            <div key={day} className="flex flex-col items-center gap-0.5">
+            <div key={day}>
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => onSelect(toStr(day))}
-                className={[
-                  "w-10 h-10 flex items-center justify-center rounded-full text-sm transition-colors",
-                  disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer",
-                  selected ? "bg-primary text-primary-foreground" : "",
-                  !disabled && !selected ? "hover:bg-accent" : "",
-                  isToday && !selected ? "ring-2 ring-primary ring-offset-1 ring-offset-card" : "",
-                ].filter(Boolean).join(" ")}
+                aria-pressed={selected}
+                aria-label={formatDateShort(toStr(day), locale)}
+                className={["cdm-day", selected ? "is-on" : "", isToday && !selected ? "is-today" : ""].filter(Boolean).join(" ")}
               >
                 {day}
               </button>
-              {dotColor && !selected && (
-                <span className={`w-1 h-1 rounded-full ${dotColor}`} aria-hidden />
-              )}
+              {dotColor && !selected && <span className={`cdm-dot ${dotColor}`} aria-hidden />}
             </div>
           );
         })}
@@ -338,6 +336,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     try {
       if (key === "fecha_max") return t("errors.fecha_max", { dias: antelacionMax });
       if (key === "personas_max") return t("errors.personas_max", { max: limiteGrupo });
+      if (key === "Required") return t("errors.required");
       return t(`errors.${key}` as Parameters<typeof t>[0]);
     } catch { return t("errors.generic"); }
   }
@@ -346,37 +345,29 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
     const isPending = embedSuccess.estado === "pendiente_aprobacion";
     const dateLabel = formatDateShort(embedSuccess.fecha, locale);
     return (
-      <div className="py-8 text-center space-y-4">
-        <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto">
-          <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <div className="cdm-center">
+        <div className="cdm-badge" aria-hidden>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <div>
-          <h3 className="font-heading text-xl font-bold text-foreground">
-            {isPending ? tConf("title_pending") : tConf("title")}
-          </h3>
-          <p className="text-muted-foreground text-sm mt-1">
-            {tConf("subtitle")}
-          </p>
-        </div>
-        <div className="bg-muted/30 rounded-lg p-4 text-left text-sm space-y-2 max-w-xs mx-auto">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{tConf("date")}</span>
-            <span className="font-medium text-foreground">{dateLabel}</span>
+        <h2 className="cdm-big">{isPending ? tConf("title_pending") : tConf("title")}</h2>
+        <p className="cdm-sub">{tConf("subtitle")}</p>
+        <dl className="cdm-dl" style={{ marginTop: 18, textAlign: "left" }}>
+          <div>
+            <dt>{tConf("date")}</dt>
+            <dd>{dateLabel}</dd>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{tConf("time")}</span>
-            <span className="font-medium text-foreground">{embedSuccess.hora}</span>
+          <div>
+            <dt>{tConf("time")}</dt>
+            <dd>{embedSuccess.hora}</dd>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{tConf("people")}</span>
-            <span className="font-medium text-foreground">{embedSuccess.personas}</span>
+          <div>
+            <dt>{tConf("people")}</dt>
+            <dd>{embedSuccess.personas}</dd>
           </div>
-        </div>
-        <p className="text-muted-foreground text-xs">
-          {tConf("cancel_info")}
-        </p>
+        </dl>
+        <p className="cdm-t" style={{ marginTop: 14, fontSize: "0.9375rem" }}>{tConf("cancel_info")}</p>
       </div>
     );
   }
@@ -394,38 +385,40 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
       <input type="hidden" {...register("personas", { valueAsNumber: true })} />
 
       {/* Step indicator — step 1 = Disponibilidad, step 2 = Tus datos */}
-      <div className="flex items-center gap-2 mb-7 select-none">
-        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>1</div>
-        <span className={`text-sm ${step === 1 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_fecha")}</span>
-        <div className="flex-1 h-px bg-border" />
-        <span className={`text-sm ${step === 2 ? "font-medium text-foreground" : "text-muted-foreground"}`}>{t("paso_datos")}</span>
-        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>2</div>
-      </div>
+      <ol className="cdm-steps" aria-label={`${t("paso_fecha")} · ${t("paso_datos")}`}>
+        <li className={`cdm-step ${step === 1 ? "is-on" : ""}`} aria-current={step === 1 ? "step" : undefined}>
+          <b>1</b>
+          <span>{t("paso_fecha")}</span>
+        </li>
+        <i aria-hidden />
+        <li className={`cdm-step ${step === 2 ? "is-on" : ""}`} aria-current={step === 2 ? "step" : undefined}>
+          <span>{t("paso_datos")}</span>
+          <b>2</b>
+        </li>
+      </ol>
 
       {/* ── STEP 1: Disponibilidad ── */}
       {step === 1 && (
         <div className="space-y-6">
           {/* Personas */}
           <div>
-            <p className="text-sm font-medium mb-3 text-foreground">{t("personas")}</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="cdm-lab" id="personas-lab" style={{ marginBottom: 10 }}>{t("personas")}</p>
+            <div className="cdm-picks" role="group" aria-labelledby="personas-lab">
               {Array.from({ length: limiteGrupo }, (_, i) => i + 1).map((n) => (
-                <button key={n} type="button" onClick={() => handlePersonas(n)}
-                  className={`w-10 h-10 rounded-full text-sm font-medium border-2 transition-colors
-                    ${personas === n ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-foreground"}`}>
+                <button key={n} type="button" onClick={() => handlePersonas(n)} aria-pressed={personas === n}
+                  className={`cdm-pick ${personas === n ? "is-on" : ""}`}>
                   {n}
                 </button>
               ))}
-              <button type="button" onClick={() => handlePersonas(limiteGrupo + 1)}
-                className={`px-3 h-10 rounded-full text-sm font-medium border-2 transition-colors
-                  ${personas > limiteGrupo ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary text-foreground"}`}>
+              <button type="button" onClick={() => handlePersonas(limiteGrupo + 1)} aria-pressed={personas > limiteGrupo}
+                className={`cdm-pick ${personas > limiteGrupo ? "is-on" : ""}`}>
                 {limiteGrupo + 1}+
               </button>
             </div>
             {personas > limiteGrupo && (
               <div className="mt-3 space-y-3">
                 <div className="flex items-center gap-3">
-                  <label className="text-sm text-foreground">{t("personas_grupo")}</label>
+                  <label htmlFor="personas-grupo">{t("personas_grupo")}</label>
                   <input
                     type="number"
                     min={limiteGrupo + 1}
@@ -435,18 +428,17 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
                       const v = Math.max(limiteGrupo + 1, Math.min(50, Number(e.target.value) || limiteGrupo + 1));
                       handlePersonas(v);
                     }}
-                    className="w-20 rounded-lg border-2 border-primary bg-transparent px-3 py-1.5 text-sm font-semibold text-foreground text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                    id="personas-grupo"
+                    className="cdm-num px-2"
                   />
                 </div>
-                <div className="rounded-lg bg-amber-900/20 border border-amber-700/40 px-4 py-3">
-                  <p className="text-sm text-amber-400">{t("group_warning", { limite: limiteGrupo })}</p>
-                </div>
+                <p className="cdm-note">{t("group_warning", { limite: limiteGrupo })}</p>
               </div>
             )}
           </div>
 
           {/* Calendar */}
-          <div className="rounded-xl border border-border p-4 bg-card">
+          <div>
             <Calendar
               year={calYear} month={calMonth}
               selectedDate={selectedDate}
@@ -456,35 +448,33 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
               topePersonas={topePersonas}
               onSelect={handleDateSelect}
               onPrev={prevMonth} onNext={nextMonth}
+              prevLabel={t("mes_anterior")} nextLabel={t("mes_siguiente")}
             />
           </div>
 
           {/* Time slots */}
           {selectedDate && (
             <div ref={timeSlotsRef}>
-              <p className="text-sm font-medium mb-3 text-foreground">
+              <p className="cdm-lab" id="horas-lab" style={{ marginBottom: 10 }}>
                 {t("hora_seccion")}
-                <span className="font-normal text-muted-foreground ml-2 capitalize">
+                <span style={{ fontWeight: 400, letterSpacing: "normal", textTransform: "none", marginLeft: 8, fontSize: "0.9375rem", color: "var(--cdm-fg)" }}>
                   {formatDateShort(selectedDate, locale)}
                 </span>
               </p>
               {availableSlots.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-2">{t("no_slots")}</p>
+                <p className="cdm-note">{t("no_slots")}</p>
               ) : (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="cdm-slots" role="group" aria-labelledby="horas-lab">
                   {availableSlots.map((slot) => (
-                    <button key={slot} type="button" onClick={() => handleTimeSelect(slot)}
-                      className={`py-2.5 rounded-lg text-sm font-medium border-2 transition-colors
-                        ${selectedTime === slot
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border hover:border-primary text-foreground"}`}>
+                    <button key={slot} type="button" onClick={() => handleTimeSelect(slot)} aria-pressed={selectedTime === slot}
+                      className={`cdm-pick ${selectedTime === slot ? "is-on" : ""}`}>
                       {slot}
                     </button>
                   ))}
                 </div>
               )}
               {availableSlots.some((s) => s.startsWith("00:")) && (
-                <p className="mt-2 text-xs text-muted-foreground">{t("midnight_note")}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{t("midnight_note")}</p>
               )}
               {errors.hora && <p className="mt-2 text-xs text-destructive">{errMsg(errors.hora.message)}</p>}
             </div>
@@ -493,7 +483,7 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
           <Button
             type="button"
             size="lg"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="cdm-btn w-full"
             disabled={!selectedDate || !selectedTime}
             onClick={handleContinue}
           >
@@ -561,37 +551,31 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
 
           <div className="flex items-start gap-3">
             <input id="consentimiento" type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+              className="mt-0.5 cursor-pointer"
               {...register("consentimiento")} />
             <Label htmlFor="consentimiento" className="text-sm font-normal cursor-pointer leading-snug">
               {t("consentimiento")}{" "}
-              <Link href={`/${locale}/privacidad`} target="_blank" className="underline">{t("politica_privacidad")}</Link>
+              <Link href={`/${locale}/privacidad`} target="_blank" className="underline underline-offset-4">{t("politica_privacidad")}</Link>
             </Label>
           </div>
           {errors.consentimiento && <p className="text-xs text-destructive">{errMsg(errors.consentimiento.message)}</p>}
 
           {/* Server error */}
           {serverError && (
-            <div className="rounded-lg bg-red-950/30 border border-red-700/40 px-4 py-3">
-              <p className="text-sm text-red-400">{errMsg(serverError) ?? t("errors.generic")}</p>
-              {process.env.NODE_ENV !== "production" && dbError && (
-                <p className="text-xs text-red-300 mt-1 font-mono break-all">Error: {dbError}</p>
-              )}
+            <div className="cdm-err" role="alert">
+              <p>{errMsg(serverError) ?? t("errors.generic")}</p>
+              {process.env.NODE_ENV !== "production" && dbError && <code>Error: {dbError}</code>}
             </div>
           )}
 
           {/* Horas alternativas */}
           {serverError === "franja_bloqueada" && alternatives.length > 0 && (
-            <div className="rounded-lg border border-border p-4 space-y-3">
-              <p className="text-sm font-medium text-foreground">{t("alternativas")}</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="cdm-note">
+              <p style={{ fontWeight: 700, marginBottom: 10 }}>{t("alternativas")}</p>
+              <div className="cdm-picks">
                 {alternatives.map((slot) => (
-                  <button
-                    key={slot}
-                    type="button"
-                    onClick={() => handleTimeSelect(slot)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                  >
+                  <button key={slot} type="button" onClick={() => handleTimeSelect(slot)} aria-pressed={selectedTime === slot}
+                    className={`cdm-pick ${selectedTime === slot ? "is-on" : ""}`}>
                     {slot}
                   </button>
                 ))}
@@ -599,14 +583,15 @@ export function ReservationForm({ franjasBloqueadas, diasCerrados, limiteGrupo, 
             </div>
           )}
 
-          <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={submitting}>
+          <Button type="submit" size="lg" className="cdm-btn w-full" disabled={submitting}>
             {submitting ? t("submitting") : t("submit")}
           </Button>
 
-          <button type="button" onClick={() => setStep(1)}
-            className="w-full text-sm text-muted-foreground hover:text-foreground text-center py-1 transition-colors">
-            ← {t("volver")}
-          </button>
+          <p className="cdm-center">
+            <button type="button" onClick={() => setStep(1)} className="cdm-link">
+              ← {t("volver")}
+            </button>
+          </p>
         </div>
       )}
     </form>

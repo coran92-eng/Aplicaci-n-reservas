@@ -3,6 +3,7 @@ import { Syne, Inter } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import Script from "next/script";
 import "./globals.css";
+import { GOOGLE_ADS_ON } from "@/lib/ads";
 
 const GTAG_ID = "AW-18213186788";
 
@@ -59,18 +60,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} className={`${syne.variable} ${inter.variable}`}>
       <body className="font-sans antialiased">{children}</body>
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`}
-        strategy="afterInteractive"
-      />
-      <Script id="gtag-init" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          window.gtag = function(){window.dataLayer.push(arguments);}
-          window.gtag('js', new Date());
-          window.gtag('config', '${GTAG_ID}');
-        `}
-      </Script>
+      {/* Google Ads solo si GOOGLE_ADS_TAG=on en producción (ver src/lib/ads.ts) */}
+      {GOOGLE_ADS_ON && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="gtag-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              window.gtag = function(){window.dataLayer.push(arguments);}
+              window.gtag('js', new Date());
+              window.gtag('config', '${GTAG_ID}');
+            `}
+          </Script>
+        </>
+      )}
     </html>
   );
 }

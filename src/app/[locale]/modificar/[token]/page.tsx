@@ -5,6 +5,11 @@ import { formatTime, generateTimeSlots, todayBarcelona, addDaysToDate } from "@/
 import type { Reserva } from "@/lib/supabase/types";
 import { ModificarForm } from "@/components/forms/ModificarForm";
 import Link from "next/link";
+import type { Metadata } from "next";
+import { Shell } from "@/components/site/Shell";
+
+// Página personal de cada reserva: fuera de los buscadores
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 function formatDateForDisplay(fecha: string, locale: string): string {
   const [y, m, d] = fecha.split("-").map(Number);
@@ -35,14 +40,16 @@ export default async function ModificarPage({
 
   if (isClosed) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-card rounded-xl border border-border p-8 text-center">
-          <p className="text-muted-foreground">{t("error_cannot_modify")}</p>
-          <Link href={`/${locale}`} className="mt-6 block text-sm text-muted-foreground hover:text-foreground">
-            {t("back_home")}
-          </Link>
+      <Shell>
+        <div className="cdm-col">
+          <div className="cdm-sign center">
+            <p className="cdm-t">{t("error_cannot_modify")}</p>
+          </div>
+          <p className="cdm-center" style={{ marginTop: 18 }}>
+            <Link href={`/${locale}`} className="cdm-link">{t("back_home")}</Link>
+          </p>
         </div>
-      </main>
+      </Shell>
     );
   }
 
@@ -64,41 +71,39 @@ export default async function ModificarPage({
   const maxDate = addDaysToDate(today, 90);
 
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-card rounded-xl border border-border p-8">
-        <div className="text-center mb-8">
-          <h1 className="font-heading text-2xl font-bold mb-2">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
+    <Shell>
+      <div className="cdm-col">
+        <div className="cdm-h">
+          <h1>{t("title")}</h1>
         </div>
+        <p className="cdm-sub">{t("subtitle")}</p>
+        <div className="cdm-sign">
+          <h2 className="cdm-lab" style={{ marginBottom: 8 }}>{t("current")}</h2>
+          <dl className="cdm-dl" style={{ marginBottom: 18 }}>
+            <div>
+              <dt>{reserva.nombre} {reserva.apellido}</dt>
+              <dd>{reserva.personas} pers.</dd>
+            </div>
+            <div>
+              <dt>{formatDateForDisplay(reserva.fecha, locale).replace(/^./, (c) => c.toUpperCase())}</dt>
+              <dd>{formatTime(reserva.hora)}</dd>
+            </div>
+          </dl>
 
-        <div className="rounded-lg border border-border p-4 space-y-2.5 text-sm mb-6">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("current")}</p>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{reserva.nombre} {reserva.apellido}</span>
-            <span className="font-medium">{reserva.personas} pers.</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground capitalize">{formatDateForDisplay(reserva.fecha, locale)}</span>
-            <span className="font-medium">{formatTime(reserva.hora)}</span>
-          </div>
+          <ModificarForm
+            token={token}
+            locale={locale}
+            today={today}
+            maxDate={maxDate}
+            closedDates={closedDates}
+            franjasBloqueadas={franjasBloqueadas}
+            allSlots={allSlots}
+          />
         </div>
-
-        <ModificarForm
-          token={token}
-          locale={locale}
-          today={today}
-          maxDate={maxDate}
-          closedDates={closedDates}
-          franjasBloqueadas={franjasBloqueadas}
-          allSlots={allSlots}
-        />
-
-        <div className="mt-6 text-center">
-          <Link href={`/${locale}`} className="text-sm text-muted-foreground hover:text-foreground">
-            {t("back_home")}
-          </Link>
-        </div>
+        <p className="cdm-center" style={{ marginTop: 18 }}>
+          <Link href={`/${locale}`} className="cdm-link">{t("back_home")}</Link>
+        </p>
       </div>
-    </main>
+    </Shell>
   );
 }

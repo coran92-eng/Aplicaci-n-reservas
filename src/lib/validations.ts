@@ -23,18 +23,21 @@ const DISPOSABLE_DOMAINS = [
   "spamgourmet.org",
 ];
 
+// Letras de cualquier alfabeto (turistas: Łukasz, Nguyễn, Ōtani…), espacios, apóstrofos, punto y guion
+const NAME_RE = /^[\p{L}\p{M}\s'’.-]+$/u;
+
 export const reservaSchema = z.object({
   nombre: z
     .string()
     .min(2, "nombre_min")
     .max(50, "nombre_max")
-    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, "nombre_min"),
+    .regex(NAME_RE, "nombre_min"),
   apellido: z
     .string()
     .min(2, "apellido_min")
     .max(50, "apellido_max")
-    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, "apellido_min"),
-  telefono: z.string().refine(
+    .regex(NAME_RE, "apellido_min"),
+  telefono: z.string({ required_error: "telefono_invalid" }).refine(
     (val) => {
       try {
         return isValidPhoneNumber(val);

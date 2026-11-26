@@ -7,6 +7,21 @@ aquí queda todo en un sitio.
 
 **Cuenta de Google Ads:** `AW-18213186788`
 
+> **Cambios del 26/11/2026 (rediseño con la imagen de la web y la carta)**
+> - **El tag de Google Ads queda APAGADO** mientras la campaña está parada: solo se carga si la
+>   variable de Vercel `GOOGLE_ADS_TAG` vale `on` (ver `src/lib/ads.ts`), y nunca en vistas previas
+>   ni en local. Así no se instalan cookies publicitarias sin consentimiento (LSSI art. 22.2).
+>   **Antes de encenderlo:** banner de cookies con Consent Mode v2 (Google exige señales de
+>   consentimiento para el tráfico de la UE). La política de privacidad cambia sola según la variable.
+> - El middleware **ya no redirige las vistas previas** de Vercel al dominio: solo la URL
+>   `*.vercel.app` de producción. Así cada PR se puede revisar en su URL de prueba.
+>   Ojo: si las variables de Supabase de *Preview* son las de producción, una reserva hecha
+>   en la vista previa es una reserva real.
+> - La web nueva de `cortedemanga.es` **no incrusta el formulario** (enlaza a
+>   `reservas.cortedemanga.es` y le pasa `gclid`/`gbraid`/`wbraid`/`utm_*` en el enlace).
+>   Por tanto la conversión **#4 (`ZVVDCKDA…`) deja de dispararse** al publicarla. Antes de
+>   publicar, comprobar en Google Ads que la **#2 (`MkMuCMe…`) es la Primaria**.
+
 ---
 
 ## 1. Google tag base

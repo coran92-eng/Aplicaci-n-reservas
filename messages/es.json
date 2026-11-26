@@ -1,7 +1,7 @@
 {
   "form": {
     "title": "Reserva tu mesa",
-    "subtitle": "Corte de Manga · Comte d'Urgell 108, Barcelona",
+    "subtitle": "Comte d’Urgell, 108 · Eixample, Barcelona",
     "nombre": "Nombre",
     "apellido": "Apellido",
     "telefono": "Teléfono",
@@ -55,8 +55,11 @@
       "rate_limit": "Demasiadas solicitudes. Inténtalo de nuevo en unos minutos.",
       "dia_cerrado": "El restaurante está cerrado ese día",
       "franja_bloqueada": "Esa franja horaria no está disponible",
-      "generic": "Ha ocurrido un error. Inténtalo de nuevo."
-    }
+      "generic": "Ha ocurrido un error. Inténtalo de nuevo.",
+      "required": "Este campo es obligatorio"
+    },
+    "mes_anterior": "Mes anterior",
+    "mes_siguiente": "Mes siguiente"
   },
   "confirmation": {
     "title": "¡Reserva confirmada!",
@@ -71,7 +74,7 @@
     "comments": "Comentarios",
     "email_not_sent": "Email no enviado",
     "cancel_info": "¿Necesitas cancelar? Usa el enlace que hemos enviado a tu email.",
-    "pending_info": "Los grupos de más de 7 personas requieren confirmación manual. Recibirás un email con la confirmación en las próximas horas.",
+    "pending_info": "Los grupos grandes requieren confirmación manual. Recibirás un email con la respuesta en las próximas horas.",
     "address": "Cómo llegar",
     "back_home": "Volver al inicio",
     "modify_link": "Modificar fecha o hora"
@@ -169,5 +172,21 @@
     "invalid_title": "Enlace no válido",
     "invalid_subtitle": "Esta reserva ya no está activa o el enlace ha caducado. Si necesitas ayuda, llámanos.",
     "back_home": "Volver al inicio"
+  },
+  "site": {
+    "skip": "Ir al contenido",
+    "home_label": "Corte de Manga, inicio",
+    "lang_label": "Idioma",
+    "foot_visit": "Visítanos",
+    "foot_daily": "Cada día desde las 8:00",
+    "directions": "Cómo llegar",
+    "foot_contact": "Contacto",
+    "phone": "Teléfono",
+    "foot_wa": "WhatsApp (solo mensajes)",
+    "wa_text": "Hola, os escribo por una reserva",
+    "foot_more": "Más",
+    "web": "La web",
+    "carta": "La carta",
+    "privacy": "Política de privacidad"
   }
 }

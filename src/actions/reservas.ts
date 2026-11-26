@@ -196,15 +196,19 @@ export async function createReserva(
     return { ok: false, error: "generic", dbError };
   }
 
-  // Fire-and-forget push notification to all admin subscribers
-  sendPushToAll({
+  // Avisos en paralelo con el email al cliente. Se esperan antes de responder: en Vercel la función
+  // se congela al devolver la respuesta y lo que quedara pendiente podía no enviarse nunca.
+  const background: Promise<unknown>[] = [];
+
+  // Push notification to all admin subscribers
+  background.push(sendPushToAll({
     title: esPendiente ? "Nueva solicitud pendiente" : "Nueva reserva",
     body: `${data.nombre} ${data.apellido} · ${data.personas} pers. · ${data.hora}`,
     url: "/admin",
-  }).catch(() => {});
+  }).catch(() => {}));
 
-  // Fire-and-forget admin email with full daily schedule
-  (async () => {
+  // Admin email with full daily schedule
+  background.push((async () => {
     try {
       const sc = createServiceClient();
       const { data: diaData } = await sc
@@ -229,11 +233,11 @@ export async function createReserva(
     } catch (err) {
       console.error("[ADMIN_NOTIFY] Failed:", err);
     }
-  })();
+  })());
 
-  // Fire-and-forget WhatsApp notification to client
+  // WhatsApp notification to client
   if (data.telefono) {
-    (async () => {
+    background.push((async () => {
       try {
         const sc = createServiceClient();
         let waResult: { messageId?: string; error?: string };
@@ -268,9 +272,9 @@ export async function createReserva(
           error: waResult.error ?? null,
         });
       } catch (err) {
-        console.error("[WHATSAPP] Fire-and-forget failed:", err);
+        console.error("[WHATSAPP] Failed:", err);
       }
-    })();
+    })());
   }
 
   // Upsert cliente (fire-and-forget, no bloquea la respuesta al usuario)
@@ -330,6 +334,8 @@ export async function createReserva(
       // No bloquear si esto también falla
     }
   }
+
+  await Promise.allSettled(background);
 
   return { ok: true, id, estado: esPendiente ? "pendiente_aprobacion" : "confirmada", cancelToken, emailSent, emailError };
 }
@@ -517,16 +523,19 @@ export async function cancelarPorToken(token: string): Promise<{
     cancel_token: token,
   };
 
-  sendCancellationEmail(reservaData).catch(console.error);
-  sendAdminNotification({
-    tipo: "cancelacion",
-    nombre: reservaData.nombre,
-    apellido: reservaData.apellido,
-    fecha: reservaData.fecha,
-    hora: reservaData.hora,
-    personas: reservaData.personas,
-    email: reservaData.email,
-  }).catch(console.error);
+  // Se esperan los dos envíos: en Vercel, lo que queda pendiente al responder puede no enviarse
+  await Promise.allSettled([
+    sendCancellationEmail(reservaData).catch(console.error),
+    sendAdminNotification({
+      tipo: "cancelacion",
+      nombre: reservaData.nombre,
+      apellido: reservaData.apellido,
+      fecha: reservaData.fecha,
+      hora: reservaData.hora,
+      personas: reservaData.personas,
+      email: reservaData.email,
+    }).catch(console.error),
+  ]);
 
   return { ok: true, reserva: reservaData };
 }
@@ -600,7 +609,7 @@ export async function rejectReserva(
   // La reserva cambió de estado entre la lectura y el rechazo (p. ej. el cliente la canceló)
   if (!updated || updated.length === 0) return { ok: false, error: "estado_cambiado" };
 
-  sendRejectionEmail({
+  await sendRejectionEmail({
     nombre: reserva.nombre,
     apellido: reserva.apellido,
     email: reserva.email,
@@ -734,21 +743,36 @@ export async function modificarReserva(
 
   const { error } = await serviceClient
     .from("reservas")
-    .update({ fecha: updates.fecha, hora, cancel_token: newToken, cancel_token_expires_at: newExpiry })
+    // nueva fecha u hora: vuelve a tocar recordatorio y reconfirmación
+    .update({ fecha: updates.fecha, hora, cancel_token: newToken, cancel_token_expires_at: newExpiry, recordatorio_enviado: false, reconfirmado: false })
     .eq("cancel_token", token);
 
   if (error) return { ok: false, error: "generic" };
 
-  sendConfirmationEmail({
-    nombre: reserva.nombre,
-    apellido: reserva.apellido,
-    email: reserva.email,
-    fecha: updates.fecha,
-    hora,
-    personas: reserva.personas,
-    cancel_token: newToken,
-    idioma: reserva.idioma,
-  }).catch(console.error);
+  // Email al cliente con los datos nuevos y aviso al bar (se esperan: en Vercel lo pendiente puede perderse)
+  await Promise.allSettled([
+    sendConfirmationEmail({
+      nombre: reserva.nombre,
+      apellido: reserva.apellido,
+      email: reserva.email,
+      fecha: updates.fecha,
+      hora,
+      personas: reserva.personas,
+      cancel_token: newToken,
+      idioma: reserva.idioma,
+    }).catch(console.error),
+    sendAdminNotification({
+      tipo: "modificacion",
+      antes: { fecha: reserva.fecha, hora: reserva.hora },
+      nombre: reserva.nombre,
+      apellido: reserva.apellido,
+      fecha: updates.fecha,
+      hora,
+      personas: reserva.personas,
+      telefono: reserva.telefono,
+      email: reserva.email,
+    }).catch(console.error),
+  ]);
 
   return { ok: true, newToken, reservaId: reserva.id };
 }
