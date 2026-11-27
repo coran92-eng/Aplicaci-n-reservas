@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Shell } from "@/components/site/Shell";
 import { CancelarCliente } from "@/components/forms/CancelarCliente";
@@ -31,12 +32,13 @@ export default async function CancelarPage({
     personas: number;
     estado: string;
     cancel_token_expires_at: string | null;
+    updated_at?: string | null;
   } | null = null;
   if (UUID_RE.test(token)) {
     const sc = createServiceClient();
     const { data } = await sc
       .from("reservas")
-      .select("fecha, hora, personas, estado, cancel_token_expires_at")
+      .select("fecha, hora, personas, estado, cancel_token_expires_at, updated_at")
       .eq("cancel_token", token)
       .maybeSingle();
     reserva = data;
@@ -47,6 +49,29 @@ export default async function CancelarPage({
   else if (reserva.cancel_token_expires_at && new Date(reserva.cancel_token_expires_at) < new Date()) problema = "not_found";
   else if (reserva.estado === "cancelada") problema = "already_cancelled";
   else if (reserva.estado !== "confirmada" && reserva.estado !== "pendiente_aprobacion") problema = "cannot_cancel";
+
+  // Cancelada hace un momento (lo normal: el cliente acaba de pulsar). Si la página se vuelve a pintar justo
+  // después, o la recarga, se le confirma la cancelación en vez de decirle que «ja estava cancel·lada».
+  const recienCancelada =
+    problema === "already_cancelled" &&
+    !!reserva?.updated_at &&
+    Date.now() - new Date(reserva.updated_at).getTime() < 15 * 60 * 1000;
+  if (recienCancelada) {
+    return (
+      <Shell>
+        <div className="cdm-col">
+          <div className="cdm-sign center" role="status">
+            <div className="cdm-badge"><Check aria-hidden /></div>
+            <h1 className="cdm-big">{t("success_title")}</h1>
+            <p className="cdm-sub">{t("success_info")}</p>
+          </div>
+          <p className="cdm-center" style={{ marginTop: 18 }}>
+            <Link href={`/${locale}`} className="cdm-link">{t("rebook")}</Link>
+          </p>
+        </div>
+      </Shell>
+    );
+  }
 
   if (problema || !reserva) {
     const titulo = problema === "already_cancelled" ? t("cancelled_title") : problema === "cannot_cancel" ? t("cannot_title") : t("invalid_title");
