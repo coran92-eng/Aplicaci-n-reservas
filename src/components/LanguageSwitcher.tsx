@@ -31,6 +31,10 @@ export function LanguageSwitcher({ label }: { label: string }) {
           <Link
             key={l.code}
             href={href}
+            // Sin precarga: cada precarga pasa por next-intl y cambia la cookie de idioma (NEXT_LOCALE) al de ese
+            // enlace. El idioma recordado quedaba mal y, al cancelar, la acción la devolvía a su sitio y Next
+            // repintaba la página: salía «Ja està cancel·lada» en vez de «Reserva cancel·lada».
+            prefetch={false}
             hrefLang={l.code}
             lang={l.code}
             aria-current={l.code === locale ? "true" : undefined}
