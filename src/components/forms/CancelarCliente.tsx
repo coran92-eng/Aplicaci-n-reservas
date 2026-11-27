@@ -28,12 +28,18 @@ export function CancelarCliente({
 
   async function handleCancel() {
     setState("loading");
-    const result = await cancelarPorToken(token);
-    if (result.ok) {
-      setState("success");
-    } else {
+    try {
+      const result = await cancelarPorToken(token);
+      if (result.ok) {
+        setState("success");
+      } else {
+        setState("error");
+        setErrorKey(result.error ?? "generic");
+      }
+    } catch {
+      // Sin conexión o la web se ha actualizado mientras tanto: que no se quede en «Cancel·lant…»
       setState("error");
-      setErrorKey(result.error ?? "generic");
+      setErrorKey("generic");
     }
   }
 
