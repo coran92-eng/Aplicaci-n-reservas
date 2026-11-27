@@ -512,6 +512,11 @@ export async function cancelarPorToken(token: string): Promise<{
     apellido: string;
   };
 }> {
+  // Un enlace roto o recortado no llega a la base de datos (p_token es uuid y daría error)
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) {
+    return { ok: false, error: "not_found" };
+  }
+
   const supabase = createClient();
 
   const { data, error } = (await supabase.rpc("cancelar_reserva", {
@@ -519,6 +524,8 @@ export async function cancelarPorToken(token: string): Promise<{
   })) as { data: CancelarReservaResult | null; error: unknown };
 
   if (error || !data) {
+    // Que quede en los logs de Vercel: este fallo estuvo meses sin verse (ver 013_cancelar_reserva_token_texto.sql)
+    console.error("[cancelar] cancelar_reserva falló:", error ?? "sin datos");
     return { ok: false, error: "generic" };
   }
 
